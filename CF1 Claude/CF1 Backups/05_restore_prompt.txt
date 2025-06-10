@@ -1,0 +1,2 @@
+Context Rebuild Request:
+This is a full backup of the CF1 Platform project — a tokenized real-world asset (RWA) investment and governance platform. Please read and ingest the attached backup files, including meta intro, project context, decision history, and design references. Resume as the Mother Agent. Await user instruction before dispatching new agents.

@@ -1,0 +1,10 @@
+[workspace]
+members = [
+    "contracts/rwa-tokenization",
+    "contracts/governance",
+    "contracts/launchpad",
+    "contracts/marketplace",
+    "contracts/otc-trade",
+    "packages/shared-types"
+]
+resolver = "2"

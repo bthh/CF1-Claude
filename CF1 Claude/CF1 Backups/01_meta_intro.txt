@@ -1,0 +1,14 @@
+CF1 Platform | Meta Introduction
+
+This zip contains a full backup of the CF1 Platform development thread as of 2025-04-30.
+It includes all critical context, decisions, design references, and README summaries.
+This backup is optimized for restoration in a new ChatGPT thread with memory enabled.
+
+To restore: Paste the 'restore_prompt.txt' contents into a new chat and upload this zip.
+
+Components:
+- 01_meta_intro.txt
+- 02_context_chat.txt
+- 03_decision_log.txt
+- 04_readme_summary.txt
+- 05_restore_prompt.txt

@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom component classes for dark mode support */
+@layer components {
+  .card {
+    @apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm;
+  }
+  
+  .card-hover {
+    @apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm hover:shadow-md transition-shadow;
+  }
+  
+  /* Text colors */
+  .text-primary-600 {
+    @apply text-blue-600 dark:text-blue-400;
+  }
+  
+  .text-secondary-900 {
+    @apply text-gray-900 dark:text-white;
+  }
+  
+  .text-secondary-600 {
+    @apply text-gray-600 dark:text-gray-400;
+  }
+  
+  .text-secondary-100 {
+    @apply text-gray-100 dark:text-gray-800;
+  }
+  
+  .text-success-500 {
+    @apply text-green-500 dark:text-green-400;
+  }
+  
+  .text-success-600 {
+    @apply text-green-600 dark:text-green-400;
+  }
+  
+  .text-danger-500 {
+    @apply text-red-500 dark:text-red-400;
+  }
+  
+  .text-danger-600 {
+    @apply text-red-600 dark:text-red-400;
+  }
+  
+  /* Background colors */
+  .bg-primary-50 {
+    @apply bg-blue-50 dark:bg-blue-900/50;
+  }
+  
+  .bg-secondary-100 {
+    @apply bg-gray-100 dark:bg-gray-700;
+  }
+  
+  .bg-secondary-200 {
+    @apply bg-gray-200 dark:bg-gray-600;
+  }
+}
