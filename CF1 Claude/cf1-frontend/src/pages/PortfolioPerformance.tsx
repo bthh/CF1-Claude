@@ -126,7 +126,7 @@ const PortfolioPerformance: React.FC = () => {
       </div>
 
       {/* Account Value Chart Section */}
-      <div className="card p-6">
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Portfolio Value</h2>
           <select className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white w-32 h-9">
@@ -205,7 +205,7 @@ const PortfolioPerformance: React.FC = () => {
       <div className="border-t border-gray-200 dark:border-gray-700"></div>
 
       {/* Assets Grid Section */}
-      <div className="card p-6">
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Assets Held</h2>
           <div className="flex items-center space-x-4">
@@ -271,7 +271,7 @@ const PortfolioPerformance: React.FC = () => {
                 <th className="text-right py-3 px-4">
                   <button
                     onClick={() => handleSort('currentValue')}
-                    className="flex items-center space-x-1 font-semibold text-secondary-700 hover:text-secondary-900 ml-auto"
+                    className="flex items-center space-x-1 font-semibold text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:text-white ml-auto"
                   >
                     <span>Current Value</span>
                     <ArrowUpDown className="w-4 h-4" />
@@ -280,7 +280,7 @@ const PortfolioPerformance: React.FC = () => {
                 <th className="text-right py-3 px-4">
                   <button
                     onClick={() => handleSort('totalChange')}
-                    className="flex items-center space-x-1 font-semibold text-secondary-700 hover:text-secondary-900 ml-auto"
+                    className="flex items-center space-x-1 font-semibold text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:text-white ml-auto"
                   >
                     <span>Total Change</span>
                     <ArrowUpDown className="w-4 h-4" />
@@ -289,7 +289,7 @@ const PortfolioPerformance: React.FC = () => {
                 <th className="text-center py-3 px-4">
                   <button
                     onClick={() => handleSort('locked')}
-                    className="flex items-center space-x-1 font-semibold text-secondary-700 hover:text-secondary-900 mx-auto"
+                    className="flex items-center space-x-1 font-semibold text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:text-white mx-auto"
                   >
                     <span>Status</span>
                     <ArrowUpDown className="w-4 h-4" />
@@ -299,33 +299,33 @@ const PortfolioPerformance: React.FC = () => {
             </thead>
             <tbody>
               {filteredAndSortedAssets.map((asset) => (
-                <tr key={asset.id} className="border-b border-secondary-100 hover:bg-secondary-50 cursor-pointer">
+                <tr key={asset.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:bg-gray-800 cursor-pointer">
                   <td className="py-4 px-4">
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-primary-400 to-primary-600 rounded-lg"></div>
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg"></div>
                       <div>
-                        <p className="font-semibold text-secondary-900">{asset.name}</p>
+                        <p className="font-semibold text-gray-900 dark:text-white">{asset.name}</p>
                       </div>
                     </div>
                   </td>
                   <td className="py-4 px-4">
-                    <span className="text-secondary-600">{asset.type}</span>
+                    <span className="text-gray-600 dark:text-gray-400">{asset.type}</span>
                   </td>
                   <td className="py-4 px-4 text-right">
-                    <span className="font-semibold text-secondary-900">{formatCurrency(asset.currentValue)}</span>
+                    <span className="font-semibold text-gray-900 dark:text-white">{formatCurrency(asset.currentValue)}</span>
                   </td>
                   <td className="py-4 px-4 text-right">
                     <div className="flex items-center justify-end space-x-2">
                       {asset.totalChange >= 0 ? (
-                        <TrendingUp className="w-4 h-4 text-success-500" />
+                        <TrendingUp className="w-4 h-4 text-green-500" />
                       ) : (
-                        <TrendingDown className="w-4 h-4 text-danger-500" />
+                        <TrendingDown className="w-4 h-4 text-red-500" />
                       )}
                       <div className="text-right">
-                        <p className={`font-semibold ${asset.totalChange >= 0 ? 'text-success-600' : 'text-danger-600'}`}>
+                        <p className={`font-semibold ${asset.totalChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                           {formatCurrency(Math.abs(asset.totalChange))}
                         </p>
-                        <p className={`text-sm ${asset.totalChange >= 0 ? 'text-success-600' : 'text-danger-600'}`}>
+                        <p className={`text-sm ${asset.totalChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                           {asset.totalChange >= 0 ? '+' : ''}{asset.changePercent}%
                         </p>
                       </div>
@@ -335,7 +335,7 @@ const PortfolioPerformance: React.FC = () => {
                     <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
                       asset.locked 
                         ? 'bg-warning-100 text-warning-800' 
-                        : 'bg-success-100 text-success-800'
+                        : 'bg-green-100 dark:bg-green-900/20 text-green-800'
                     }`}>
                       {asset.locked ? 'Locked' : 'Unlocked'}
                     </span>
@@ -348,7 +348,7 @@ const PortfolioPerformance: React.FC = () => {
 
         {filteredAndSortedAssets.length === 0 && (
           <div className="text-center py-8">
-            <p className="text-secondary-500">No assets found matching your criteria.</p>
+            <p className="text-gray-500 dark:text-gray-400">No assets found matching your criteria.</p>
           </div>
         )}
       </div>

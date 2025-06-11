@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Clock, Users, Target, TrendingUp } from 'lucide-react';
-import { InvestmentModalSimple } from '../components/InvestmentModalSimple';
+import { InvestmentModal } from '../components/InvestmentModal';
 
 const ProposalDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -162,13 +162,13 @@ const ProposalDetail: React.FC = () => {
       </div>
 
       {/* Investment Modal */}
-      <InvestmentModalSimple
+      <InvestmentModal
         isOpen={showInvestModal}
         onClose={() => setShowInvestModal(false)}
         proposal={proposal}
         onSuccess={() => {
           setShowInvestModal(false);
-          // Show success message or refresh data
+          // Refresh data or show success message
         }}
       />
     </div>

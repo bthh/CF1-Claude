@@ -34,7 +34,7 @@ const AssetListing: React.FC<AssetListingProps> = ({
   const navigate = useNavigate();
   return (
     <div 
-      className="card-hover p-6 cursor-pointer border border-gray-200 dark:border-gray-700 rounded-lg"
+      className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm hover:shadow-md transition-shadow p-6 cursor-pointer border border-gray-200 dark:border-gray-700 rounded-lg"
       onClick={() => navigate(`/marketplace/asset/${id}`)}
     >
       <div className="aspect-video bg-gray-100 dark:bg-gray-700 rounded-lg mb-4 overflow-hidden">
@@ -48,14 +48,14 @@ const AssetListing: React.FC<AssetListingProps> = ({
       <div className="space-y-3">
         <div>
           <div className="flex items-start justify-between mb-2">
-            <h3 className="font-semibold text-secondary-900 text-lg">{name}</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-white text-lg">{name}</h3>
             <div className="flex items-center space-x-1">
               <Star className="w-4 h-4 text-warning-400 fill-current" />
-              <span className="text-sm text-secondary-600">{rating}</span>
+              <span className="text-sm text-gray-600 dark:text-gray-400">{rating}</span>
             </div>
           </div>
-          <div className="flex items-center space-x-2 text-sm text-secondary-600">
-            <span className="bg-secondary-100 px-2 py-1 rounded-full">{type}</span>
+          <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+            <span className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">{type}</span>
             <div className="flex items-center space-x-1">
               <MapPin className="w-3 h-3" />
               <span>{location}</span>
@@ -65,36 +65,36 @@ const AssetListing: React.FC<AssetListingProps> = ({
 
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
-            <p className="text-secondary-600">Total Value</p>
-            <p className="font-semibold text-secondary-900">{totalValue}</p>
+            <p className="text-gray-600 dark:text-gray-400">Total Value</p>
+            <p className="font-semibold text-gray-900 dark:text-white">{totalValue}</p>
           </div>
           <div>
-            <p className="text-secondary-600">Token Price</p>
-            <p className="font-semibold text-secondary-900">{tokenPrice}</p>
+            <p className="text-gray-600 dark:text-gray-400">Token Price</p>
+            <p className="font-semibold text-gray-900 dark:text-white">{tokenPrice}</p>
           </div>
         </div>
 
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
-            <span className="text-secondary-600">Available</span>
+            <span className="text-gray-600 dark:text-gray-400">Available</span>
             <span className="font-medium">{tokensAvailable.toLocaleString()} / {totalTokens.toLocaleString()}</span>
           </div>
           <div className="w-full bg-secondary-200 rounded-full h-2">
             <div 
-              className="bg-primary-600 h-2 rounded-full" 
+              className="bg-blue-600 h-2 rounded-full" 
               style={{ width: `${((totalTokens - tokensAvailable) / totalTokens) * 100}%` }}
             ></div>
           </div>
         </div>
 
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-1 text-success-600">
+          <div className="flex items-center space-x-1 text-green-600">
             <TrendingUp className="w-4 h-4" />
             <span className="text-sm font-medium">{apy} APY</span>
           </div>
           <div className="flex flex-wrap gap-1">
             {tags.slice(0, 2).map((tag, index) => (
-              <span key={index} className="text-xs bg-primary-100 text-primary-700 px-2 py-1 rounded-full">
+              <span key={index} className="text-xs bg-blue-100 dark:bg-blue-900/20 text-blue-700 px-2 py-1 rounded-full">
                 {tag}
               </span>
             ))}
@@ -243,7 +243,7 @@ const Marketplace: React.FC = () => {
 
       <div className="flex flex-col lg:flex-row gap-6">
         <div className="lg:w-64 space-y-4">
-          <div className="card p-4">
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-4">
             <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Categories</h3>
             <div className="space-y-2">
               {categories.map((category) => (
@@ -263,7 +263,7 @@ const Marketplace: React.FC = () => {
             </div>
           </div>
 
-          <div className="card p-4">
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-4">
             <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Filters</h3>
             <div className="space-y-4">
               <div>

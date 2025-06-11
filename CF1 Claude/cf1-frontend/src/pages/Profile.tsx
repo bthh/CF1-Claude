@@ -87,22 +87,22 @@ const Profile: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-secondary-900">Profile</h1>
-          <p className="text-secondary-600 mt-1">Manage your account and view your investment activity</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Profile</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">Manage your account and view your investment activity</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Profile Card */}
         <div className="lg:col-span-2">
-          <div className="card p-6">
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
             <div className="flex items-start justify-between mb-6">
               <div className="flex items-center space-x-4">
                 <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center">
                   <span className="text-blue-600 font-bold text-2xl">{userProfile.profileImage}</span>
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-secondary-900">{userProfile.name}</h2>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{userProfile.name}</h2>
                   <div className="flex items-center space-x-2 mt-1">
                     {userProfile.verified && (
                       <div className="flex items-center space-x-1 text-green-600">
@@ -113,7 +113,7 @@ const Profile: React.FC = () => {
                   </div>
                 </div>
               </div>
-              <button className="flex items-center space-x-2 px-4 py-2 border border-secondary-300 rounded-lg text-secondary-600 hover:text-secondary-900 hover:bg-secondary-50 transition-colors">
+              <button className="flex items-center space-x-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                 <Edit className="w-4 h-4" />
                 <span>Edit Profile</span>
               </button>
@@ -122,53 +122,53 @@ const Profile: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div className="space-y-4">
                 <div className="flex items-center space-x-3">
-                  <Mail className="w-5 h-5 text-secondary-400" />
-                  <span className="text-secondary-600">{userProfile.email}</span>
+                  <Mail className="w-5 h-5 text-gray-400" />
+                  <span className="text-gray-600 dark:text-gray-400">{userProfile.email}</span>
                 </div>
                 <div className="flex items-center space-x-3">
-                  <Phone className="w-5 h-5 text-secondary-400" />
-                  <span className="text-secondary-600">{userProfile.phone}</span>
+                  <Phone className="w-5 h-5 text-gray-400" />
+                  <span className="text-gray-600 dark:text-gray-400">{userProfile.phone}</span>
                 </div>
                 <div className="flex items-center space-x-3">
-                  <MapPin className="w-5 h-5 text-secondary-400" />
-                  <span className="text-secondary-600">{userProfile.location}</span>
+                  <MapPin className="w-5 h-5 text-gray-400" />
+                  <span className="text-gray-600 dark:text-gray-400">{userProfile.location}</span>
                 </div>
               </div>
               <div className="space-y-4">
                 <div className="flex items-center space-x-3">
-                  <Calendar className="w-5 h-5 text-secondary-400" />
-                  <span className="text-secondary-600">Member since {userProfile.joinDate}</span>
+                  <Calendar className="w-5 h-5 text-gray-400" />
+                  <span className="text-gray-600 dark:text-gray-400">Member since {userProfile.joinDate}</span>
                 </div>
                 <div className="flex items-center space-x-3">
-                  <Wallet className="w-5 h-5 text-secondary-400" />
-                  <span className="text-secondary-600 font-mono text-sm">{userProfile.walletAddress}</span>
+                  <Wallet className="w-5 h-5 text-gray-400" />
+                  <span className="text-gray-600 dark:text-gray-400 font-mono text-sm">{userProfile.walletAddress}</span>
                 </div>
               </div>
             </div>
 
             {/* Investment Statistics */}
-            <div className="border-t border-secondary-200 pt-6">
-              <h3 className="text-lg font-semibold text-secondary-900 mb-4">Investment Overview</h3>
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Investment Overview</h3>
               <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-secondary-900">{investmentStats.totalInvested}</p>
-                  <p className="text-sm text-secondary-600">Total Invested</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{investmentStats.totalInvested}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Total Invested</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-secondary-900">{investmentStats.activeInvestments}</p>
-                  <p className="text-sm text-secondary-600">Active Investments</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{investmentStats.activeInvestments}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Active Investments</p>
                 </div>
                 <div className="text-center">
                   <p className="text-2xl font-bold text-green-600">{investmentStats.totalReturns}</p>
-                  <p className="text-sm text-secondary-600">Total Returns</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Total Returns</p>
                 </div>
                 <div className="text-center">
                   <p className="text-2xl font-bold text-blue-600">{investmentStats.avgAPY}</p>
-                  <p className="text-sm text-secondary-600">Avg. APY</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Avg. APY</p>
                 </div>
                 <div className="text-center">
                   <p className="text-2xl font-bold text-purple-600">{investmentStats.successRate}</p>
-                  <p className="text-sm text-secondary-600">Success Rate</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Success Rate</p>
                 </div>
               </div>
             </div>
@@ -178,24 +178,24 @@ const Profile: React.FC = () => {
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Quick Actions */}
-          <div className="card p-4">
-            <h3 className="font-semibold text-secondary-900 mb-4">Quick Actions</h3>
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-4">
+            <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h3>
             <div className="space-y-2">
-              <button className="w-full text-left p-3 rounded-lg border border-secondary-200 hover:bg-secondary-50 transition-colors">
+              <button className="w-full text-left p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                 <div className="flex items-center space-x-3">
                   <CreditCard className="w-5 h-5 text-blue-600" />
                   <div>
-                    <p className="font-medium text-secondary-900">Add Payment Method</p>
-                    <p className="text-xs text-secondary-600">Link bank or card</p>
+                    <p className="font-medium text-gray-900 dark:text-white">Add Payment Method</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">Link bank or bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm</p>
                   </div>
                 </div>
               </button>
-              <button className="w-full text-left p-3 rounded-lg border border-secondary-200 hover:bg-secondary-50 transition-colors">
+              <button className="w-full text-left p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                 <div className="flex items-center space-x-3">
                   <Building className="w-5 h-5 text-green-600" />
                   <div>
-                    <p className="font-medium text-secondary-900">KYC Verification</p>
-                    <p className="text-xs text-secondary-600">Complete identity verification</p>
+                    <p className="font-medium text-gray-900 dark:text-white">KYC Verification</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">Complete identity verification</p>
                   </div>
                 </div>
               </button>
@@ -203,21 +203,21 @@ const Profile: React.FC = () => {
           </div>
 
           {/* Achievements */}
-          <div className="card p-4">
-            <h3 className="font-semibold text-secondary-900 mb-4">Achievements</h3>
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-4">
+            <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Achievements</h3>
             <div className="space-y-3">
               {achievements.map((achievement, index) => (
                 <div key={index} className={`flex items-center space-x-3 p-2 rounded-lg ${
-                  achievement.earned ? 'bg-green-50' : 'bg-secondary-50'
+                  achievement.earned ? 'bg-green-50' : 'bg-gray-50 dark:bg-gray-800'
                 }`}>
                   {achievement.icon}
                   <div className="flex-1">
                     <p className={`text-sm font-medium ${
-                      achievement.earned ? 'text-secondary-900' : 'text-secondary-600'
+                      achievement.earned ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400'
                     }`}>
                       {achievement.title}
                     </p>
-                    <p className="text-xs text-secondary-500">{achievement.description}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{achievement.description}</p>
                   </div>
                 </div>
               ))}
@@ -227,11 +227,11 @@ const Profile: React.FC = () => {
       </div>
 
       {/* Recent Activity */}
-      <div className="card p-6">
-        <h3 className="text-lg font-semibold text-secondary-900 mb-4">Recent Activity</h3>
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Recent Activity</h3>
         <div className="space-y-4">
           {recentActivity.map((activity) => (
-            <div key={activity.id} className="flex items-center justify-between py-3 border-b border-secondary-100 last:border-b-0">
+            <div key={activity.id} className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
               <div className="flex items-center space-x-3">
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                   activity.type === 'investment' ? 'bg-blue-100' :
@@ -242,19 +242,19 @@ const Profile: React.FC = () => {
                   {activity.type === 'vote' && <Star className="w-5 h-5 text-purple-600" />}
                 </div>
                 <div>
-                  <p className="font-medium text-secondary-900">{activity.title}</p>
-                  <p className="text-sm text-secondary-600">{activity.date}</p>
+                  <p className="font-medium text-gray-900 dark:text-white">{activity.title}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">{activity.date}</p>
                 </div>
               </div>
               <div className="text-right">
                 {activity.amount && (
                   <p className={`font-medium ${
-                    activity.amount.startsWith('+') ? 'text-green-600' : 'text-secondary-900'
+                    activity.amount.startsWith('+') ? 'text-green-600' : 'text-gray-900 dark:text-white'
                   }`}>
                     {activity.amount}
                   </p>
                 )}
-                <p className="text-sm text-secondary-600 capitalize">{activity.status}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 capitalize">{activity.status}</p>
               </div>
             </div>
           ))}

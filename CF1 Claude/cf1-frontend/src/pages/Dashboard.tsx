@@ -11,23 +11,23 @@ interface StatCardProps {
 
 const StatCard: React.FC<StatCardProps> = ({ title, value, change, isPositive, icon }) => {
   return (
-    <div className="card p-6">
+    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
       <div className="flex items-center justify-between">
         <div className="flex-1">
-          <p className="text-sm font-medium text-secondary-600">{title}</p>
-          <p className="text-2xl font-bold text-secondary-900 mt-1">{value}</p>
+          <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{title}</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{value}</p>
           <div className="flex items-center mt-2">
             {isPositive ? (
-              <TrendingUp className="w-4 h-4 text-success-500 mr-1" />
+              <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
             ) : (
-              <TrendingDown className="w-4 h-4 text-danger-500 mr-1" />
+              <TrendingDown className="w-4 h-4 text-red-500 mr-1" />
             )}
-            <span className={`text-sm font-medium ${isPositive ? 'text-success-600' : 'text-danger-600'}`}>
+            <span className={`text-sm font-medium ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
               {change}
             </span>
           </div>
         </div>
-        <div className="p-3 bg-primary-50 rounded-lg">
+        <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
           {icon}
         </div>
       </div>
@@ -46,7 +46,7 @@ interface AssetCardProps {
 
 const AssetCard: React.FC<AssetCardProps> = ({ name, type, value, change, isPositive, imageUrl }) => {
   return (
-    <div className="card-hover p-4 cursor-pointer">
+    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm hover:shadow-md transition-shadow p-4 cursor-pointer">
       <div className="flex items-center space-x-3">
         <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center overflow-hidden">
           {imageUrl ? (
@@ -77,28 +77,28 @@ const Dashboard: React.FC = () => {
       value: '$124,523',
       change: '+12.5%',
       isPositive: true,
-      icon: <DollarSign className="w-6 h-6 text-primary-600" />
+      icon: <DollarSign className="w-6 h-6 text-blue-600" />
     },
     {
       title: 'Active Investments',
       value: '12',
       change: '+2 this month',
       isPositive: true,
-      icon: <BarChart3 className="w-6 h-6 text-primary-600" />
+      icon: <BarChart3 className="w-6 h-6 text-blue-600" />
     },
     {
       title: 'Monthly Returns',
       value: '8.3%',
       change: '+1.2%',
       isPositive: true,
-      icon: <TrendingUp className="w-6 h-6 text-primary-600" />
+      icon: <TrendingUp className="w-6 h-6 text-blue-600" />
     },
     {
       title: 'Governance Votes',
       value: '5',
       change: 'Active',
       isPositive: true,
-      icon: <Eye className="w-6 h-6 text-primary-600" />
+      icon: <Eye className="w-6 h-6 text-blue-600" />
     }
   ];
 
@@ -163,7 +163,7 @@ const Dashboard: React.FC = () => {
       <div className="border-t border-gray-200 dark:border-gray-700"></div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="card p-6">
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Total RWA Tokenized on CF1</h2>
             <select className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white w-32 h-9">
@@ -246,7 +246,7 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="card p-6">
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Top Performers</h2>
             <button className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium">
@@ -265,7 +265,7 @@ const Dashboard: React.FC = () => {
       <div className="border-t border-gray-200 dark:border-gray-700"></div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="card p-6">
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Active Proposals</h3>
           <div className="space-y-3">
             <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
@@ -289,7 +289,7 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="card p-6">
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Upcoming Launches</h3>
           <div className="space-y-3">
             <div className="flex items-center space-x-3">
@@ -313,7 +313,7 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="card p-6">
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h3>
           <div className="space-y-2">
             <button className="w-full border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg py-2 px-3 flex items-center justify-start">

@@ -181,7 +181,7 @@ const CreateProposal: React.FC = () => {
                 }`}>
                   {step.title}
                 </p>
-                <p className="text-xs text-secondary-500 mt-1 max-w-24">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 max-w-24">
                   {step.description}
                 </p>
               </div>
@@ -341,10 +341,10 @@ const CreateProposal: React.FC = () => {
               type="text"
               value={formData.expectedAPY}
               onChange={(e) => handleInputChange('expectedAPY', e.target.value)}
-              className="w-full pr-8 pl-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              className="w-full pr-8 pl-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               placeholder="9.2"
             />
-            <span className="absolute right-3 top-2 text-secondary-500">%</span>
+            <span className="absolute right-3 top-2 text-gray-500 dark:text-gray-400">%</span>
           </div>
         </div>
       </div>
@@ -384,8 +384,8 @@ const CreateProposal: React.FC = () => {
             <FileText className="w-4 h-4 inline mr-1" />
             {doc.label} {doc.required && '*'}
           </label>
-          <div className="border-2 border-dashed border-secondary-300 rounded-lg p-6 text-center">
-            <Upload className="w-8 h-8 text-secondary-400 mx-auto mb-2" />
+          <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center">
+            <Upload className="w-8 h-8 text-gray-400 dark:text-gray-500 mx-auto mb-2" />
             <input
               type="file"
               accept=".pdf"
@@ -395,13 +395,13 @@ const CreateProposal: React.FC = () => {
             />
             <label
               htmlFor={doc.field}
-              className="cursor-pointer text-primary-600 hover:text-primary-700 font-medium"
+              className="cursor-pointer text-blue-600 hover:text-blue-700 font-medium"
             >
               Click to upload
             </label>
-            <p className="text-sm text-secondary-500 mt-1">PDF format, max 10MB</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">PDF format, max 10MB</p>
             {formData[doc.field as keyof FormData] && (
-              <p className="text-sm text-success-600 mt-2">
+              <p className="text-sm text-green-600 mt-2">
                 ✓ {(formData[doc.field as keyof FormData] as File)?.name}
               </p>
             )}
@@ -441,31 +441,31 @@ const CreateProposal: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-secondary-50 border border-secondary-200 rounded-lg p-6">
-        <h3 className="text-lg font-medium text-secondary-900 mb-4">Proposal Summary</h3>
+      <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg p-6">
+        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Proposal Summary</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
           <div>
-            <p className="text-secondary-600">Asset Name:</p>
+            <p className="text-gray-600 dark:text-gray-400">Asset Name:</p>
             <p className="font-medium">{formData.assetName || 'Not specified'}</p>
           </div>
           <div>
-            <p className="text-secondary-600">Category:</p>
+            <p className="text-gray-600 dark:text-gray-400">Category:</p>
             <p className="font-medium">{formData.category || 'Not specified'}</p>
           </div>
           <div>
-            <p className="text-secondary-600">Target Amount:</p>
+            <p className="text-gray-600 dark:text-gray-400">Target Amount:</p>
             <p className="font-medium">${formData.targetAmount || 'Not specified'}</p>
           </div>
           <div>
-            <p className="text-secondary-600">Expected APY:</p>
+            <p className="text-gray-600 dark:text-gray-400">Expected APY:</p>
             <p className="font-medium">{formData.expectedAPY ? `${formData.expectedAPY}%` : 'Not specified'}</p>
           </div>
         </div>
       </div>
 
-      <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
-        <h4 className="text-sm font-medium text-primary-800 mb-2">Next Steps</h4>
-        <p className="text-sm text-primary-700">
+      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+        <h4 className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">Next Steps</h4>
+        <p className="text-sm text-blue-700">
           After submission, your proposal will be reviewed by our compliance team within 3-5 business days. 
           You'll receive an email notification once the review is complete.
         </p>
@@ -478,21 +478,21 @@ const CreateProposal: React.FC = () => {
       <div className="flex items-center justify-between mb-6">
         <button
           onClick={() => navigate('/launchpad')}
-          className="flex items-center space-x-2 px-4 py-2 border border-secondary-300 rounded-lg text-secondary-600 hover:text-secondary-900 hover:bg-secondary-50 transition-colors"
+          className="flex items-center space-x-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:text-white hover:bg-gray-50 dark:bg-gray-800 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Back to Launchpad</span>
         </button>
         
         <div className="text-center flex-1">
-          <h1 className="text-3xl font-bold text-secondary-900">Submit New Proposal</h1>
-          <p className="text-secondary-600 mt-1">Create a new tokenized asset proposal</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Submit New Proposal</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">Create a new tokenized asset proposal</p>
         </div>
         
         <div className="w-32"></div> {/* Spacer for centering */}
       </div>
 
-      <div className="card p-8">
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-8">
         {renderStepIndicator()}
 
         <div className="min-h-[500px]">
@@ -502,21 +502,21 @@ const CreateProposal: React.FC = () => {
           {currentStep === 4 && renderReviewSubmit()}
         </div>
 
-        <div className="flex items-center justify-between pt-8 border-t border-secondary-200">
+        <div className="flex items-center justify-between pt-8 border-t border-gray-200 dark:border-gray-600">
           <button
             onClick={prevStep}
             disabled={currentStep === 1}
             className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
               currentStep === 1
-                ? 'text-secondary-400 cursor-not-allowed'
-                : 'text-secondary-600 hover:text-secondary-900 hover:bg-secondary-50'
+                ? 'text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:text-white hover:bg-gray-50 dark:bg-gray-800'
             }`}
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Previous</span>
           </button>
 
-          <div className="text-sm text-secondary-500">
+          <div className="text-sm text-gray-500 dark:text-gray-400">
             Step {currentStep} of {totalSteps}
           </div>
 

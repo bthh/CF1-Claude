@@ -47,52 +47,52 @@ const GovernanceProposal: React.FC<ProposalProps> = ({
   const getStatusBadge = () => {
     switch (status) {
       case 'active':
-        return <span className="bg-primary-100 text-primary-800 text-xs px-2 py-1 rounded-full">Active Voting</span>;
+        return <span className="bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 text-xs px-2 py-1 rounded-full">Active Voting</span>;
       case 'passed':
-        return <span className="bg-success-100 text-success-800 text-xs px-2 py-1 rounded-full">Passed</span>;
+        return <span className="bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200 text-xs px-2 py-1 rounded-full">Passed</span>;
       case 'rejected':
-        return <span className="bg-danger-100 text-danger-800 text-xs px-2 py-1 rounded-full">Rejected</span>;
+        return <span className="bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-200 text-xs px-2 py-1 rounded-full">Rejected</span>;
       case 'pending':
-        return <span className="bg-warning-100 text-warning-800 text-xs px-2 py-1 rounded-full">Pending</span>;
+        return <span className="bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 text-xs px-2 py-1 rounded-full">Pending</span>;
     }
   };
 
   const getProposalTypeIcon = () => {
     switch (proposalType) {
       case 'dividend':
-        return <TrendingUp className="w-5 h-5 text-success-600" />;
+        return <TrendingUp className="w-5 h-5 text-green-600" />;
       case 'renovation':
-        return <AlertCircle className="w-5 h-5 text-warning-600" />;
+        return <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />;
       case 'sale':
-        return <Eye className="w-5 h-5 text-danger-600" />;
+        return <Eye className="w-5 h-5 text-red-600" />;
       case 'management':
-        return <Users className="w-5 h-5 text-primary-600" />;
+        return <Users className="w-5 h-5 text-blue-600" />;
       case 'expansion':
-        return <TrendingUp className="w-5 h-5 text-success-600" />;
+        return <TrendingUp className="w-5 h-5 text-green-600" />;
       default:
-        return <Vote className="w-5 h-5 text-secondary-600" />;
+        return <Vote className="w-5 h-5 text-gray-600 dark:text-gray-400" />;
     }
   };
 
   const getProposalTypeColor = () => {
     switch (proposalType) {
       case 'dividend':
-        return 'bg-success-50 text-success-700';
+        return 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300';
       case 'renovation':
-        return 'bg-warning-50 text-warning-700';
+        return 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300';
       case 'sale':
-        return 'bg-danger-50 text-danger-700';
+        return 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300';
       case 'management':
-        return 'bg-primary-50 text-primary-700';
+        return 'bg-blue-50 dark:bg-blue-900/20 text-blue-700';
       case 'expansion':
-        return 'bg-success-50 text-success-700';
+        return 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300';
       default:
-        return 'bg-secondary-50 text-secondary-700';
+        return 'bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300';
     }
   };
 
   return (
-    <div className="card-hover p-6 cursor-pointer">
+    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm hover:shadow-md transition-shadow p-6 cursor-pointer">
       <div className="space-y-4">
         <div className="flex items-start justify-between">
           <div className="flex-1">
@@ -103,30 +103,30 @@ const GovernanceProposal: React.FC<ProposalProps> = ({
               </span>
               {getStatusBadge()}
             </div>
-            <h3 className="font-semibold text-secondary-900 text-lg mb-1">{title}</h3>
-            <p className="text-sm text-secondary-600 mb-2">{assetName} • {assetType}</p>
-            <p className="text-sm text-secondary-700 line-clamp-2">{description}</p>
+            <h3 className="font-semibold text-gray-900 dark:text-white text-lg mb-1">{title}</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{assetName} • {assetType}</p>
+            <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2">{description}</p>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
-            <p className="text-secondary-600">Proposed by</p>
-            <p className="font-medium text-secondary-900">{proposedBy}</p>
+            <p className="text-gray-600 dark:text-gray-400">Proposed by</p>
+            <p className="font-medium text-gray-900 dark:text-white">{proposedBy}</p>
           </div>
           <div>
-            <p className="text-secondary-600">Created</p>
-            <p className="font-medium text-secondary-900">{createdDate}</p>
+            <p className="text-gray-600 dark:text-gray-400">Created</p>
+            <p className="font-medium text-gray-900 dark:text-white">{createdDate}</p>
           </div>
           {requiredAmount && (
             <>
               <div>
-                <p className="text-secondary-600">Required Amount</p>
-                <p className="font-medium text-secondary-900">{requiredAmount}</p>
+                <p className="text-gray-600 dark:text-gray-400">Required Amount</p>
+                <p className="font-medium text-gray-900 dark:text-white">{requiredAmount}</p>
               </div>
               <div>
-                <p className="text-secondary-600">Expected Impact</p>
-                <p className="font-medium text-success-600">{impact}</p>
+                <p className="text-gray-600 dark:text-gray-400">Expected Impact</p>
+                <p className="font-medium text-green-600">{impact}</p>
               </div>
             </>
           )}
@@ -134,21 +134,21 @@ const GovernanceProposal: React.FC<ProposalProps> = ({
 
         <div className="space-y-3">
           <div className="flex justify-between items-center text-sm">
-            <span className="text-secondary-600">Voting Progress</span>
+            <span className="text-gray-600 dark:text-gray-400">Voting Progress</span>
             <span className="font-medium">{totalVotes} / {quorumRequired} votes</span>
           </div>
           
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <div className="flex items-center space-x-2">
-                <CheckCircle className="w-5 h-5 text-success-600" />
+                <CheckCircle className="w-5 h-5 text-green-600" />
                 <span>For ({votesFor})</span>
               </div>
               <span className="font-medium">{forPercentage.toFixed(1)}%</span>
             </div>
-            <div className="w-full bg-secondary-200 rounded-full h-2">
+            <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
               <div 
-                className="bg-success-500 h-2 rounded-full" 
+                className="bg-green-500 dark:bg-green-400 h-2 rounded-full" 
                 style={{ width: `${forPercentage}%` }}
               ></div>
             </div>
@@ -157,14 +157,14 @@ const GovernanceProposal: React.FC<ProposalProps> = ({
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <div className="flex items-center space-x-2">
-                <XCircle className="w-5 h-5 text-danger-600" />
+                <XCircle className="w-5 h-5 text-red-600" />
                 <span>Against ({votesAgainst})</span>
               </div>
               <span className="font-medium">{againstPercentage.toFixed(1)}%</span>
             </div>
-            <div className="w-full bg-secondary-200 rounded-full h-2">
+            <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
               <div 
-                className="bg-danger-500 h-2 rounded-full" 
+                className="bg-red-500 dark:bg-red-400 h-2 rounded-full" 
                 style={{ width: `${againstPercentage}%` }}
               ></div>
             </div>
@@ -172,26 +172,26 @@ const GovernanceProposal: React.FC<ProposalProps> = ({
 
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-secondary-600">Quorum Progress</span>
+              <span className="text-gray-600 dark:text-gray-400">Quorum Progress</span>
               <span className="font-medium">{Math.min(quorumPercentage, 100).toFixed(1)}%</span>
             </div>
-            <div className="w-full bg-secondary-200 rounded-full h-2">
+            <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
               <div 
-                className={`h-2 rounded-full ${quorumPercentage >= 100 ? 'bg-success-500' : 'bg-warning-500'}`}
+                className={`h-2 rounded-full ${quorumPercentage >= 100 ? 'bg-green-500 dark:bg-green-400' : 'bg-yellow-500 dark:bg-yellow-400'}`}
                 style={{ width: `${Math.min(quorumPercentage, 100)}%` }}
               ></div>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center justify-between pt-2 border-t border-secondary-200">
-          <div className="flex items-center space-x-1 text-sm text-secondary-600">
+        <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-600">
+          <div className="flex items-center space-x-1 text-sm text-gray-600 dark:text-gray-400">
             <Clock className="w-5 h-5" />
             <span>{timeLeft}</span>
           </div>
           {userVoted ? (
             <span className={`text-sm px-3 py-1 rounded-full ${
-              userVoted === 'for' ? 'bg-success-100 text-success-700' : 'bg-danger-100 text-danger-700'
+              userVoted === 'for' ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300' : 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300'
             }`}>
               You voted {userVoted}
             </span>
@@ -200,7 +200,7 @@ const GovernanceProposal: React.FC<ProposalProps> = ({
               Vote Now
             </button>
           ) : (
-            <span className="text-sm text-secondary-500">Voting ended</span>
+            <span className="text-sm text-gray-500 dark:text-gray-400">Voting ended</span>
           )}
         </div>
       </div>
@@ -358,58 +358,58 @@ const Governance: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-secondary-900">Governance</h1>
-          <p className="text-secondary-600 mt-1">Participate in asset governance decisions and voting</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Governance</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">Participate in asset governance decisions and voting</p>
         </div>
         <div className="text-right">
-          <p className="text-2xl font-bold text-primary-600">1,247</p>
-          <p className="text-sm text-secondary-600">Your Voting Power</p>
+          <p className="text-2xl font-bold text-blue-600">1,247</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">Your Voting Power</p>
         </div>
       </div>
 
       {/* Stats Section Divider */}
-      <div className="border-t border-secondary-200"></div>
+      <div className="border-t border-gray-200 dark:border-gray-600"></div>
 
-      <div className="card p-6">
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div className="text-center">
-            <div className="flex items-center justify-center w-14 h-14 bg-primary-100 rounded-lg mx-auto mb-3">
-              <Vote className="w-8 h-8 text-primary-600" />
+            <div className="flex items-center justify-center w-14 h-14 bg-blue-100 dark:bg-blue-900/20 rounded-lg mx-auto mb-3">
+              <Vote className="w-8 h-8 text-blue-600" />
             </div>
-            <p className="text-2xl font-bold text-secondary-900">12</p>
-            <p className="text-sm text-secondary-600">Active Proposals</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">12</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Active Proposals</p>
           </div>
           <div className="text-center">
-            <div className="flex items-center justify-center w-14 h-14 bg-success-100 rounded-lg mx-auto mb-3">
-              <CheckCircle className="w-8 h-8 text-success-600" />
+            <div className="flex items-center justify-center w-14 h-14 bg-green-100 dark:bg-green-900/20 rounded-lg mx-auto mb-3">
+              <CheckCircle className="w-8 h-8 text-green-600" />
             </div>
-            <p className="text-2xl font-bold text-secondary-900">89%</p>
-            <p className="text-sm text-secondary-600">Participation Rate</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">89%</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Participation Rate</p>
           </div>
           <div className="text-center">
-            <div className="flex items-center justify-center w-14 h-14 bg-warning-100 rounded-lg mx-auto mb-3">
-              <Clock className="w-8 h-8 text-warning-600" />
+            <div className="flex items-center justify-center w-14 h-14 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg mx-auto mb-3">
+              <Clock className="w-8 h-8 text-yellow-600 dark:text-yellow-400" />
             </div>
-            <p className="text-2xl font-bold text-secondary-900">5</p>
-            <p className="text-sm text-secondary-600">Pending Your Vote</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">5</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Pending Your Vote</p>
           </div>
           <div className="text-center">
-            <div className="flex items-center justify-center w-14 h-14 bg-danger-100 rounded-lg mx-auto mb-3">
-              <Calendar className="w-8 h-8 text-danger-600" />
+            <div className="flex items-center justify-center w-14 h-14 bg-red-100 dark:bg-red-900/20 rounded-lg mx-auto mb-3">
+              <Calendar className="w-8 h-8 text-red-600" />
             </div>
-            <p className="text-2xl font-bold text-secondary-900">7</p>
-            <p className="text-sm text-secondary-600">Days Avg. Duration</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">7</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Days Avg. Duration</p>
           </div>
         </div>
       </div>
 
       {/* Filters & Proposals Section Divider */}
-      <div className="border-t border-secondary-200"></div>
+      <div className="border-t border-gray-200 dark:border-gray-600"></div>
 
       <div className="flex flex-col lg:flex-row gap-6">
         <div className="lg:w-64 space-y-4">
-          <div className="card p-4">
-            <h3 className="font-semibold text-secondary-900 mb-3">Proposal Types</h3>
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-4">
+            <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Proposal Types</h3>
             <div className="space-y-2">
               {proposalTypes.map((type) => (
                 <button
@@ -417,8 +417,8 @@ const Governance: React.FC = () => {
                   onClick={() => setSelectedType(type.id)}
                   className={`w-full flex items-center justify-between p-2 rounded-lg text-left transition-colors ${
                     selectedType === type.id
-                      ? 'bg-primary-50 text-primary-700'
-                      : 'text-secondary-600 hover:bg-secondary-50'
+                      ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700'
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:bg-gray-800'
                   }`}
                 >
                   <span className="text-sm">{type.name}</span>
@@ -428,23 +428,23 @@ const Governance: React.FC = () => {
             </div>
           </div>
 
-          <div className="card p-4">
-            <h3 className="font-semibold text-secondary-900 mb-3">Your Assets</h3>
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-4">
+            <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Your Assets</h3>
             <div className="space-y-3">
               <div className="text-sm">
-                <p className="text-secondary-600 mb-1">Manhattan Office</p>
+                <p className="text-gray-600 dark:text-gray-400 mb-1">Manhattan Office</p>
                 <p className="font-medium">450 tokens</p>
               </div>
               <div className="text-sm">
-                <p className="text-secondary-600 mb-1">Gold Vault</p>
+                <p className="text-gray-600 dark:text-gray-400 mb-1">Gold Vault</p>
                 <p className="font-medium">580 tokens</p>
               </div>
               <div className="text-sm">
-                <p className="text-secondary-600 mb-1">Art Collection</p>
+                <p className="text-gray-600 dark:text-gray-400 mb-1">Art Collection</p>
                 <p className="font-medium">125 tokens</p>
               </div>
               <div className="text-sm">
-                <p className="text-secondary-600 mb-1">Wine Collection</p>
+                <p className="text-gray-600 dark:text-gray-400 mb-1">Wine Collection</p>
                 <p className="font-medium">92 tokens</p>
               </div>
             </div>
@@ -452,8 +452,8 @@ const Governance: React.FC = () => {
         </div>
 
         <div className="flex-1">
-          <div className="card">
-            <div className="border-b border-secondary-200">
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
+            <div className="border-b border-gray-200 dark:border-gray-600">
               <nav className="flex space-x-8 px-6">
                 {[
                   { key: 'active', label: 'Active', count: tabCounts.active },
@@ -466,8 +466,8 @@ const Governance: React.FC = () => {
                     onClick={() => setSelectedTab(tab.key as 'active' | 'passed' | 'rejected' | 'all')}
                     className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                       selectedTab === tab.key
-                        ? 'border-primary-500 text-primary-600'
-                        : 'border-transparent text-secondary-500 hover:text-secondary-700'
+                        ? 'border-blue-500 dark:border-blue-400 text-blue-600'
+                        : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-300'
                     }`}
                   >
                     {tab.label} ({tab.count})
@@ -485,11 +485,11 @@ const Governance: React.FC = () => {
 
               {filteredProposals.length === 0 && (
                 <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-secondary-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                    <Vote className="w-8 h-8 text-secondary-400" />
+                  <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center mx-auto mb-4">
+                    <Vote className="w-8 h-8 text-gray-400 dark:text-gray-500" />
                   </div>
-                  <h3 className="text-lg font-medium text-secondary-900 mb-2">No proposals found</h3>
-                  <p className="text-secondary-600">Try adjusting your filters or check back later for new proposals.</p>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No proposals found</h3>
+                  <p className="text-gray-600 dark:text-gray-400">Try adjusting your filters or check back later for new proposals.</p>
                 </div>
               )}
             </div>

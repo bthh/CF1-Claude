@@ -198,7 +198,7 @@ const PortfolioTransactions: React.FC = () => {
 
       {/* Transaction Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="card p-6">
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Transactions</p>
@@ -210,7 +210,7 @@ const PortfolioTransactions: React.FC = () => {
           </div>
         </div>
         
-        <div className="card p-6">
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">This Month</p>
@@ -222,7 +222,7 @@ const PortfolioTransactions: React.FC = () => {
           </div>
         </div>
 
-        <div className="card p-6">
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Pending</p>
@@ -236,7 +236,7 @@ const PortfolioTransactions: React.FC = () => {
           </div>
         </div>
 
-        <div className="card p-6">
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Volume</p>
@@ -255,7 +255,7 @@ const PortfolioTransactions: React.FC = () => {
       <div className="border-t border-gray-200 dark:border-gray-700"></div>
 
       {/* Transaction History Table */}
-      <div className="card p-6">
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Transaction History</h2>
           <div className="flex items-center space-x-4">
@@ -322,7 +322,7 @@ const PortfolioTransactions: React.FC = () => {
                 <th className="text-right py-3 px-4">
                   <button
                     onClick={() => handleSort('transactionValue')}
-                    className="flex items-center space-x-1 font-semibold text-secondary-700 hover:text-secondary-900 ml-auto"
+                    className="flex items-center space-x-1 font-semibold text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:text-white ml-auto"
                   >
                     <span>Value</span>
                     <ArrowUpDown className="w-4 h-4" />
@@ -331,7 +331,7 @@ const PortfolioTransactions: React.FC = () => {
                 <th className="text-center py-3 px-4">
                   <button
                     onClick={() => handleSort('status')}
-                    className="flex items-center space-x-1 font-semibold text-secondary-700 hover:text-secondary-900 mx-auto"
+                    className="flex items-center space-x-1 font-semibold text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:text-white mx-auto"
                   >
                     <span>Status</span>
                     <ArrowUpDown className="w-4 h-4" />
@@ -340,7 +340,7 @@ const PortfolioTransactions: React.FC = () => {
                 <th className="text-right py-3 px-4">
                   <button
                     onClick={() => handleSort('timestamp')}
-                    className="flex items-center space-x-1 font-semibold text-secondary-700 hover:text-secondary-900 ml-auto"
+                    className="flex items-center space-x-1 font-semibold text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:text-white ml-auto"
                   >
                     <span>Date & Time</span>
                     <ArrowUpDown className="w-4 h-4" />
@@ -350,12 +350,12 @@ const PortfolioTransactions: React.FC = () => {
             </thead>
             <tbody>
               {filteredAndSortedTransactions.map((transaction) => (
-                <tr key={transaction.id} className="border-b border-secondary-100 hover:bg-secondary-50 cursor-pointer">
+                <tr key={transaction.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:bg-gray-800 cursor-pointer">
                   <td className="py-4 px-4">
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-primary-400 to-primary-600 rounded-lg"></div>
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg"></div>
                       <div>
-                        <p className="font-semibold text-secondary-900">{transaction.assetName}</p>
+                        <p className="font-semibold text-gray-900 dark:text-white">{transaction.assetName}</p>
                       </div>
                     </div>
                   </td>
@@ -366,7 +366,7 @@ const PortfolioTransactions: React.FC = () => {
                   </td>
                   <td className="py-4 px-4 text-right">
                     <span className={`font-semibold ${
-                      transaction.transactionValue >= 0 ? 'text-success-600' : 'text-danger-600'
+                      transaction.transactionValue >= 0 ? 'text-green-600' : 'text-red-600'
                     }`}>
                       {transaction.transactionType === 'Transfer' ? '-' : (
                         transaction.transactionValue < 0 ? '-' : '+'
@@ -380,7 +380,7 @@ const PortfolioTransactions: React.FC = () => {
                     </span>
                   </td>
                   <td className="py-4 px-4 text-right">
-                    <span className="text-secondary-600">{formatDateTime(transaction.timestamp)}</span>
+                    <span className="text-gray-600 dark:text-gray-400">{formatDateTime(transaction.timestamp)}</span>
                   </td>
                 </tr>
               ))}
@@ -390,7 +390,7 @@ const PortfolioTransactions: React.FC = () => {
 
         {filteredAndSortedTransactions.length === 0 && (
           <div className="text-center py-8">
-            <p className="text-secondary-500">No transactions found matching your criteria.</p>
+            <p className="text-gray-500 dark:text-gray-400">No transactions found matching your criteria.</p>
           </div>
         )}
       </div>

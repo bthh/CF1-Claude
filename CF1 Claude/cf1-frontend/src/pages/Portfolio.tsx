@@ -48,11 +48,11 @@ const PortfolioAsset: React.FC<PortfolioAssetProps> = ({
       <td className="px-6 py-4">
         <div>
           <p className="font-semibold text-gray-900 dark:text-white">{currentValue}</p>
-          <p className="text-sm text-secondary-600">{purchaseValue} invested</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">{purchaseValue} invested</p>
         </div>
       </td>
       <td className="px-6 py-4">
-        <div className={`flex items-center space-x-1 ${isPositive ? 'text-success-600' : 'text-danger-600'}`}>
+        <div className={`flex items-center space-x-1 ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
           {isPositive ? (
             <TrendingUp className="w-4 h-4" />
           ) : (
@@ -63,11 +63,11 @@ const PortfolioAsset: React.FC<PortfolioAssetProps> = ({
         </div>
       </td>
       <td className="px-6 py-4">
-        <span className="text-success-600 font-medium">{apy}</span>
+        <span className="text-green-600 font-medium">{apy}</span>
       </td>
       <td className="px-6 py-4">
         <button className="p-1 hover:bg-secondary-200 rounded transition-colors">
-          <MoreHorizontal className="w-4 h-4 text-secondary-600" />
+          <MoreHorizontal className="w-4 h-4 text-gray-600 dark:text-gray-400" />
         </button>
       </td>
     </tr>
@@ -168,7 +168,7 @@ const Portfolio: React.FC = () => {
       <div className="border-t border-gray-200 dark:border-gray-700"></div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="card p-6">
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
           <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Portfolio Value</h3>
           <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalPortfolioValue}</p>
           <div className="flex items-center mt-2 text-green-600 dark:text-green-400">
@@ -177,22 +177,22 @@ const Portfolio: React.FC = () => {
           </div>
         </div>
 
-        <div className="card p-6">
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
           <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Invested</h3>
           <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalInvested}</p>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Across 5 assets</p>
         </div>
 
-        <div className="card p-6">
-          <h3 className="text-sm font-medium text-secondary-600 mb-1">Monthly Income</h3>
-          <p className="text-2xl font-bold text-secondary-900">$1,247</p>
-          <p className="text-sm text-success-600 mt-2">+8.3% avg APY</p>
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
+          <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Monthly Income</h3>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">$1,247</p>
+          <p className="text-sm text-green-600 mt-2">+8.3% avg APY</p>
         </div>
 
-        <div className="card p-6">
-          <h3 className="text-sm font-medium text-secondary-600 mb-1">Active Proposals</h3>
-          <p className="text-2xl font-bold text-secondary-900">3</p>
-          <p className="text-sm text-warning-600 mt-2">2 require voting</p>
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
+          <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Active Proposals</h3>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">3</p>
+          <p className="text-sm text-yellow-600 mt-2">2 require voting</p>
         </div>
       </div>
 
@@ -200,7 +200,7 @@ const Portfolio: React.FC = () => {
       <div className="border-t border-gray-200 dark:border-gray-700"></div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 card p-6">
+        <div className="lg:col-span-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Portfolio Performance</h2>
             <div className="flex items-center space-x-2">
@@ -266,7 +266,7 @@ const Portfolio: React.FC = () => {
             </svg>
             
             {/* Chart Labels */}
-            <div className="absolute bottom-2 left-4 right-4 flex justify-between text-xs text-secondary-500">
+            <div className="absolute bottom-2 left-4 right-4 flex justify-between text-xs text-gray-500 dark:text-gray-400">
               <span>Jan 1</span>
               <span>Jan 8</span>
               <span>Jan 15</span>
@@ -275,7 +275,7 @@ const Portfolio: React.FC = () => {
             </div>
             
             {/* Value Labels */}
-            <div className="absolute top-2 left-4 flex flex-col justify-between h-48 text-xs text-secondary-500">
+            <div className="absolute top-2 left-4 flex flex-col justify-between h-48 text-xs text-gray-500 dark:text-gray-400">
               <span>$170k</span>
               <span>$165k</span>
               <span>$160k</span>
@@ -284,47 +284,47 @@ const Portfolio: React.FC = () => {
             </div>
             
             {/* Current Value Indicator */}
-            <div className="absolute top-4 right-4 bg-success-100 text-success-800 px-3 py-1 rounded-full text-sm font-medium">
+            <div className="absolute top-4 right-4 bg-green-100 dark:bg-green-900/20 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
               +4.1% ↗
             </div>
           </div>
         </div>
 
-        <div className="card p-6">
-          <h2 className="text-xl font-semibold text-secondary-900 mb-4">Asset Allocation</h2>
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Asset Allocation</h2>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-primary-500 rounded-full"></div>
-                <span className="text-sm text-secondary-700">Real Estate</span>
+                <div className="w-3 h-3 bg-blue-50 dark:bg-blue-900/20 rounded-full"></div>
+                <span className="text-sm text-gray-700 dark:text-gray-300">Real Estate</span>
               </div>
-              <span className="text-sm font-medium text-secondary-900">60%</span>
+              <span className="text-sm font-medium text-gray-900 dark:text-white">60%</span>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-warning-500 rounded-full"></div>
-                <span className="text-sm text-secondary-700">Precious Metals</span>
+                <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                <span className="text-sm text-gray-700 dark:text-gray-300">Precious Metals</span>
               </div>
-              <span className="text-sm font-medium text-secondary-900">18%</span>
+              <span className="text-sm font-medium text-gray-900 dark:text-white">18%</span>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-success-500 rounded-full"></div>
-                <span className="text-sm text-secondary-700">Vehicles</span>
+                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                <span className="text-sm text-gray-700 dark:text-gray-300">Vehicles</span>
               </div>
-              <span className="text-sm font-medium text-secondary-900">12%</span>
+              <span className="text-sm font-medium text-gray-900 dark:text-white">12%</span>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-danger-500 rounded-full"></div>
-                <span className="text-sm text-secondary-700">Art</span>
+                <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                <span className="text-sm text-gray-700 dark:text-gray-300">Art</span>
               </div>
-              <span className="text-sm font-medium text-secondary-900">10%</span>
+              <span className="text-sm font-medium text-gray-900 dark:text-white">10%</span>
             </div>
           </div>
           
-          <div className="mt-6 pt-4 border-t border-secondary-200">
-            <button className="w-full btn-outline text-sm py-2">
+          <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <button className="w-full border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm py-2">
               <Eye className="w-4 h-4 mr-2" />
               View Detailed Breakdown
             </button>
@@ -335,9 +335,9 @@ const Portfolio: React.FC = () => {
       {/* Assets Table Section Divider */}
       <div className="border-t border-gray-200 dark:border-gray-700"></div>
 
-      <div className="card">
-        <div className="p-6 border-b border-secondary-200">
-          <h2 className="text-xl font-semibold text-secondary-900">Your Assets</h2>
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Your Assets</h2>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">

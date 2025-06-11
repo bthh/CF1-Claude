@@ -202,7 +202,7 @@ const Activity: React.FC = () => {
 
       {/* Activity Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="card p-6">
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Activities</p>
@@ -214,7 +214,7 @@ const Activity: React.FC = () => {
           </div>
         </div>
         
-        <div className="card p-6">
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">This Month</p>
@@ -226,7 +226,7 @@ const Activity: React.FC = () => {
           </div>
         </div>
 
-        <div className="card p-6">
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Active Projects</p>
@@ -240,7 +240,7 @@ const Activity: React.FC = () => {
           </div>
         </div>
 
-        <div className="card p-6">
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Completed</p>
@@ -259,7 +259,7 @@ const Activity: React.FC = () => {
       <div className="border-t border-gray-200 dark:border-gray-700"></div>
 
       {/* Project Activity Table */}
-      <div className="card p-6">
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Project Activity</h2>
           <div className="flex items-center space-x-4">
@@ -335,7 +335,7 @@ const Activity: React.FC = () => {
                 <th className="text-center py-3 px-4">
                   <button
                     onClick={() => handleSort('status')}
-                    className="flex items-center space-x-1 font-semibold text-secondary-700 hover:text-secondary-900 mx-auto"
+                    className="flex items-center space-x-1 font-semibold text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:text-white mx-auto"
                   >
                     <span>Status</span>
                     <ArrowUpDown className="w-4 h-4" />
@@ -344,7 +344,7 @@ const Activity: React.FC = () => {
                 <th className="text-right py-3 px-4">
                   <button
                     onClick={() => handleSort('timestamp')}
-                    className="flex items-center space-x-1 font-semibold text-secondary-700 hover:text-secondary-900 ml-auto"
+                    className="flex items-center space-x-1 font-semibold text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:text-white ml-auto"
                   >
                     <span>Date & Time</span>
                     <ArrowUpDown className="w-4 h-4" />
@@ -354,7 +354,7 @@ const Activity: React.FC = () => {
             </thead>
             <tbody>
               {filteredAndSortedActivities.map((activity) => (
-                <tr key={activity.id} className="border-b border-secondary-100 hover:bg-secondary-50 cursor-pointer">
+                <tr key={activity.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
                   <td className="py-4 px-4">
                     <div className="flex items-center space-x-3">
                       <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center">
@@ -365,8 +365,8 @@ const Activity: React.FC = () => {
                         {activity.activityType === 'Governance Vote' && <FileText className="w-5 h-5 text-white" />}
                       </div>
                       <div>
-                        <p className="font-semibold text-secondary-900">{activity.projectName}</p>
-                        <p className="text-sm text-secondary-600">{activity.description}</p>
+                        <p className="font-semibold text-gray-900 dark:text-white">{activity.projectName}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">{activity.description}</p>
                       </div>
                     </div>
                   </td>
@@ -376,7 +376,7 @@ const Activity: React.FC = () => {
                     </span>
                   </td>
                   <td className="py-4 px-4">
-                    <span className="text-secondary-700 font-medium">
+                    <span className="text-gray-700 dark:text-gray-300 font-medium">
                       {activity.creator}
                     </span>
                   </td>
@@ -386,7 +386,7 @@ const Activity: React.FC = () => {
                     </span>
                   </td>
                   <td className="py-4 px-4 text-right">
-                    <span className="text-secondary-600">{formatDateTime(activity.timestamp)}</span>
+                    <span className="text-gray-600 dark:text-gray-400">{formatDateTime(activity.timestamp)}</span>
                   </td>
                 </tr>
               ))}
@@ -396,7 +396,7 @@ const Activity: React.FC = () => {
 
         {filteredAndSortedActivities.length === 0 && (
           <div className="text-center py-8">
-            <p className="text-secondary-500">No activities found matching your criteria.</p>
+            <p className="text-gray-500 dark:text-gray-400">No activities found matching your criteria.</p>
           </div>
         )}
       </div>

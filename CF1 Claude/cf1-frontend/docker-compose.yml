@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  cf1-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cf1-frontend
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    networks:
+      - cf1-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.cf1-frontend.rule=Host(`app.cf1platform.com`)"
+      - "traefik.http.routers.cf1-frontend.tls=true"
+      - "traefik.http.routers.cf1-frontend.tls.certresolver=letsencrypt"
+
+  # Optional: Add a reverse proxy/load balancer
+  traefik:
+    image: traefik:v2.9
+    container_name: cf1-traefik
+    command:
+      - "--api.dashboard=true"
+      - "--providers.docker=true"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.letsencrypt.acme.email=admin@cf1platform.com"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/acme.json"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./acme.json:/acme.json
+    networks:
+      - cf1-network
+    profiles:
+      - production
+
+networks:
+  cf1-network:
+    driver: bridge

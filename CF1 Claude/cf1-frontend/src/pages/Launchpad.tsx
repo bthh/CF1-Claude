@@ -39,21 +39,21 @@ const ProposalCard: React.FC<ProposalCardProps> = ({
   const getStatusBadge = () => {
     switch (status) {
       case 'active':
-        return <span className="bg-success-100 text-success-800 text-xs px-2 py-1 rounded-full">Active</span>;
+        return <span className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 text-xs px-2 py-1 rounded-full">Active</span>;
       case 'funded':
-        return <span className="bg-primary-100 text-primary-800 text-xs px-2 py-1 rounded-full">Funded</span>;
+        return <span className="bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400 text-xs px-2 py-1 rounded-full">Funded</span>;
       case 'upcoming':
-        return <span className="bg-warning-100 text-warning-800 text-xs px-2 py-1 rounded-full">Coming Soon</span>;
+        return <span className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400 text-xs px-2 py-1 rounded-full">Coming Soon</span>;
     }
   };
 
   return (
     <div 
-      className="card-hover p-6 cursor-pointer"
+      className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm hover:shadow-md transition-shadow p-6 cursor-pointer"
       onClick={() => navigate(`/launchpad/proposal/${id}`)}
     >
-      <div className="aspect-video bg-secondary-100 rounded-lg mb-4 overflow-hidden">
-        <div className="w-full h-full bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center relative">
+      <div className="aspect-video bg-gray-100 dark:bg-gray-700 rounded-lg mb-4 overflow-hidden">
+        <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/20 dark:to-blue-800/20 flex items-center justify-center relative">
           <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20"></div>
           <div className="relative z-10 text-center">
             <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center mx-auto mb-2">
@@ -71,7 +71,7 @@ const ProposalCard: React.FC<ProposalCardProps> = ({
                 <div className="w-8 h-8 bg-gray-500 rounded-full"></div>
               )}
             </div>
-            <span className="text-secondary-600 text-xs font-medium">{category}</span>
+            <span className="text-gray-600 dark:text-gray-400 text-xs font-medium">{category}</span>
           </div>
         </div>
       </div>
@@ -79,12 +79,12 @@ const ProposalCard: React.FC<ProposalCardProps> = ({
       <div className="space-y-4">
         <div>
           <div className="flex items-start justify-between mb-2">
-            <h3 className="font-semibold text-secondary-900 text-lg">{title}</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-white text-lg">{title}</h3>
             {getStatusBadge()}
           </div>
-          <p className="text-sm text-secondary-600 line-clamp-2">{description}</p>
-          <div className="flex items-center space-x-4 mt-2 text-sm text-secondary-600">
-            <span className="bg-secondary-100 px-2 py-1 rounded-full">{category}</span>
+          <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{description}</p>
+          <div className="flex items-center space-x-4 mt-2 text-sm text-gray-600 dark:text-gray-400">
+            <span className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">{category}</span>
             <div className="flex items-center space-x-1">
               <MapPin className="w-3 h-3" />
               <span>{location}</span>
@@ -94,23 +94,23 @@ const ProposalCard: React.FC<ProposalCardProps> = ({
 
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
-            <p className="text-secondary-600">Target Amount</p>
-            <p className="font-semibold text-secondary-900">{targetAmount}</p>
+            <p className="text-gray-600 dark:text-gray-400">Target Amount</p>
+            <p className="font-semibold text-gray-900 dark:text-white">{targetAmount}</p>
           </div>
           <div>
-            <p className="text-secondary-600">Expected APY</p>
-            <p className="font-semibold text-success-600">{expectedAPY}</p>
+            <p className="text-gray-600 dark:text-gray-400">Expected APY</p>
+            <p className="font-semibold text-green-600">{expectedAPY}</p>
           </div>
         </div>
 
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
-            <span className="text-secondary-600">Raised: {raisedAmount}</span>
+            <span className="text-gray-600 dark:text-gray-400">Raised: {raisedAmount}</span>
             <span className="font-medium">{raisedPercentage}%</span>
           </div>
           <div className="w-full bg-secondary-200 rounded-full h-2">
             <div 
-              className="bg-primary-600 h-2 rounded-full" 
+              className="bg-blue-600 h-2 rounded-full" 
               style={{ width: `${raisedPercentage}%` }}
             ></div>
           </div>
@@ -118,32 +118,43 @@ const ProposalCard: React.FC<ProposalCardProps> = ({
 
         <div className="flex items-center justify-between text-sm">
           <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-1 text-secondary-600">
+            <div className="flex items-center space-x-1 text-gray-600 dark:text-gray-400">
               <Users className="w-4 h-4" />
               <span>{backers} backers</span>
             </div>
-            <div className="flex items-center space-x-1 text-secondary-600">
+            <div className="flex items-center space-x-1 text-gray-600 dark:text-gray-400">
               <Clock className="w-4 h-4" />
               <span>{daysLeft} days left</span>
             </div>
           </div>
         </div>
 
-        <div className="pt-2 border-t border-secondary-200">
+        <div className="pt-2 border-t border-gray-200 dark:border-gray-600">
           <div className="flex items-center justify-between text-sm mb-3">
-            <span className="text-secondary-600">Minimum Investment</span>
-            <span className="font-semibold text-secondary-900">{minimumInvestment}</span>
+            <span className="text-gray-600 dark:text-gray-400">Minimum Investment</span>
+            <span className="font-semibold text-gray-900 dark:text-white">{minimumInvestment}</span>
           </div>
-          <button 
-            className="w-full btn-primary py-2" 
-            disabled={status !== 'active'}
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/launchpad/proposal/${id}`);
-            }}
-          >
-            {status === 'active' ? 'View Details' : status === 'funded' ? 'View Details' : 'View Details'}
-          </button>
+          <div className="flex space-x-2">
+            <button 
+              className="flex-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg py-2 text-sm font-medium transition-colors" 
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/launchpad/proposal/${id}`);
+              }}
+            >
+              View Details
+            </button>
+            <button 
+              className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg py-2 text-sm font-medium transition-colors" 
+              disabled={status !== 'active'}
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/launchpad/proposal/${id}?invest=true`);
+              }}
+            >
+              {status === 'active' ? 'Invest' : status === 'funded' ? 'Funded' : 'Coming Soon'}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -280,12 +291,12 @@ const Launchpad: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-secondary-900">Launchpad</h1>
-          <p className="text-secondary-600 mt-1">Discover and fund new tokenized asset proposals</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Launchpad</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">Discover and fund new tokenized asset proposals</p>
         </div>
         <button 
           onClick={() => navigate('/launchpad/create')}
-          className="btn-primary px-4 py-2 h-10 flex items-center space-x-2"
+          className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors px-4 py-2 h-10 flex items-center space-x-2"
         >
           <Plus className="w-4 h-4" />
           <span>Submit Proposal</span>
@@ -293,48 +304,48 @@ const Launchpad: React.FC = () => {
       </div>
 
       {/* Stats Section Divider */}
-      <div className="border-t border-secondary-200"></div>
+      <div className="border-t border-gray-200 dark:border-gray-600"></div>
 
-      <div className="card p-6">
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div className="text-center">
-            <div className="flex items-center justify-center w-12 h-12 bg-primary-100 rounded-lg mx-auto mb-3">
-              <Target className="w-6 h-6 text-primary-600" />
+            <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg mx-auto mb-3">
+              <Target className="w-6 h-6 text-blue-600" />
             </div>
-            <p className="text-2xl font-bold text-secondary-900">$12.8M</p>
-            <p className="text-sm text-secondary-600">Total Raised</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">$12.8M</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Total Raised</p>
           </div>
           <div className="text-center">
-            <div className="flex items-center justify-center w-12 h-12 bg-success-100 rounded-lg mx-auto mb-3">
-              <TrendingUp className="w-6 h-6 text-success-600" />
+            <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-lg mx-auto mb-3">
+              <TrendingUp className="w-6 h-6 text-green-600" />
             </div>
-            <p className="text-2xl font-bold text-secondary-900">18</p>
-            <p className="text-sm text-secondary-600">Active Proposals</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">18</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Active Proposals</p>
           </div>
           <div className="text-center">
-            <div className="flex items-center justify-center w-12 h-12 bg-warning-100 rounded-lg mx-auto mb-3">
-              <Users className="w-6 h-6 text-warning-600" />
+            <div className="flex items-center justify-center w-12 h-12 bg-orange-100 dark:bg-orange-900/20 rounded-lg mx-auto mb-3">
+              <Users className="w-6 h-6 text-orange-600" />
             </div>
-            <p className="text-2xl font-bold text-secondary-900">1,247</p>
-            <p className="text-sm text-secondary-600">Total Investors</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">1,247</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Total Investors</p>
           </div>
           <div className="text-center">
-            <div className="flex items-center justify-center w-12 h-12 bg-danger-100 rounded-lg mx-auto mb-3">
-              <Calendar className="w-6 h-6 text-danger-600" />
+            <div className="flex items-center justify-center w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-lg mx-auto mb-3">
+              <Calendar className="w-6 h-6 text-red-600" />
             </div>
-            <p className="text-2xl font-bold text-secondary-900">9.4%</p>
-            <p className="text-sm text-secondary-600">Avg. Expected APY</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">9.4%</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Avg. Expected APY</p>
           </div>
         </div>
       </div>
 
       {/* Categories & Proposals Section Divider */}
-      <div className="border-t border-secondary-200"></div>
+      <div className="border-t border-gray-200 dark:border-gray-600"></div>
 
       <div className="flex flex-col lg:flex-row gap-6">
         <div className="lg:w-64 space-y-4">
-          <div className="card p-4">
-            <h3 className="font-semibold text-secondary-900 mb-3">Categories</h3>
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-4">
+            <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Categories</h3>
             <div className="space-y-2">
               {categories.map((category) => (
                 <button
@@ -342,8 +353,8 @@ const Launchpad: React.FC = () => {
                   onClick={() => setSelectedCategory(category.id)}
                   className={`w-full flex items-center justify-between p-2 rounded-lg text-left transition-colors ${
                     selectedCategory === category.id
-                      ? 'bg-primary-50 text-primary-700'
-                      : 'text-secondary-600 hover:bg-secondary-50'
+                      ? 'bg-blue-50 text-blue-700'
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:bg-gray-800'
                   }`}
                 >
                   <span>{category.name}</span>
@@ -353,19 +364,19 @@ const Launchpad: React.FC = () => {
             </div>
           </div>
 
-          <div className="card p-4">
-            <h3 className="font-semibold text-secondary-900 mb-3">Quick Stats</h3>
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-4">
+            <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Quick Stats</h3>
             <div className="space-y-3">
               <div className="flex justify-between text-sm">
-                <span className="text-secondary-600">Success Rate</span>
-                <span className="font-medium text-success-600">94%</span>
+                <span className="text-gray-600 dark:text-gray-400">Success Rate</span>
+                <span className="font-medium text-green-600">94%</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-secondary-600">Avg. Funding Time</span>
+                <span className="text-gray-600 dark:text-gray-400">Avg. Funding Time</span>
                 <span className="font-medium">21 days</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-secondary-600">Min. Investment</span>
+                <span className="text-gray-600 dark:text-gray-400">Min. Investment</span>
                 <span className="font-medium">$500</span>
               </div>
             </div>
@@ -373,8 +384,8 @@ const Launchpad: React.FC = () => {
         </div>
 
         <div className="flex-1">
-          <div className="card">
-            <div className="border-b border-secondary-200">
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
+            <div className="border-b border-gray-200 dark:border-gray-600">
               <nav className="flex space-x-8 px-6">
                 {[
                   { key: 'active', label: 'Active', count: tabCounts.active },
@@ -386,8 +397,8 @@ const Launchpad: React.FC = () => {
                     onClick={() => setSelectedTab(tab.key as 'active' | 'funded' | 'upcoming')}
                     className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                       selectedTab === tab.key
-                        ? 'border-primary-500 text-primary-600'
-                        : 'border-transparent text-secondary-500 hover:text-secondary-700'
+                        ? 'border-blue-500 text-blue-600'
+                        : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-300'
                     }`}
                   >
                     {tab.label} ({tab.count})
@@ -405,11 +416,11 @@ const Launchpad: React.FC = () => {
 
               {filteredProposals.length === 0 && (
                 <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-secondary-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                  <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center mx-auto mb-4">
                     <Eye className="w-8 h-8 text-secondary-400" />
                   </div>
-                  <h3 className="text-lg font-medium text-secondary-900 mb-2">No proposals found</h3>
-                  <p className="text-secondary-600">Try adjusting your filters or check back later for new opportunities.</p>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No proposals found</h3>
+                  <p className="text-gray-600 dark:text-gray-400">Try adjusting your filters or check back later for new opportunities.</p>
                 </div>
               )}
             </div>
