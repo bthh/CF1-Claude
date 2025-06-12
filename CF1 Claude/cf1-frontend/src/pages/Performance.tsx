@@ -1,5 +1,6 @@
 import React from 'react';
-import { Star, MapPin, DollarSign, TrendingUp, Clock, Rocket, Trophy } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Star, MapPin, TrendingUp, Rocket, Trophy } from 'lucide-react';
 
 interface SpotlightAsset {
   id: string;
@@ -29,11 +30,20 @@ const SpotlightCard: React.FC<SpotlightAsset> = ({
   apy,
   rating,
   imageUrl,
-  tags,
-  status
+  tags
 }) => {
+  const navigate = useNavigate();
+  
+  const handleClick = () => {
+    console.log('Spotlight asset clicked:', name, 'ID:', id);
+    navigate(`/marketplace/asset/${id}`);
+  };
+
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm hover:shadow-md transition-shadow p-6 cursor-pointer">
+    <div 
+      className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm hover:shadow-md transition-shadow p-6 cursor-pointer"
+      onClick={handleClick}
+    >
       <div className="aspect-video bg-gray-100 dark:bg-gray-700 rounded-lg mb-4 overflow-hidden">
         <img 
           src={imageUrl || `https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=300&fit=crop`} 
@@ -98,7 +108,13 @@ const SpotlightCard: React.FC<SpotlightAsset> = ({
           </div>
         </div>
 
-        <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+        <button 
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleClick();
+          }}
+        >
           View Details
         </button>
       </div>

@@ -2,7 +2,7 @@ import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
-export default defineConfig(({ command, mode }) => {
+export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   
   return {
@@ -30,7 +30,17 @@ export default defineConfig(({ command, mode }) => {
     server: {
       port: 5173,
       host: true,
-      cors: true
+      cors: true,
+      hmr: {
+        port: 5174
+      },
+      watch: {
+        usePolling: true,
+        interval: 100
+      },
+      strictPort: false,
+      // Fix for React Router - serve index.html for all routes
+      historyApiFallback: true
     },
     
     // Preview server configuration

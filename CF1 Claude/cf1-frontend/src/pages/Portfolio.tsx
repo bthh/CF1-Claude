@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { TrendingUp, TrendingDown, MoreHorizontal, Download, Eye, Settings } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface PortfolioAssetProps {
   id: string;
@@ -75,6 +76,7 @@ const PortfolioAsset: React.FC<PortfolioAssetProps> = ({
 };
 
 const Portfolio: React.FC = () => {
+  const navigate = useNavigate();
   const [timeframe, setTimeframe] = useState('30d');
   
   const portfolioAssets: PortfolioAssetProps[] = [
@@ -324,7 +326,10 @@ const Portfolio: React.FC = () => {
           </div>
           
           <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <button className="w-full border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm py-2">
+            <button 
+              onClick={() => navigate('/portfolio/performance')}
+              className="w-full border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm py-2 flex items-center justify-center"
+            >
               <Eye className="w-4 h-4 mr-2" />
               View Detailed Breakdown
             </button>

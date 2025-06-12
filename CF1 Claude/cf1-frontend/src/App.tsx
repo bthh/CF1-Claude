@@ -1,5 +1,9 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { QueryProvider } from './providers/QueryProvider';
+import { NotificationProvider } from './components/NotificationProvider';
+import { OnboardingProvider } from './components/Onboarding/OnboardingProvider';
+import { ErrorBoundary, RouteErrorBoundary } from './components/ErrorBoundary';
+// import { usePageTracking } from './hooks/useMonitoring';
 import Layout from './components/Layout/Layout';
 import Dashboard from './pages/Dashboard';
 import Performance from './pages/Performance';
@@ -12,33 +16,68 @@ import PortfolioTransactions from './pages/PortfolioTransactions';
 import Launchpad from './pages/Launchpad';
 import CreateProposal from './pages/CreateProposal';
 import ProposalDetail from './pages/ProposalDetail';
+import LaunchpadDrafts from './pages/LaunchpadDrafts';
+import MySubmissions from './pages/MySubmissions';
 import Governance from './pages/Governance';
+import CreateGovernanceProposal from './pages/CreateGovernanceProposal';
+import GovernanceProposalDetail from './pages/GovernanceProposalDetail';
+import GovernanceDrafts from './pages/GovernanceDrafts';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
+import Verification from './pages/Verification';
+import Analytics from './pages/Analytics';
+
+// Component for tracking page views
+const PageTracker = () => {
+  // usePageTracking();
+  return null;
+};
 
 function App() {
   return (
-    <Router>
-      <Layout>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/dashboard/performance" element={<Performance />} />
-          <Route path="/dashboard/activity" element={<Activity />} />
-          <Route path="/marketplace" element={<Marketplace />} />
-          <Route path="/marketplace/asset/:id" element={<AssetDetail />} />
-          <Route path="/portfolio" element={<Portfolio />} />
-          <Route path="/portfolio/performance" element={<PortfolioPerformance />} />
-          <Route path="/portfolio/transactions" element={<PortfolioTransactions />} />
-          <Route path="/launchpad" element={<Launchpad />} />
-          <Route path="/launchpad/create" element={<CreateProposal />} />
-          <Route path="/launchpad/proposal/:id" element={<ProposalDetail />} />
-          <Route path="/governance" element={<Governance />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/profile/settings" element={<Settings />} />
-        </Routes>
-      </Layout>
-    </Router>
+    <ErrorBoundary>
+      <QueryProvider>
+        <NotificationProvider>
+          <OnboardingProvider>
+            <Router>
+              <PageTracker />
+              <Layout>
+            <RouteErrorBoundary>
+              <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/dashboard/performance" element={<Performance />} />
+              <Route path="/dashboard/activity" element={<Activity />} />
+              <Route path="/marketplace" element={<Marketplace />} />
+              <Route path="/marketplace/asset/:id" element={<AssetDetail />} />
+              <Route path="/portfolio" element={<Portfolio />} />
+              <Route path="/portfolio/performance" element={<PortfolioPerformance />} />
+              <Route path="/portfolio/transactions" element={<PortfolioTransactions />} />
+              <Route path="/launchpad" element={<Launchpad />} />
+              <Route path="/launchpad/create" element={<CreateProposal />} />
+              <Route path="/launchpad/proposal/:id" element={<ProposalDetail />} />
+              <Route path="/launchpad/drafts" element={<LaunchpadDrafts />} />
+              <Route path="/my-submissions" element={<MySubmissions />} />
+              <Route path="/governance" element={<Governance />} />
+              <Route path="/governance/active" element={<Governance />} />
+              <Route path="/governance/passed" element={<Governance />} />
+              <Route path="/governance/rejected" element={<Governance />} />
+              <Route path="/governance/my-votes" element={<Governance />} />
+              <Route path="/governance/create" element={<CreateGovernanceProposal />} />
+              <Route path="/governance/proposal/:id" element={<GovernanceProposalDetail />} />
+              <Route path="/governance/drafts" element={<GovernanceDrafts />} />
+              <Route path="/analytics" element={<Analytics />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/profile/settings" element={<Settings />} />
+              <Route path="/profile/verification" element={<Verification />} />
+              </Routes>
+            </RouteErrorBoundary>
+            </Layout>
+          </Router>
+          </OnboardingProvider>
+        </NotificationProvider>
+      </QueryProvider>
+    </ErrorBoundary>
   );
 }
 

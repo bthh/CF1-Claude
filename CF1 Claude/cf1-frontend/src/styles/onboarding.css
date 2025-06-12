@@ -1,0 +1,285 @@
+/* Onboarding Tour Styles */
+
+/* Element highlighting */
+.onboarding-highlight {
+  position: relative;
+  z-index: 1001 !important;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.5) !important;
+  border-radius: 8px !important;
+  transition: all 0.3s ease-in-out !important;
+}
+
+.onboarding-highlight::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border: 2px solid #3B82F6;
+  border-radius: 12px;
+  animation: pulse-border 2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Overlay */
+.onboarding-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  pointer-events: none;
+  transition: opacity 0.3s ease-in-out;
+}
+
+/* Pulse animation for highlighted elements */
+@keyframes pulse-border {
+  0%, 100% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+}
+
+/* Tooltip arrow styles */
+.onboarding-tooltip {
+  position: relative;
+}
+
+.onboarding-tooltip.placement-top::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -8px;
+  border: 8px solid transparent;
+  border-top-color: white;
+}
+
+.dark .onboarding-tooltip.placement-top::after {
+  border-top-color: #1f2937;
+}
+
+.onboarding-tooltip.placement-bottom::after {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  margin-left: -8px;
+  border: 8px solid transparent;
+  border-bottom-color: white;
+}
+
+.dark .onboarding-tooltip.placement-bottom::after {
+  border-bottom-color: #1f2937;
+}
+
+.onboarding-tooltip.placement-left::after {
+  content: '';
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  margin-top: -8px;
+  border: 8px solid transparent;
+  border-left-color: white;
+}
+
+.dark .onboarding-tooltip.placement-left::after {
+  border-left-color: #1f2937;
+}
+
+.onboarding-tooltip.placement-right::after {
+  content: '';
+  position: absolute;
+  right: 100%;
+  top: 50%;
+  margin-top: -8px;
+  border: 8px solid transparent;
+  border-right-color: white;
+}
+
+.dark .onboarding-tooltip.placement-right::after {
+  border-right-color: #1f2937;
+}
+
+/* Spotlight effect */
+.onboarding-spotlight {
+  position: fixed;
+  pointer-events: none;
+  z-index: 999;
+  border-radius: 50%;
+  background: radial-gradient(circle, transparent 0%, transparent 40%, rgba(0, 0, 0, 0.5) 70%);
+  transition: all 0.3s ease-in-out;
+}
+
+/* Tour progress indicators */
+.onboarding-progress {
+  transition: width 0.3s ease-in-out;
+}
+
+/* Animation for tour entrance */
+.onboarding-tour-enter {
+  opacity: 0;
+  transform: scale(0.9) translateY(-20px);
+  animation: tour-enter 0.3s ease-out forwards;
+}
+
+@keyframes tour-enter {
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Animation for step transitions */
+.onboarding-step-transition {
+  animation: step-fade 0.2s ease-in-out;
+}
+
+@keyframes step-fade {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+/* Welcome modal animations */
+.onboarding-welcome-enter {
+  opacity: 0;
+  transform: scale(0.95);
+  animation: welcome-enter 0.3s ease-out forwards;
+}
+
+@keyframes welcome-enter {
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Backdrop blur effect */
+.onboarding-backdrop {
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+/* Tour card hover effects */
+.onboarding-tour-card {
+  transition: all 0.2s ease-in-out;
+}
+
+.onboarding-tour-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.dark .onboarding-tour-card:hover {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+/* Tour completion celebration */
+.onboarding-complete-celebration {
+  animation: celebrate 0.6s ease-out;
+}
+
+@keyframes celebrate {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .onboarding-highlight,
+  .onboarding-overlay,
+  .onboarding-tooltip,
+  .onboarding-progress {
+    transition: none !important;
+    animation: none !important;
+  }
+  
+  .onboarding-tour-enter,
+  .onboarding-step-transition,
+  .onboarding-welcome-enter,
+  .onboarding-complete-celebration {
+    animation: none !important;
+  }
+  
+  .onboarding-tour-card:hover {
+    transform: none !important;
+  }
+}
+
+/* High contrast mode adjustments */
+@media (prefers-contrast: high) {
+  .onboarding-highlight {
+    box-shadow: 0 0 0 4px #000 !important;
+  }
+  
+  .onboarding-highlight::before {
+    border-color: #000 !important;
+  }
+  
+  .dark .onboarding-highlight {
+    box-shadow: 0 0 0 4px #fff !important;
+  }
+  
+  .dark .onboarding-highlight::before {
+    border-color: #fff !important;
+  }
+}
+
+/* Focus management for accessibility */
+.onboarding-focus-trap {
+  position: relative;
+}
+
+.onboarding-focus-trap::before,
+.onboarding-focus-trap::after {
+  content: '';
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Tour button states */
+.onboarding-button {
+  transition: all 0.2s ease-in-out;
+}
+
+.onboarding-button:focus-visible {
+  outline: 2px solid #3B82F6;
+  outline-offset: 2px;
+}
+
+.onboarding-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Tour navigation hints */
+.onboarding-hint {
+  position: relative;
+  opacity: 0.8;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.onboarding-hint:hover {
+  opacity: 1;
+}
+
+/* Keyboard navigation indicators */
+.onboarding-keyboard-hint {
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  font-size: 0.75rem;
+  background: rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+
+.dark .onboarding-keyboard-hint {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}

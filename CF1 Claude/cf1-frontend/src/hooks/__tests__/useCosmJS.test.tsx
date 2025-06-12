@@ -157,7 +157,14 @@ describe('useCosmJS', () => {
     })
 
     it('creates proposal successfully', async () => {
-      const mockResult = { transactionHash: 'mock_hash' }
+      const mockResult = { 
+        transactionHash: 'mock_hash',
+        logs: [],
+        height: 123456,
+        events: [],
+        gasWanted: 200000,
+        gasUsed: 180000
+      } as any
       vi.mocked(cosmjsClient.createProposal).mockResolvedValue(mockResult)
 
       const { result } = renderHook(() => useCosmJS())

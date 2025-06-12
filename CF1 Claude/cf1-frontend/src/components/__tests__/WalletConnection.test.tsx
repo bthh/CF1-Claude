@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '../../test/test-utils'
+import { render, screen, fireEvent } from '../../test/test-utils'
 import { WalletConnection, ConnectWalletButton, WalletStatus } from '../WalletConnection'
 import { createMockUseCosmJS } from '../../test/mocks/cosmjs'
 import { useCosmJS } from '../../hooks/useCosmJS'
@@ -27,7 +27,7 @@ describe('WalletConnection', () => {
     it('renders connect button when not connected', () => {
       render(<WalletConnection />)
       
-      expect(screen.getByRole('button', { name: /connect wallet/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /connect (demo )?wallet/i })).toBeInTheDocument()
     })
 
     it('shows connecting state when connecting', () => {
@@ -57,7 +57,7 @@ describe('WalletConnection', () => {
 
       render(<WalletConnection />)
       
-      const connectButton = screen.getByRole('button', { name: /connect wallet/i })
+      const connectButton = screen.getByRole('button', { name: /connect (demo )?wallet/i })
       fireEvent.click(connectButton)
 
       expect(mockClearError).toHaveBeenCalled()
@@ -200,7 +200,7 @@ describe('WalletStatus', () => {
     render(<WalletStatus />)
     
     // Check that the address parts are rendered (first 12, last 8)
-    expect(screen.getByText((content, element) => {
+    expect(screen.getByText((_, element) => {
       return element?.textContent === 'neutron1mock...89abcdef'
     })).toBeInTheDocument()
     expect(screen.getByText(/1000 NTRN/i)).toBeInTheDocument()

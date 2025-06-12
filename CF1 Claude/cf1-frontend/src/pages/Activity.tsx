@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Filter, ArrowUpDown, Calendar, Rocket, CheckCircle, Clock, FileText } from 'lucide-react';
+import { Search, ArrowUpDown, Calendar, Rocket, CheckCircle, Clock, FileText } from 'lucide-react';
 
 interface ProjectActivity {
   id: string;

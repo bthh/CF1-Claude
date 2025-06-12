@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TrendingUp, TrendingDown, Search, Filter, ArrowUpDown } from 'lucide-react';
+import { TrendingUp, TrendingDown, Search, ArrowUpDown } from 'lucide-react';
 
 interface Asset {
   id: string;

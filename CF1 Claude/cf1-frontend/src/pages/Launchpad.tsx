@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Clock, Users, Target, TrendingUp, Calendar, MapPin, Eye, Plus } from 'lucide-react';
+import { Clock, Users, Target, TrendingUp, Calendar, MapPin, Eye, Plus, Search } from 'lucide-react';
 
 interface ProposalCardProps {
   id: string;
@@ -32,7 +32,6 @@ const ProposalCard: React.FC<ProposalCardProps> = ({
   daysLeft,
   expectedAPY,
   minimumInvestment,
-  imageUrl,
   status
 }) => {
   const navigate = useNavigate();
@@ -165,6 +164,7 @@ const Launchpad: React.FC = () => {
   const navigate = useNavigate();
   const [selectedTab, setSelectedTab] = useState<'active' | 'funded' | 'upcoming'>('active');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
 
   const categories = [
     { id: 'all', name: 'All Categories', count: 18 },
@@ -278,7 +278,13 @@ const Launchpad: React.FC = () => {
     const matchesTab = proposal.status === selectedTab;
     const matchesCategory = selectedCategory === 'all' || 
       proposal.category.toLowerCase().includes(selectedCategory.replace('-', ' '));
-    return matchesTab && matchesCategory;
+    const matchesSearch = searchTerm === '' || 
+      proposal.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      proposal.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      proposal.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      proposal.location.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    return matchesTab && matchesCategory && matchesSearch;
   });
 
   const tabCounts = {
@@ -408,6 +414,27 @@ const Launchpad: React.FC = () => {
             </div>
 
             <div className="p-6">
+              {/* Search Bar */}
+              <div className="mb-6">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search proposals by title, description, category, or location..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                {searchTerm && (
+                  <div className="mt-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                    <p className="text-blue-800 dark:text-blue-200 text-sm">
+                      Found {filteredProposals.length} proposal{filteredProposals.length !== 1 ? 's' : ''} matching "{searchTerm}"
+                    </p>
+                  </div>
+                )}
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {filteredProposals.map((proposal) => (
                   <ProposalCard key={proposal.id} {...proposal} />
@@ -415,12 +442,25 @@ const Launchpad: React.FC = () => {
               </div>
 
               {filteredProposals.length === 0 && (
-                <div className="text-center py-12">
+                <div className="col-span-full text-center py-12">
                   <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center mx-auto mb-4">
-                    <Eye className="w-8 h-8 text-secondary-400" />
+                    <Eye className="w-8 h-8 text-gray-400 dark:text-gray-500" />
                   </div>
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No proposals found</h3>
-                  <p className="text-gray-600 dark:text-gray-400">Try adjusting your filters or check back later for new opportunities.</p>
+                  <p className="text-gray-600 dark:text-gray-400 mb-4">
+                    {searchTerm 
+                      ? `No proposals match your search for "${searchTerm}"`
+                      : "No proposals match the selected filters"
+                    }
+                  </p>
+                  {searchTerm && (
+                    <button
+                      onClick={() => setSearchTerm('')}
+                      className="text-blue-600 hover:text-blue-700 font-medium"
+                    >
+                      Clear search
+                    </button>
+                  )}
                 </div>
               )}
             </div>

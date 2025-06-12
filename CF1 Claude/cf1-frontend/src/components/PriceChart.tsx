@@ -13,6 +13,7 @@ interface PriceChartProps {
   priceChange24h: string;
   volume24h: string;
   className?: string;
+  onTimeframeChange?: (timeframe: '7D' | '1M' | '3M' | '1Y') => void;
 }
 
 export const PriceChart: React.FC<PriceChartProps> = ({
@@ -20,24 +21,60 @@ export const PriceChart: React.FC<PriceChartProps> = ({
   currentPrice,
   priceChange24h,
   volume24h,
-  className = ''
+  className = '',
+  onTimeframeChange
 }) => {
-  const [timeframe, setTimeframe] = useState<'1D' | '7D' | '1M' | '3M' | '1Y'>('7D');
+  const [timeframe, setTimeframe] = useState<'7D' | '1M' | '3M' | '1Y'>('7D');
 
-  // Calculate chart dimensions and scaling
-  const maxPrice = Math.max(...data.map(d => d.price));
-  const minPrice = Math.min(...data.map(d => d.price));
-  const priceRange = maxPrice - minPrice;
+  // Filter data based on timeframe
+  const getFilteredData = () => {
+    if (!data || data.length === 0) return [];
+
+    const now = new Date();
+    let cutoffDate: Date;
+
+    switch (timeframe) {
+      case '7D':
+        cutoffDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case '1M':
+        cutoffDate = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+        break;
+      case '3M':
+        cutoffDate = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
+        break;
+      case '1Y':
+        cutoffDate = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+        break;
+      default:
+        return data;
+    }
+
+    return data.filter(point => new Date(point.date) >= cutoffDate);
+  };
+
+  const filteredData = getFilteredData();
+
+  const handleTimeframeChange = (newTimeframe: '7D' | '1M' | '3M' | '1Y') => {
+    setTimeframe(newTimeframe);
+    onTimeframeChange?.(newTimeframe);
+  };
+
+  // Calculate chart dimensions and scaling using filtered data
+  const maxPrice = filteredData.length > 0 ? Math.max(...filteredData.map(d => d.price)) : 0;
+  const minPrice = filteredData.length > 0 ? Math.min(...filteredData.map(d => d.price)) : 0;
+  const priceRange = maxPrice - minPrice || 1; // Avoid division by zero
   const chartHeight = 200;
   const chartWidth = 400;
+  const padding = { top: 10, right: 10, bottom: 30, left: 35 };
 
-  // Generate SVG path for price line
+  // Generate SVG path for price line using filtered data
   const generatePath = () => {
-    if (data.length < 2) return '';
+    if (filteredData.length < 2) return '';
 
-    return data.map((point, index) => {
-      const x = (index / (data.length - 1)) * chartWidth;
-      const y = chartHeight - ((point.price - minPrice) / priceRange) * chartHeight;
+    return filteredData.map((point, index) => {
+      const x = padding.left + (index / (filteredData.length - 1)) * (chartWidth - padding.left - padding.right);
+      const y = padding.top + ((maxPrice - point.price) / priceRange) * (chartHeight - padding.top - padding.bottom);
       return `${index === 0 ? 'M' : 'L'} ${x} ${y}`;
     }).join(' ');
   };
@@ -71,10 +108,10 @@ export const PriceChart: React.FC<PriceChartProps> = ({
 
         {/* Timeframe Selector */}
         <div className="flex space-x-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
-          {(['1D', '7D', '1M', '3M', '1Y'] as const).map((tf) => (
+          {(['7D', '1M', '3M', '1Y'] as const).map((tf) => (
             <button
               key={tf}
-              onClick={() => setTimeframe(tf)}
+              onClick={() => handleTimeframeChange(tf)}
               className={`px-3 py-1 text-sm font-medium rounded transition-colors ${
                 timeframe === tf
                   ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
@@ -89,15 +126,16 @@ export const PriceChart: React.FC<PriceChartProps> = ({
 
       {/* Chart Area */}
       <div className="relative">
-        {data.length >= 2 ? (
-          <div className="relative h-48 bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+        {filteredData.length >= 2 ? (
+          <div className="relative h-64 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
             <svg
               width="100%"
               height="100%"
               viewBox={`0 0 ${chartWidth} ${chartHeight}`}
-              className="overflow-visible"
+              preserveAspectRatio="none"
+              className="absolute inset-0"
             >
-              {/* Grid lines */}
+              {/* Axis lines */}
               <defs>
                 <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
                   <path
@@ -109,7 +147,35 @@ export const PriceChart: React.FC<PriceChartProps> = ({
                   />
                 </pattern>
               </defs>
-              <rect width="100%" height="100%" fill="url(#grid)" />
+              
+              {/* Chart area background */}
+              <rect 
+                x={padding.left} 
+                y={padding.top} 
+                width={chartWidth - padding.left - padding.right} 
+                height={chartHeight - padding.top - padding.bottom} 
+                fill="url(#grid)" 
+              />
+              
+              {/* Axis lines */}
+              <line 
+                x1={padding.left} 
+                y1={chartHeight - padding.bottom} 
+                x2={chartWidth - padding.right} 
+                y2={chartHeight - padding.bottom} 
+                stroke="currentColor" 
+                strokeWidth="1" 
+                className="text-gray-400 dark:text-gray-500"
+              />
+              <line 
+                x1={padding.left} 
+                y1={padding.top} 
+                x2={padding.left} 
+                y2={chartHeight - padding.bottom} 
+                stroke="currentColor" 
+                strokeWidth="1" 
+                className="text-gray-400 dark:text-gray-500"
+              />
 
               {/* Price line */}
               <path
@@ -121,9 +187,9 @@ export const PriceChart: React.FC<PriceChartProps> = ({
               />
 
               {/* Data points */}
-              {data.map((point, index) => {
-                const x = (index / (data.length - 1)) * chartWidth;
-                const y = chartHeight - ((point.price - minPrice) / priceRange) * chartHeight;
+              {filteredData.map((point, index) => {
+                const x = padding.left + (index / (filteredData.length - 1)) * (chartWidth - padding.left - padding.right);
+                const y = padding.top + ((maxPrice - point.price) / priceRange) * (chartHeight - padding.top - padding.bottom);
                 return (
                   <circle
                     key={index}
@@ -140,33 +206,35 @@ export const PriceChart: React.FC<PriceChartProps> = ({
 
               {/* Area under curve */}
               <path
-                d={`${generatePath()} L ${chartWidth} ${chartHeight} L 0 ${chartHeight} Z`}
+                d={`${generatePath()} L ${chartWidth - padding.right} ${chartHeight - padding.bottom} L ${padding.left} ${chartHeight - padding.bottom} Z`}
                 fill={isPositive ? '#10B981' : '#EF4444'}
                 fillOpacity="0.1"
               />
             </svg>
 
             {/* Y-axis labels */}
-            <div className="absolute left-0 top-0 h-full flex flex-col justify-between text-xs text-gray-500 dark:text-gray-400">
+            <div className="absolute left-1 top-4 bottom-8 flex flex-col justify-between text-xs text-gray-500 dark:text-gray-400">
               <span>${maxPrice.toFixed(2)}</span>
               <span>${((maxPrice + minPrice) / 2).toFixed(2)}</span>
               <span>${minPrice.toFixed(2)}</span>
             </div>
 
             {/* X-axis labels */}
-            <div className="absolute bottom-0 left-0 w-full flex justify-between text-xs text-gray-500 dark:text-gray-400 px-4">
-              {data.map((point, index) => (
-                index % Math.ceil(data.length / 5) === 0 && (
-                  <span key={index}>
-                    {new Date(point.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                  </span>
-                )
-              ))}
+            <div className="absolute bottom-2 left-9 right-4 flex justify-between text-xs text-gray-500 dark:text-gray-400">
+              {filteredData.length > 0 && (
+                <>
+                  <span>{new Date(filteredData[0].date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                  {filteredData.length > 2 && (
+                    <span>{new Date(filteredData[Math.floor(filteredData.length / 2)].date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                  )}
+                  <span>{new Date(filteredData[filteredData.length - 1].date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                </>
+              )}
             </div>
           </div>
         ) : (
           // Placeholder when no data
-          <div className="h-48 bg-gray-50 dark:bg-gray-700/50 rounded-lg flex items-center justify-center">
+          <div className="h-64 bg-gray-50 dark:bg-gray-700/50 rounded-lg flex items-center justify-center">
             <div className="text-center">
               <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-2" />
               <p className="text-gray-500 dark:text-gray-400 text-sm">

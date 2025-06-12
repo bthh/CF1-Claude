@@ -1,13 +1,23 @@
 // @ts-nocheck
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Clock, Users, Target, TrendingUp } from 'lucide-react';
-import { InvestmentModalSimple } from '../components/InvestmentModalSimple';
+import { InvestmentModal } from '../components/InvestmentModal';
+import { useBusinessTracking } from '../hooks/useMonitoring';
 
 const ProposalDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [showInvestModal, setShowInvestModal] = useState(false);
+  const { trackProposal } = useBusinessTracking();
+
+  // Track proposal view
+  useEffect(() => {
+    if (id) {
+      const proposalTracking = trackProposal;
+      proposalTracking.viewed(id);
+    }
+  }, [id, trackProposal]);
 
   // Mock proposal data
   const proposal = {
@@ -162,7 +172,7 @@ const ProposalDetail: React.FC = () => {
       </div>
 
       {/* Investment Modal */}
-      <InvestmentModalSimple
+      <InvestmentModal
         isOpen={showInvestModal}
         onClose={() => setShowInvestModal(false)}
         proposal={proposal}

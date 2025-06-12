@@ -3,12 +3,38 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Star, MapPin, TrendingUp, DollarSign, BarChart3 } from 'lucide-react';
 import { PriceChart } from '../components/PriceChart';
+import { InvestmentModal } from '../components/InvestmentModal';
+import { SellModal } from '../components/SellModal';
+
+// Generate price history data for different timeframes
+const generatePriceHistory = () => {
+  const data = [];
+  const basePrice = 100;
+  const now = new Date();
+  
+  // Generate 1 year of daily data
+  for (let i = 365; i >= 0; i--) {
+    const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+    const randomChange = (Math.random() - 0.5) * 0.1; // ±5% daily variation
+    const price = basePrice * (1 + randomChange * (365 - i) / 365);
+    const volume = Math.floor(Math.random() * 100000 + 50000);
+    
+    data.push({
+      date: date.toISOString(),
+      price: Math.max(price, 50), // Minimum price of $50
+      volume
+    });
+  }
+  
+  return data;
+};
 
 const AssetDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [isBuyModalOpen, setIsBuyModalOpen] = useState(false);
   const [isSellModalOpen, setIsSellModalOpen] = useState(false);
+  const [selectedTimeframe, setSelectedTimeframe] = useState<'7D' | '1M' | '3M' | '1Y'>('7D');
 
   // Mock asset data
   const asset = {
@@ -26,13 +52,27 @@ const AssetDetail: React.FC = () => {
     totalTokens: 25000,
     availableTokens: 15000,
     totalHolders: 1247,
-    priceHistory: [
-      { date: '2024-01-01', price: 100.00, volume: 50000 },
-      { date: '2024-01-02', price: 101.25, volume: 75000 },
-      { date: '2024-01-03', price: 102.50, volume: 60000 },
-      { date: '2024-01-04', price: 103.75, volume: 80000 },
-      { date: '2024-01-05', price: 105.25, volume: 125000 },
-    ],
+    priceHistory: generatePriceHistory(),
+  };
+
+  // Convert asset to proposal format for InvestmentModal
+  const assetAsProposal = {
+    id: asset.id,
+    asset_details: {
+      name: asset.name,
+      asset_type: asset.type,
+      location: asset.location,
+      description: asset.description
+    },
+    financial_terms: {
+      token_price: '105250000', // $105.25 in micro units
+      minimum_investment: '100000000', // $100 minimum
+      expected_apy: asset.expectedAPY,
+      total_shares: asset.totalTokens
+    },
+    funding_progress: {
+      raised_percentage: 60
+    }
   };
 
   const TradingModal = ({ isOpen, onClose, mode }: { isOpen: boolean; onClose: () => void; mode: 'buy' | 'sell' }) => {
@@ -204,6 +244,10 @@ const AssetDetail: React.FC = () => {
               currentPrice={asset.currentPrice}
               priceChange24h={asset.priceChange24h}
               volume24h={asset.volume24h}
+              onTimeframeChange={(timeframe) => {
+                setSelectedTimeframe(timeframe);
+                console.log('Timeframe changed to:', timeframe);
+              }}
             />
           </div>
         </div>
@@ -218,7 +262,7 @@ const AssetDetail: React.FC = () => {
                 className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold transition-colors flex items-center justify-center space-x-2"
               >
                 <DollarSign className="w-4 h-4" />
-                <span>Buy Tokens</span>
+                <span>Buy Tokens (Market/Limit)</span>
               </button>
               
               <button 
@@ -283,17 +327,25 @@ const AssetDetail: React.FC = () => {
         </div>
       </div>
 
-      {/* Trading Modals */}
-      <TradingModal 
+      {/* Investment Modal with Limit Buy */}
+      <InvestmentModal 
         isOpen={isBuyModalOpen}
         onClose={() => setIsBuyModalOpen(false)}
-        mode="buy"
+        proposal={assetAsProposal}
+        onSuccess={() => {
+          console.log('Investment successful');
+          setIsBuyModalOpen(false);
+        }}
       />
 
-      <TradingModal 
+      <SellModal 
         isOpen={isSellModalOpen}
         onClose={() => setIsSellModalOpen(false)}
-        mode="sell"
+        asset={asset}
+        onSuccess={() => {
+          console.log('Sell successful');
+          setIsSellModalOpen(false);
+        }}
       />
     </div>
   );

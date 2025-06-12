@@ -1,4 +1,4 @@
-import { UseCosmJSReturn } from '../../hooks/useCosmJS'
+import type { UseCosmJSReturn } from '../../hooks/useCosmJS'
 
 // Mock data for testing
 export const mockProposal = {
@@ -110,7 +110,7 @@ export const createMockUseCosmJS = (overrides: Partial<UseCosmJSReturn> = {}): U
 export const mockUseCosmJS = createMockUseCosmJS()
 
 // Mock for useProposal hook
-export const createMockUseProposal = (proposalId: string, overrides: any = {}) => ({
+export const createMockUseProposal = (_: string, overrides: any = {}) => ({
   proposal: mockProposal,
   loading: false,
   error: null,

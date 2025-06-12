@@ -1,3 +1,53 @@
 [package]
 name = "cf1-core"
 version = "0.1.0"
+edition = "2021"
+description = "CF1 Platform - Enterprise RWA Tokenization Smart Contracts"
+license = "MIT"
+repository = "https://github.com/bthh/CF1-Claude"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+cosmwasm-std = "2.0"
+cosmwasm-schema = "2.0"
+cw-storage-plus = "2.0"
+cw2 = "2.0"
+cw20 = "2.0"
+cw20-base = { version = "2.0", features = ["library"] }
+schemars = "0.8"
+serde = { version = "1.0", default-features = false, features = ["derive"] }
+thiserror = "1.0"
+cosmwasm-crypto = "2.0"
+
+[dev-dependencies]
+cw-multi-test = "2.0"
+anyhow = "1.0"
+
+[features]
+default = []
+library = []
+
+[[example]]
+name = "schema"
+required-features = []
+
+[profile.release]
+opt-level = 3
+debug = false
+rpath = false
+lto = true
+debug-assertions = false
+codegen-units = 1
+panic = 'abort'
+incremental = false
+overflow-checks = true
+
+# Gas-optimized build profile
+[profile.gas-optimized]
+inherits = "release"
+opt-level = 'z'        # Optimize for size
+lto = "fat"            # Full LTO
+codegen-units = 1      # Single codegen unit
+strip = "symbols"      # Strip symbols for smaller binary

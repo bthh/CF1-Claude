@@ -1,13 +1,13 @@
-import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
+import { SigningCosmWasmClient, CosmWasmClient } from "@cosmjs/cosmwasm-stargate";
 import { GasPrice } from "@cosmjs/stargate";
-import { Keplr } from "@keplr-wallet/types";
+import type { Keplr } from "@keplr-wallet/types";
 
 // Neutron testnet configuration
 const NEUTRON_TESTNET_CONFIG = {
-  chainId: "pion-1",
-  chainName: "Neutron Testnet",
-  rpc: "https://rpc-palvus.pion-1.ntrn.tech",
-  rest: "https://rest-palvus.pion-1.ntrn.tech",
+  chainId: import.meta.env.VITE_CHAIN_ID || "pion-1",
+  chainName: import.meta.env.VITE_CHAIN_NAME || "Neutron Testnet",
+  rpc: import.meta.env.VITE_RPC_URL || "https://rpc-palvus.pion-1.ntrn.tech",
+  rest: import.meta.env.VITE_REST_URL || "https://rest-palvus.pion-1.ntrn.tech",
   bip44: {
     coinType: 118,
   },
@@ -46,12 +46,12 @@ const NEUTRON_TESTNET_CONFIG = {
 };
 
 // Contract addresses (to be set after deployment)
-export const CF1_LAUNCHPAD_CONTRACT = process.env.REACT_APP_LAUNCHPAD_CONTRACT || "";
+export const CF1_LAUNCHPAD_CONTRACT = import.meta.env.VITE_LAUNCHPAD_CONTRACT_ADDRESS || "";
 
 // Gas configuration
 const GAS_PRICES = GasPrice.fromString("0.025untrn");
 
-export interface CosmJSConfig {
+interface CosmJSConfig {
   chainId: string;
   rpcEndpoint: string;
   gasPrice: GasPrice;
@@ -61,17 +61,34 @@ export interface CosmJSConfig {
 export class CF1CosmJSClient {
   private client: SigningCosmWasmClient | null = null;
   private signer: string = "";
+  private demoMode: boolean = false;
+  private config: CosmJSConfig;
   
-  constructor(
-    private config: CosmJSConfig = {
-      chainId: NEUTRON_TESTNET_CONFIG.chainId,
-      rpcEndpoint: NEUTRON_TESTNET_CONFIG.rpc,
-      gasPrice: GAS_PRICES,
-      contractAddress: CF1_LAUNCHPAD_CONTRACT,
+  constructor(config: CosmJSConfig = {
+    chainId: NEUTRON_TESTNET_CONFIG.chainId,
+    rpcEndpoint: NEUTRON_TESTNET_CONFIG.rpc,
+    gasPrice: GAS_PRICES,
+    contractAddress: CF1_LAUNCHPAD_CONTRACT,
+  }) {
+    this.config = config;
+    // Enable demo mode if contract address is missing or demo
+    this.demoMode = !config.contractAddress || 
+                   config.contractAddress.includes('demo') || 
+                   import.meta.env.VITE_ENABLE_MOCK_DATA === 'true';
+    
+    if (this.demoMode) {
+      console.warn('CosmJS running in demo mode - real blockchain interactions disabled');
     }
-  ) {}
+  }
 
   async connectWallet(): Promise<string> {
+    // Demo mode fallback
+    if (this.demoMode) {
+      this.signer = "neutron1demo2user3address4for5testing6purposes7890abc";
+      console.log("Demo mode: Using mock wallet address:", this.signer);
+      return this.signer;
+    }
+
     if (!window.keplr) {
       throw new Error("Keplr wallet not found. Please install Keplr extension.");
     }
@@ -116,10 +133,21 @@ export class CF1CosmJSClient {
   }
 
   isConnected(): boolean {
-    return this.client !== null && this.signer !== "";
+    return this.demoMode ? this.signer !== "" : this.client !== null && this.signer !== "";
+  }
+
+  isDemoMode(): boolean {
+    return this.demoMode;
   }
 
   private requireConnection(): void {
+    if (this.demoMode) {
+      if (!this.signer) {
+        throw new Error("Demo wallet not connected. Please connect your wallet first.");
+      }
+      return;
+    }
+    
     if (!this.client || !this.signer) {
       throw new Error("Wallet not connected. Please connect your wallet first.");
     }
@@ -195,6 +223,33 @@ export class CF1CosmJSClient {
   async invest(proposalId: string, amount: string) {
     this.requireConnection();
     
+    // Demo mode simulation
+    if (this.demoMode) {
+      console.log(`Demo mode: Simulating investment of ${amount} untrn in proposal ${proposalId}`);
+      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate transaction time
+      
+      return {
+        transactionHash: `demo_tx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        gasWanted: "200000",
+        gasUsed: "180000",
+        height: Math.floor(Math.random() * 1000000) + 5000000,
+        events: [],
+        logs: [{
+          msg_index: 0,
+          log: "",
+          events: [{
+            type: "wasm",
+            attributes: [
+              { key: "action", value: "invest" },
+              { key: "proposal_id", value: proposalId },
+              { key: "amount", value: amount },
+              { key: "investor", value: this.signer }
+            ]
+          }]
+        }]
+      };
+    }
+    
     const msg = {
       invest: {
         proposal_id: proposalId,
@@ -267,22 +322,31 @@ export class CF1CosmJSClient {
 
   // Query Functions
   async queryProposal(proposalId: string) {
-    if (!this.client) {
+    let queryClient: CosmWasmClient | SigningCosmWasmClient;
+    
+    if (this.client) {
+      queryClient = this.client;
+    } else {
       // Create query-only client
-      this.client = await SigningCosmWasmClient.connect(this.config.rpcEndpoint);
+      queryClient = await CosmWasmClient.connect(this.config.rpcEndpoint);
     }
     
-    return await this.client.queryContractSmart(this.config.contractAddress, {
+    return await queryClient.queryContractSmart(this.config.contractAddress, {
       proposal: { proposal_id: proposalId },
     });
   }
 
   async queryAllProposals(startAfter?: string, limit?: number) {
-    if (!this.client) {
-      this.client = await SigningCosmWasmClient.connect(this.config.rpcEndpoint);
+    let queryClient: CosmWasmClient | SigningCosmWasmClient;
+    
+    if (this.client) {
+      queryClient = this.client;
+    } else {
+      // Create query-only client
+      queryClient = await CosmWasmClient.connect(this.config.rpcEndpoint);
     }
     
-    return await this.client.queryContractSmart(this.config.contractAddress, {
+    return await queryClient.queryContractSmart(this.config.contractAddress, {
       all_proposals: {
         start_after: startAfter || null,
         limit: limit || 30,
@@ -291,11 +355,16 @@ export class CF1CosmJSClient {
   }
 
   async queryProposalsByCreator(creator: string, startAfter?: string, limit?: number) {
-    if (!this.client) {
-      this.client = await SigningCosmWasmClient.connect(this.config.rpcEndpoint);
+    let queryClient: CosmWasmClient | SigningCosmWasmClient;
+    
+    if (this.client) {
+      queryClient = this.client;
+    } else {
+      // Create query-only client
+      queryClient = await CosmWasmClient.connect(this.config.rpcEndpoint);
     }
     
-    return await this.client.queryContractSmart(this.config.contractAddress, {
+    return await queryClient.queryContractSmart(this.config.contractAddress, {
       proposals_by_creator: {
         creator,
         start_after: startAfter || null,
@@ -305,11 +374,16 @@ export class CF1CosmJSClient {
   }
 
   async queryProposalsByStatus(status: string, startAfter?: string, limit?: number) {
-    if (!this.client) {
-      this.client = await SigningCosmWasmClient.connect(this.config.rpcEndpoint);
+    let queryClient: CosmWasmClient | SigningCosmWasmClient;
+    
+    if (this.client) {
+      queryClient = this.client;
+    } else {
+      // Create query-only client
+      queryClient = await CosmWasmClient.connect(this.config.rpcEndpoint);
     }
     
-    return await this.client.queryContractSmart(this.config.contractAddress, {
+    return await queryClient.queryContractSmart(this.config.contractAddress, {
       proposals_by_status: {
         status,
         start_after: startAfter || null,
@@ -319,11 +393,16 @@ export class CF1CosmJSClient {
   }
 
   async queryUserInvestments(user: string, startAfter?: string, limit?: number) {
-    if (!this.client) {
-      this.client = await SigningCosmWasmClient.connect(this.config.rpcEndpoint);
+    let queryClient: CosmWasmClient | SigningCosmWasmClient;
+    
+    if (this.client) {
+      queryClient = this.client;
+    } else {
+      // Create query-only client
+      queryClient = await CosmWasmClient.connect(this.config.rpcEndpoint);
     }
     
-    return await this.client.queryContractSmart(this.config.contractAddress, {
+    return await queryClient.queryContractSmart(this.config.contractAddress, {
       investments_by_user: {
         user,
         start_after: startAfter || null,
@@ -333,11 +412,16 @@ export class CF1CosmJSClient {
   }
 
   async queryUserPortfolio(user: string, startAfter?: string, limit?: number) {
-    if (!this.client) {
-      this.client = await SigningCosmWasmClient.connect(this.config.rpcEndpoint);
+    let queryClient: CosmWasmClient | SigningCosmWasmClient;
+    
+    if (this.client) {
+      queryClient = this.client;
+    } else {
+      // Create query-only client
+      queryClient = await CosmWasmClient.connect(this.config.rpcEndpoint);
     }
     
-    return await this.client.queryContractSmart(this.config.contractAddress, {
+    return await queryClient.queryContractSmart(this.config.contractAddress, {
       user_portfolio: {
         user,
         start_after: startAfter || null,
@@ -347,77 +431,118 @@ export class CF1CosmJSClient {
   }
 
   async queryPortfolioPerformance(user: string) {
-    if (!this.client) {
-      this.client = await SigningCosmWasmClient.connect(this.config.rpcEndpoint);
+    let queryClient: CosmWasmClient | SigningCosmWasmClient;
+    
+    if (this.client) {
+      queryClient = this.client;
+    } else {
+      // Create query-only client
+      queryClient = await CosmWasmClient.connect(this.config.rpcEndpoint);
     }
     
-    return await this.client.queryContractSmart(this.config.contractAddress, {
+    return await queryClient.queryContractSmart(this.config.contractAddress, {
       portfolio_performance: { user },
     });
   }
 
   async queryCreator(creator: string) {
-    if (!this.client) {
-      this.client = await SigningCosmWasmClient.connect(this.config.rpcEndpoint);
+    let queryClient: CosmWasmClient | SigningCosmWasmClient;
+    
+    if (this.client) {
+      queryClient = this.client;
+    } else {
+      // Create query-only client
+      queryClient = await CosmWasmClient.connect(this.config.rpcEndpoint);
     }
     
-    return await this.client.queryContractSmart(this.config.contractAddress, {
+    return await queryClient.queryContractSmart(this.config.contractAddress, {
       creator: { creator },
     });
   }
 
   async queryPlatformStats() {
-    if (!this.client) {
-      this.client = await SigningCosmWasmClient.connect(this.config.rpcEndpoint);
+    let queryClient: CosmWasmClient | SigningCosmWasmClient;
+    
+    if (this.client) {
+      queryClient = this.client;
+    } else {
+      // Create query-only client
+      queryClient = await CosmWasmClient.connect(this.config.rpcEndpoint);
     }
     
-    return await this.client.queryContractSmart(this.config.contractAddress, {
+    return await queryClient.queryContractSmart(this.config.contractAddress, {
       platform_stats: {},
     });
   }
 
   async queryLockupStatus(proposalId: string) {
-    if (!this.client) {
-      this.client = await SigningCosmWasmClient.connect(this.config.rpcEndpoint);
+    let queryClient: CosmWasmClient | SigningCosmWasmClient;
+    
+    if (this.client) {
+      queryClient = this.client;
+    } else {
+      // Create query-only client
+      queryClient = await CosmWasmClient.connect(this.config.rpcEndpoint);
     }
     
-    return await this.client.queryContractSmart(this.config.contractAddress, {
+    return await queryClient.queryContractSmart(this.config.contractAddress, {
       lockup_status: { proposal_id: proposalId },
     });
   }
 
   async queryComplianceReport(proposalId: string) {
-    if (!this.client) {
-      this.client = await SigningCosmWasmClient.connect(this.config.rpcEndpoint);
+    let queryClient: CosmWasmClient | SigningCosmWasmClient;
+    
+    if (this.client) {
+      queryClient = this.client;
+    } else {
+      // Create query-only client
+      queryClient = await CosmWasmClient.connect(this.config.rpcEndpoint);
     }
     
-    return await this.client.queryContractSmart(this.config.contractAddress, {
+    return await queryClient.queryContractSmart(this.config.contractAddress, {
       compliance_report: { proposal_id: proposalId },
     });
   }
 
   async queryGovernanceInfo(proposalId: string) {
-    if (!this.client) {
-      this.client = await SigningCosmWasmClient.connect(this.config.rpcEndpoint);
+    let queryClient: CosmWasmClient | SigningCosmWasmClient;
+    
+    if (this.client) {
+      queryClient = this.client;
+    } else {
+      // Create query-only client
+      queryClient = await CosmWasmClient.connect(this.config.rpcEndpoint);
     }
     
-    return await this.client.queryContractSmart(this.config.contractAddress, {
+    return await queryClient.queryContractSmart(this.config.contractAddress, {
       governance_info: { proposal_id: proposalId },
     });
   }
 
   // Utility functions
   async getBalance(address?: string): Promise<string> {
-    if (!this.client) {
-      this.client = await SigningCosmWasmClient.connect(this.config.rpcEndpoint);
-    }
-    
     const userAddress = address || this.signer;
     if (!userAddress) {
       throw new Error("No address provided and wallet not connected");
     }
 
-    const balance = await this.client.getBalance(userAddress, "untrn");
+    // Demo mode fallback
+    if (this.demoMode) {
+      // Return a realistic demo balance
+      return (Math.floor(Math.random() * 50000000) + 10000000).toString(); // 10-60 NTRN
+    }
+
+    let queryClient: CosmWasmClient | SigningCosmWasmClient;
+    
+    if (this.client) {
+      queryClient = this.client;
+    } else {
+      // Create query-only client
+      queryClient = await CosmWasmClient.connect(this.config.rpcEndpoint);
+    }
+
+    const balance = await queryClient.getBalance(userAddress, "untrn");
     return balance.amount;
   }
 

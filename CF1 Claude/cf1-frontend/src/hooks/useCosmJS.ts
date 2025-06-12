@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { cosmjsClient, CF1CosmJSClient } from '../services/cosmjs';
+import { cosmjsClient } from '../services/cosmjs';
+import { useBusinessTracking, useUserTracking } from './useMonitoring';
 
 export interface UseCosmJSReturn {
   // Connection state
@@ -40,6 +41,10 @@ export const useCosmJS = (): UseCosmJSReturn => {
   const [balance, setBalance] = useState<string>('0');
   const [error, setError] = useState<string | null>(null);
 
+  // Monitoring hooks
+  const { trackWallet, trackInvestment } = useBusinessTracking();
+  const { setUser, clearUser } = useUserTracking();
+
   // Check connection status on mount
   useEffect(() => {
     const checkConnection = async () => {
@@ -77,6 +82,18 @@ export const useCosmJS = (): UseCosmJSReturn => {
       setAddress(addr);
       setIsConnected(true);
       await updateBalance();
+
+      // Track wallet connection
+      const walletType = cosmjsClient.isDemoMode() ? 'demo' : 'keplr';
+      const walletTracking = trackWallet;
+      walletTracking.connected(addr, walletType);
+      
+      // Set user context for monitoring
+      setUser({
+        walletAddress: addr,
+        sessionId: `session_${Date.now()}`,
+        userAgent: navigator.userAgent,
+      });
     } catch (err: any) {
       setError(err.message || 'Failed to connect wallet');
       console.error('Connection error:', err);
@@ -87,12 +104,23 @@ export const useCosmJS = (): UseCosmJSReturn => {
 
   // Disconnect wallet
   const disconnect = useCallback(async () => {
+    const currentAddress = address;
+    
     await cosmjsClient.disconnectWallet();
     setAddress('');
     setIsConnected(false);
     setBalance('0');
     setError(null);
-  }, []);
+
+    // Track wallet disconnection
+    if (currentAddress) {
+      const walletTracking = trackWallet;
+      walletTracking.disconnected(currentAddress);
+    }
+    
+    // Clear user context
+    clearUser();
+  }, [address, trackWallet, clearUser]);
 
   // Contract interaction functions
   const createProposal = useCallback(async (params: any) => {
@@ -133,15 +161,27 @@ export const useCosmJS = (): UseCosmJSReturn => {
 
   const invest = useCallback(async (proposalId: string, amount: string) => {
     setError(null);
+    
+    // Track investment start
+    const investmentTracking = trackInvestment;
+    investmentTracking.started(proposalId, amount);
+    
     try {
       const result = await cosmjsClient.invest(proposalId, amount);
       await updateBalance();
+      
+      // Track successful investment
+      investmentTracking.completed(proposalId, amount, result.transactionHash);
+      
       return result;
     } catch (err: any) {
+      // Track failed investment
+      investmentTracking.failed(proposalId, amount, err.message || 'Unknown error');
+      
       setError(err.message || 'Failed to invest');
       throw err;
     }
-  }, [updateBalance]);
+  }, [updateBalance, trackInvestment]);
 
   // Query functions
   const queryProposal = useCallback(async (proposalId: string) => {

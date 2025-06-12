@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { TrendingUp, TrendingDown, DollarSign, BarChart3, Eye, Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { AnalyticsDashboard } from '../components/Analytics/AnalyticsDashboard';
 
 interface StatCardProps {
   title: string;
@@ -36,34 +38,44 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, change, isPositive, i
 };
 
 interface AssetCardProps {
+  id: string;
   name: string;
   type: string;
   value: string;
   change: string;
   isPositive: boolean;
   imageUrl?: string;
+  onClick?: () => void;
 }
 
-const AssetCard: React.FC<AssetCardProps> = ({ name, type, value, change, isPositive, imageUrl }) => {
+const AssetCard: React.FC<AssetCardProps> = ({ id, name, type, value, change, isPositive, imageUrl, onClick }) => {
+  const navigate = useNavigate();
+  
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('Dashboard AssetCard clicked:', name, 'ID:', id);
+    alert(`Clicked: ${name}`);
+    navigate(`/marketplace/asset/${id}`);
+  };
+
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm hover:shadow-md transition-shadow p-4 cursor-pointer">
-      <div className="flex items-center space-x-3">
-        <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center overflow-hidden">
-          {imageUrl ? (
-            <img src={imageUrl} alt={name} className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg"></div>
-          )}
+    <div 
+      className="bg-blue-100 border-2 border-blue-500 rounded-lg p-4 cursor-pointer"
+      onClick={handleClick}
+      onMouseEnter={() => console.log('Mouse entered card:', name)}
+    >
+      <div className="flex items-center space-x-3" style={{ pointerEvents: 'none' }}>
+        <div className="w-12 h-12 bg-gray-300 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-blue-500 rounded-lg"></div>
         </div>
         <div className="flex-1">
-          <h4 className="font-semibold text-gray-900 dark:text-white">{name}</h4>
-          <p className="text-sm text-gray-600 dark:text-gray-400">{type}</p>
+          <h4 className="font-semibold text-gray-900">{name}</h4>
+          <p className="text-sm text-gray-600">{type}</p>
         </div>
         <div className="text-right">
-          <p className="font-semibold text-gray-900 dark:text-white">{value}</p>
-          <p className={`text-sm ${isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-            {change}
-          </p>
+          <p className="font-semibold text-gray-900">{value}</p>
+          <p className="text-sm text-green-600">{change}</p>
         </div>
       </div>
     </div>
@@ -71,6 +83,8 @@ const AssetCard: React.FC<AssetCardProps> = ({ name, type, value, change, isPosi
 };
 
 const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
+  const [showAnalytics, setShowAnalytics] = useState(false);
   const stats = [
     {
       title: 'Total Portfolio Value',
@@ -104,6 +118,7 @@ const Dashboard: React.FC = () => {
 
   const topPerformers = [
     {
+      id: 'beverly-hills-estate',
       name: 'Beverly Hills Estate',
       type: 'Luxury Real Estate',
       value: '$2.4M',
@@ -112,6 +127,7 @@ const Dashboard: React.FC = () => {
       imageUrl: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400&h=300&fit=crop'
     },
     {
+      id: 'vintage-wine-collection',
       name: 'Vintage Wine Collection',
       type: 'Collectibles',
       value: '$850K',
@@ -120,6 +136,7 @@ const Dashboard: React.FC = () => {
       imageUrl: 'https://images.unsplash.com/photo-1547595628-c61a29f496f0?w=400&h=300&fit=crop'
     },
     {
+      id: 'swiss-watch-portfolio',
       name: 'Swiss Watch Portfolio',
       type: 'Luxury Goods',
       value: '$1.2M',
@@ -128,6 +145,7 @@ const Dashboard: React.FC = () => {
       imageUrl: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=300&fit=crop'
     },
     {
+      id: 'london-commercial-space',
       name: 'London Commercial Space',
       type: 'Commercial Real Estate',
       value: '$3.1M',
@@ -249,13 +267,40 @@ const Dashboard: React.FC = () => {
         <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Top Performers</h2>
-            <button className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium">
+            <button className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-sm font-medium">
               View All
             </button>
           </div>
           <div className="space-y-3">
             {topPerformers.map((asset, index) => (
-              <AssetCard key={index} {...asset} />
+              <div
+                key={asset.id}
+                className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm hover:shadow-md transition-shadow p-4 cursor-pointer"
+                onClick={() => {
+                  console.log('Direct onClick - Asset clicked:', asset.name);
+                  navigate(`/marketplace/asset/${asset.id}`);
+                }}
+              >
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center overflow-hidden">
+                    {asset.imageUrl ? (
+                      <img src={asset.imageUrl} alt={asset.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg"></div>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-gray-900 dark:text-white">{asset.name}</h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{asset.type}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold text-gray-900 dark:text-white">{asset.value}</p>
+                    <p className={`text-sm ${asset.isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                      {asset.change}
+                    </p>
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
         </div>
@@ -324,13 +369,23 @@ const Dashboard: React.FC = () => {
               <Eye className="w-4 h-4 mr-2" />
               Browse Marketplace
             </button>
-            <button className="w-full border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg py-2 px-3 flex items-center justify-start">
+            <button 
+              onClick={() => setShowAnalytics(!showAnalytics)}
+              className="w-full border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg py-2 px-3 flex items-center justify-start"
+            >
               <BarChart3 className="w-4 h-4 mr-2" />
-              View Analytics
+              {showAnalytics ? 'Hide Analytics' : 'View Analytics'}
             </button>
           </div>
         </div>
       </div>
+      
+      {/* Analytics Dashboard */}
+      {showAnalytics && (
+        <div className="mt-8 border-t border-gray-200 dark:border-gray-700 pt-8">
+          <AnalyticsDashboard />
+        </div>
+      )}
     </div>
   );
 };

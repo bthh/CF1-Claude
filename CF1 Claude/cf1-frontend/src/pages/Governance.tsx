@@ -1,28 +1,12 @@
-import React, { useState } from 'react';
-import { Vote, Clock, Users, CheckCircle, XCircle, AlertCircle, TrendingUp, Eye, Calendar } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Vote, Clock, Users, CheckCircle, XCircle, AlertCircle, TrendingUp, Eye, Calendar, Search } from 'lucide-react';
+import { useGovernanceStore, type GovernanceProposal } from '../store/governanceStore';
+import { useSimulatedLoading } from '../hooks/useLoading';
+import { SkeletonProposalCard, SkeletonStats } from '../components/Loading/Skeleton';
 
-interface ProposalProps {
-  id: string;
-  title: string;
-  description: string;
-  assetName: string;
-  assetType: string;
-  proposalType: 'dividend' | 'renovation' | 'sale' | 'management' | 'expansion';
-  status: 'active' | 'passed' | 'rejected' | 'pending';
-  votesFor: number;
-  votesAgainst: number;
-  totalVotes: number;
-  quorumRequired: number;
-  timeLeft: string;
-  proposedBy: string;
-  createdDate: string;
-  endDate: string;
-  userVoted?: 'for' | 'against' | null;
-  impact: string;
-  requiredAmount?: string;
-}
-
-const GovernanceProposal: React.FC<ProposalProps> = ({
+const GovernanceProposalCard: React.FC<GovernanceProposal> = ({
+  id,
   title,
   description,
   assetName,
@@ -40,6 +24,11 @@ const GovernanceProposal: React.FC<ProposalProps> = ({
   requiredAmount,
   userVoted
 }) => {
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    navigate(`/governance/proposal/${id}`);
+  };
   const forPercentage = totalVotes > 0 ? (votesFor / totalVotes) * 100 : 0;
   const againstPercentage = totalVotes > 0 ? (votesAgainst / totalVotes) * 100 : 0;
   const quorumPercentage = (totalVotes / quorumRequired) * 100;
@@ -92,7 +81,10 @@ const GovernanceProposal: React.FC<ProposalProps> = ({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm hover:shadow-md transition-shadow p-6 cursor-pointer">
+    <div 
+      className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm hover:shadow-md transition-shadow p-6 cursor-pointer"
+      onClick={handleClick}
+    >
       <div className="space-y-4">
         <div className="flex items-start justify-between">
           <div className="flex-1">
@@ -196,7 +188,13 @@ const GovernanceProposal: React.FC<ProposalProps> = ({
               You voted {userVoted}
             </span>
           ) : status === 'active' ? (
-            <button className="btn-primary text-sm px-4 py-1">
+            <button 
+              className="btn-primary text-sm px-4 py-1"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleClick();
+              }}
+            >
               Vote Now
             </button>
           ) : (
@@ -209,149 +207,61 @@ const GovernanceProposal: React.FC<ProposalProps> = ({
 };
 
 const Governance: React.FC = () => {
+  const location = useLocation();
   const [selectedTab, setSelectedTab] = useState<'active' | 'passed' | 'rejected' | 'all'>('active');
   const [selectedType, setSelectedType] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  const { proposals: mockProposals } = useGovernanceStore();
+  
+  // Simulate loading state for proposals
+  const { isLoading, data: proposals } = useSimulatedLoading(mockProposals, 1200);
 
-  const proposalTypes = [
-    { id: 'all', name: 'All Types', count: 12 },
-    { id: 'dividend', name: 'Dividend Distribution', count: 4 },
-    { id: 'renovation', name: 'Property Improvements', count: 3 },
-    { id: 'management', name: 'Management Changes', count: 2 },
-    { id: 'expansion', name: 'Business Expansion', count: 2 },
-    { id: 'sale', name: 'Asset Sale', count: 1 }
-  ];
-
-  const proposals: ProposalProps[] = [
-    {
-      id: '1',
-      title: 'Q4 Dividend Distribution',
-      description: 'Proposal to distribute quarterly dividends of $2.50 per token based on rental income from Manhattan Office Complex.',
-      assetName: 'Manhattan Office Complex',
-      assetType: 'Commercial Real Estate',
-      proposalType: 'dividend',
-      status: 'active',
-      votesFor: 1247,
-      votesAgainst: 156,
-      totalVotes: 1403,
-      quorumRequired: 1500,
-      timeLeft: '5 days left',
-      proposedBy: 'Asset Manager',
-      createdDate: 'Dec 3, 2024',
-      endDate: 'Dec 10, 2024',
-      impact: '+$2.50/token',
-      userVoted: null
-    },
-    {
-      id: '2',
-      title: 'Lobby Renovation Project',
-      description: 'Modernize the main lobby with new marble flooring, LED lighting, and digital directory system to increase property value.',
-      assetName: 'Miami Beach Resort',
-      assetType: 'Hospitality Real Estate',
-      proposalType: 'renovation',
-      status: 'active',
-      votesFor: 892,
-      votesAgainst: 234,
-      totalVotes: 1126,
-      quorumRequired: 1200,
-      timeLeft: '12 days left',
-      proposedBy: 'Property Manager',
-      createdDate: 'Nov 28, 2024',
-      endDate: 'Dec 15, 2024',
-      impact: '+8% property value',
-      requiredAmount: '$150,000',
-      userVoted: 'for'
-    },
-    {
-      id: '3',
-      title: 'Change Property Management Company',
-      description: 'Switch to a new property management firm with better track record and lower fees to improve net returns.',
-      assetName: 'Gold Bullion Vault',
-      assetType: 'Precious Metals',
-      proposalType: 'management',
-      status: 'passed',
-      votesFor: 2156,
-      votesAgainst: 344,
-      totalVotes: 2500,
-      quorumRequired: 2000,
-      timeLeft: 'Ended',
-      proposedBy: 'Token Holder',
-      createdDate: 'Nov 15, 2024',
-      endDate: 'Nov 30, 2024',
-      impact: '-0.5% fees',
-      userVoted: 'for'
-    },
-    {
-      id: '4',
-      title: 'Expand Wine Storage Facility',
-      description: 'Add temperature-controlled storage units to accommodate additional wine inventory and increase revenue potential.',
-      assetName: 'Rare Wine Collection',
-      assetType: 'Collectibles',
-      proposalType: 'expansion',
-      status: 'active',
-      votesFor: 567,
-      votesAgainst: 123,
-      totalVotes: 690,
-      quorumRequired: 800,
-      timeLeft: '8 days left',
-      proposedBy: 'Collection Manager',
-      createdDate: 'Dec 1, 2024',
-      endDate: 'Dec 12, 2024',
-      impact: '+15% capacity',
-      requiredAmount: '$75,000',
-      userVoted: null
-    },
-    {
-      id: '5',
-      title: 'Partial Asset Sale - Classic Cars',
-      description: 'Sell 3 vehicles from the classic car collection to realize gains and redistribute proceeds to token holders.',
-      assetName: 'Classic Car Collection',
-      assetType: 'Luxury Vehicles',
-      proposalType: 'sale',
-      status: 'rejected',
-      votesFor: 234,
-      votesAgainst: 1456,
-      totalVotes: 1690,
-      quorumRequired: 1500,
-      timeLeft: 'Ended',
-      proposedBy: 'Token Holder',
-      createdDate: 'Nov 20, 2024',
-      endDate: 'Dec 5, 2024',
-      impact: '$45,000 distribution',
-      userVoted: 'against'
-    },
-    {
-      id: '6',
-      title: 'Emergency Maintenance Fund',
-      description: 'Establish a reserve fund for emergency repairs and maintenance to ensure proper asset preservation.',
-      assetName: 'Multiple Assets',
-      assetType: 'General',
-      proposalType: 'management',
-      status: 'active',
-      votesFor: 1123,
-      votesAgainst: 67,
-      totalVotes: 1190,
-      quorumRequired: 1000,
-      timeLeft: '3 days left',
-      proposedBy: 'Platform Manager',
-      createdDate: 'Dec 4, 2024',
-      endDate: 'Dec 9, 2024',
-      impact: '2% of value reserved',
-      requiredAmount: '$50,000',
-      userVoted: null
+  // Set tab based on current route
+  useEffect(() => {
+    const path = location.pathname;
+    if (path === '/governance/active') {
+      setSelectedTab('active');
+    } else if (path === '/governance/passed') {
+      setSelectedTab('passed');
+    } else if (path === '/governance/rejected') {
+      setSelectedTab('rejected');
+    } else if (path === '/governance/my-votes') {
+      setSelectedTab('all');
+      // Could add additional filtering for user's votes
+    } else {
+      setSelectedTab('active'); // default
     }
+  }, [location.pathname]);
+
+  // Calculate proposal type counts dynamically
+  const proposalTypes = [
+    { id: 'all', name: 'All Types', count: (proposals || []).length },
+    { id: 'dividend', name: 'Dividend Distribution', count: (proposals || []).filter(p => p.proposalType === 'dividend').length },
+    { id: 'renovation', name: 'Property Improvements', count: (proposals || []).filter(p => p.proposalType === 'renovation').length },
+    { id: 'management', name: 'Management Changes', count: (proposals || []).filter(p => p.proposalType === 'management').length },
+    { id: 'expansion', name: 'Business Expansion', count: (proposals || []).filter(p => p.proposalType === 'expansion').length },
+    { id: 'sale', name: 'Asset Sale', count: (proposals || []).filter(p => p.proposalType === 'sale').length }
   ];
 
-  const filteredProposals = proposals.filter(proposal => {
+  const filteredProposals = (proposals || []).filter(proposal => {
     const matchesTab = selectedTab === 'all' || proposal.status === selectedTab;
     const matchesType = selectedType === 'all' || proposal.proposalType === selectedType;
-    return matchesTab && matchesType;
+    const matchesSearch = searchTerm === '' || 
+      proposal.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      proposal.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      proposal.assetName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      proposal.assetType.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      proposal.proposedBy.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    return matchesTab && matchesType && matchesSearch;
   });
 
   const tabCounts = {
-    active: proposals.filter(p => p.status === 'active').length,
-    passed: proposals.filter(p => p.status === 'passed').length,
-    rejected: proposals.filter(p => p.status === 'rejected').length,
-    all: proposals.length
+    active: (proposals || []).filter(p => p.status === 'active').length,
+    passed: (proposals || []).filter(p => p.status === 'passed').length,
+    rejected: (proposals || []).filter(p => p.status === 'rejected').length,
+    all: (proposals || []).length
   };
 
   return (
@@ -370,38 +280,42 @@ const Governance: React.FC = () => {
       {/* Stats Section Divider */}
       <div className="border-t border-gray-200 dark:border-gray-600"></div>
 
-      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="text-center">
-            <div className="flex items-center justify-center w-14 h-14 bg-blue-100 dark:bg-blue-900/20 rounded-lg mx-auto mb-3">
-              <Vote className="w-8 h-8 text-blue-600" />
+      {isLoading ? (
+        <SkeletonStats count={4} />
+      ) : (
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="text-center">
+              <div className="flex items-center justify-center w-14 h-14 bg-blue-100 dark:bg-blue-900/20 rounded-lg mx-auto mb-3">
+                <Vote className="w-8 h-8 text-blue-600" />
+              </div>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{(proposals || []).filter(p => p.status === 'active').length}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Active Proposals</p>
             </div>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">12</p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Active Proposals</p>
-          </div>
-          <div className="text-center">
-            <div className="flex items-center justify-center w-14 h-14 bg-green-100 dark:bg-green-900/20 rounded-lg mx-auto mb-3">
-              <CheckCircle className="w-8 h-8 text-green-600" />
+            <div className="text-center">
+              <div className="flex items-center justify-center w-14 h-14 bg-green-100 dark:bg-green-900/20 rounded-lg mx-auto mb-3">
+                <CheckCircle className="w-8 h-8 text-green-600" />
+              </div>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">89%</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Participation Rate</p>
             </div>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">89%</p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Participation Rate</p>
-          </div>
-          <div className="text-center">
-            <div className="flex items-center justify-center w-14 h-14 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg mx-auto mb-3">
-              <Clock className="w-8 h-8 text-yellow-600 dark:text-yellow-400" />
+            <div className="text-center">
+              <div className="flex items-center justify-center w-14 h-14 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg mx-auto mb-3">
+                <Clock className="w-8 h-8 text-yellow-600 dark:text-yellow-400" />
+              </div>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{(proposals || []).filter(p => p.status === 'active' && !p.userVoted).length}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Pending Your Vote</p>
             </div>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">5</p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Pending Your Vote</p>
-          </div>
-          <div className="text-center">
-            <div className="flex items-center justify-center w-14 h-14 bg-red-100 dark:bg-red-900/20 rounded-lg mx-auto mb-3">
-              <Calendar className="w-8 h-8 text-red-600" />
+            <div className="text-center">
+              <div className="flex items-center justify-center w-14 h-14 bg-red-100 dark:bg-red-900/20 rounded-lg mx-auto mb-3">
+                <Calendar className="w-8 h-8 text-red-600" />
+              </div>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">7</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Days Avg. Duration</p>
             </div>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">7</p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Days Avg. Duration</p>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Filters & Proposals Section Divider */}
       <div className="border-t border-gray-200 dark:border-gray-600"></div>
@@ -477,20 +391,51 @@ const Governance: React.FC = () => {
             </div>
 
             <div className="p-6">
-              <div className="space-y-6">
-                {filteredProposals.map((proposal) => (
-                  <GovernanceProposal key={proposal.id} {...proposal} />
-                ))}
+              {/* Search Bar */}
+              <div className="mb-6">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search proposals by title, description, asset, or proposer..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                {searchTerm && (
+                  <div className="mt-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                    <p className="text-blue-800 dark:text-blue-200 text-sm">
+                      Found {filteredProposals.length} proposal{filteredProposals.length !== 1 ? 's' : ''} matching "{searchTerm}"
+                    </p>
+                  </div>
+                )}
               </div>
 
-              {filteredProposals.length === 0 && (
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center mx-auto mb-4">
-                    <Vote className="w-8 h-8 text-gray-400 dark:text-gray-500" />
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No proposals found</h3>
-                  <p className="text-gray-600 dark:text-gray-400">Try adjusting your filters or check back later for new proposals.</p>
+              {isLoading ? (
+                <div className="space-y-6">
+                  {Array.from({ length: 3 }).map((_, index) => (
+                    <SkeletonProposalCard key={index} />
+                  ))}
                 </div>
+              ) : (
+                <>
+                  <div className="space-y-6">
+                    {filteredProposals.map((proposal) => (
+                      <GovernanceProposalCard key={proposal.id} {...proposal} />
+                    ))}
+                  </div>
+
+                  {filteredProposals.length === 0 && (
+                    <div className="text-center py-12">
+                      <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center mx-auto mb-4">
+                        <Vote className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+                      </div>
+                      <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No proposals found</h3>
+                      <p className="text-gray-600 dark:text-gray-400">Try adjusting your filters or check back later for new proposals.</p>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>

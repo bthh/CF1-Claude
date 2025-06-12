@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useCosmJS } from '../hooks/useCosmJS';
+import { useNotifications } from '../hooks/useNotifications';
+import { VerificationGate } from './Verification/VerificationGate';
 
 interface InvestmentModalProps {
   isOpen: boolean;
@@ -14,7 +16,10 @@ export const InvestmentModal: React.FC<InvestmentModalProps> = ({
   proposal,
   onSuccess
 }) => {
+  const [orderType, setOrderType] = useState<'market' | 'limit'>('market');
   const [investmentAmount, setInvestmentAmount] = useState<string>('');
+  const [limitPrice, setLimitPrice] = useState<string>('');
+  const [limitQuantity, setLimitQuantity] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [calculatedShares, setCalculatedShares] = useState<number>(0);
   const [estimatedReturns, setEstimatedReturns] = useState<string>('0');
@@ -28,55 +33,91 @@ export const InvestmentModal: React.FC<InvestmentModalProps> = ({
     error,
     clearError
   } = useCosmJS();
+  
+  const { success, error: showError, warning } = useNotifications();
 
-  // Calculate shares and returns when investment amount changes
+  // Calculate shares and returns based on order type
   useEffect(() => {
-    if (investmentAmount && proposal) {
+    if (proposal) {
       try {
-        const amountNum = parseFloat(investmentAmount);
-        const tokenPrice = parseFloat(proposal.financial_terms?.token_price || '0') / 1000000; // Convert from micro units
+        let shares = 0;
+        let totalAmount = 0;
         
-        if (tokenPrice > 0) {
-          const shares = Math.floor(amountNum / tokenPrice);
-          setCalculatedShares(shares);
+        if (orderType === 'market' && investmentAmount) {
+          const amountNum = parseFloat(investmentAmount);
+          const tokenPrice = parseFloat(proposal.financial_terms?.token_price || '0') / 1000000; // Convert from micro units
           
+          if (tokenPrice > 0) {
+            shares = Math.floor(amountNum / tokenPrice);
+            totalAmount = amountNum;
+          }
+        } else if (orderType === 'limit' && limitPrice && limitQuantity) {
+          const priceNum = parseFloat(limitPrice);
+          const quantityNum = parseFloat(limitQuantity);
+          
+          if (priceNum > 0 && quantityNum > 0) {
+            shares = quantityNum;
+            totalAmount = priceNum * quantityNum;
+          }
+        }
+        
+        setCalculatedShares(shares);
+        
+        if (totalAmount > 0) {
           // Calculate estimated returns based on expected APY
           const expectedAPY = parseFloat(proposal.financial_terms?.expected_apy?.replace('%', '') || '0') / 100;
-          const annualReturns = amountNum * expectedAPY;
+          const annualReturns = totalAmount * expectedAPY;
           setEstimatedReturns(annualReturns.toFixed(2));
+        } else {
+          setEstimatedReturns('0');
         }
       } catch (error) {
         setCalculatedShares(0);
         setEstimatedReturns('0');
       }
     }
-  }, [investmentAmount, proposal]);
+  }, [orderType, investmentAmount, limitPrice, limitQuantity, proposal]);
 
   const handleInvest = async () => {
     if (!isConnected) {
-      alert('Please connect your wallet first');
+      warning('Wallet Not Connected', 'Please connect your wallet to make an investment.');
       return;
     }
 
-    if (!investmentAmount || parseFloat(investmentAmount) <= 0) {
-      alert('Please enter a valid investment amount');
-      return;
+    let totalAmount = '';
+    
+    if (orderType === 'market') {
+      if (!investmentAmount || parseFloat(investmentAmount) <= 0) {
+        showError('Invalid Amount', 'Please enter a valid investment amount.');
+        return;
+      }
+      totalAmount = investmentAmount;
+    } else if (orderType === 'limit') {
+      if (!limitPrice || parseFloat(limitPrice) <= 0) {
+        showError('Invalid Price', 'Please enter a valid limit price.');
+        return;
+      }
+      if (!limitQuantity || parseFloat(limitQuantity) <= 0) {
+        showError('Invalid Quantity', 'Please enter a valid quantity.');
+        return;
+      }
+      totalAmount = (parseFloat(limitPrice) * parseFloat(limitQuantity)).toString();
     }
 
     // Convert to micro units for the contract
-    const amountInMicroUnits = parseAmount(investmentAmount);
+    const amountInMicroUnits = parseAmount(totalAmount);
     
     // Check minimum investment
     const minInvestment = proposal.financial_terms?.minimum_investment || '0';
     if (parseInt(amountInMicroUnits) < parseInt(minInvestment)) {
-      alert(`Minimum investment is $${formatAmount(minInvestment)}`);
+      showError('Minimum Investment Required', `The minimum investment for this proposal is $${formatAmount(minInvestment)}.`);
       return;
     }
 
     // Check user balance
     const userBalance = parseInt(balance);
     if (parseInt(amountInMicroUnits) > userBalance) {
-      alert('Insufficient balance');
+      showError('Insufficient Balance', 'You don\'t have enough funds for this investment.');
       return;
     }
 
@@ -87,14 +128,31 @@ export const InvestmentModal: React.FC<InvestmentModalProps> = ({
       const result = await invest(proposal.id, amountInMicroUnits);
       
       if (result) {
-        alert('Investment successful!');
+        success(
+          'Investment Successful!', 
+          `You have successfully invested $${totalAmount} in ${proposal.asset_details?.name || 'this proposal'}.`,
+          {
+            actionLabel: 'View Portfolio',
+            onAction: () => window.location.href = '/portfolio'
+          }
+        );
         setInvestmentAmount('');
+        setLimitPrice('');
+        setLimitQuantity('');
         onSuccess?.();
         onClose();
       }
     } catch (error: any) {
       console.error('Investment failed:', error);
-      alert(`Investment failed: ${error.message || 'Unknown error'}`);
+      showError(
+        'Investment Failed',
+        error.message || 'An unexpected error occurred. Please try again.',
+        {
+          persistent: true,
+          actionLabel: 'Contact Support',
+          onAction: () => window.open('mailto:support@cf1platform.com', '_blank')
+        }
+      );
     } finally {
       setIsProcessing(false);
     }
@@ -108,9 +166,31 @@ export const InvestmentModal: React.FC<InvestmentModalProps> = ({
     }
   };
 
+  const handleLimitPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (/^\d*\.?\d*$/.test(value)) {
+      setLimitPrice(value);
+    }
+  };
+
+  const handleLimitQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (/^\d*\.?\d*$/.test(value)) {
+      setLimitQuantity(value);
+    }
+  };
+
   const setMaxAmount = () => {
     const userBalanceFormatted = formatAmount(balance);
-    setInvestmentAmount(userBalanceFormatted);
+    if (orderType === 'market') {
+      setInvestmentAmount(userBalanceFormatted);
+    } else {
+      // For limit orders, calculate max quantity based on current limit price
+      if (limitPrice && parseFloat(limitPrice) > 0) {
+        const maxQuantity = parseFloat(userBalanceFormatted) / parseFloat(limitPrice);
+        setLimitQuantity(Math.floor(maxQuantity).toString());
+      }
+    }
   };
 
   if (!isOpen) return null;
@@ -146,46 +226,143 @@ export const InvestmentModal: React.FC<InvestmentModalProps> = ({
           )}
 
           <div className="space-y-4">
-            {/* Investment Amount Input */}
+            {/* Order Type Selector */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Investment Amount (USD)
+                Order Type
               </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={investmentAmount}
-                  onChange={handleAmountChange}
-                  placeholder="0.00"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
-                           bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                           focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  disabled={isProcessing || !isConnected}
-                />
+              <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
                 <button
-                  onClick={setMaxAmount}
-                  className="absolute right-2 top-2 text-xs text-blue-600 dark:text-blue-400 hover:underline"
-                  disabled={isProcessing || !isConnected}
+                  onClick={() => setOrderType('market')}
+                  className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
+                    orderType === 'market'
+                      ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                  }`}
+                  disabled={isProcessing}
                 >
-                  MAX
+                  Market Buy
+                </button>
+                <button
+                  onClick={() => setOrderType('limit')}
+                  className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
+                    orderType === 'limit'
+                      ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                  }`}
+                  disabled={isProcessing}
+                >
+                  Limit Buy
                 </button>
               </div>
-              {isConnected && (
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                  Available: ${formatAmount(balance)} NTRN
-                </p>
-              )}
             </div>
 
+            {/* Market Order Inputs */}
+            {orderType === 'market' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Investment Amount (USD)
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={investmentAmount}
+                    onChange={handleAmountChange}
+                    placeholder="0.00"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
+                             bg-white dark:bg-gray-700 text-gray-900 dark:text-white
+                             focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    disabled={isProcessing || !isConnected}
+                  />
+                  <button
+                    onClick={setMaxAmount}
+                    className="absolute right-2 top-2 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                    disabled={isProcessing || !isConnected}
+                  >
+                    MAX
+                  </button>
+                </div>
+                {isConnected && (
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                    Available: ${formatAmount(balance)} NTRN
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Limit Order Inputs */}
+            {orderType === 'limit' && (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Limit Price (USD per token)
+                  </label>
+                  <input
+                    type="text"
+                    value={limitPrice}
+                    onChange={handleLimitPriceChange}
+                    placeholder="0.00"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
+                             bg-white dark:bg-gray-700 text-gray-900 dark:text-white
+                             focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    disabled={isProcessing || !isConnected}
+                  />
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                    Current price: ${formatAmount(proposal?.financial_terms?.token_price || '0')}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Quantity (tokens)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={limitQuantity}
+                      onChange={handleLimitQuantityChange}
+                      placeholder="0"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
+                               bg-white dark:bg-gray-700 text-gray-900 dark:text-white
+                               focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      disabled={isProcessing || !isConnected}
+                    />
+                    <button
+                      onClick={setMaxAmount}
+                      className="absolute right-2 top-2 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                      disabled={isProcessing || !isConnected || !limitPrice}
+                    >
+                      MAX
+                    </button>
+                  </div>
+                  {isConnected && (
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                      Available: ${formatAmount(balance)} NTRN
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Investment Summary */}
-            {investmentAmount && parseFloat(investmentAmount) > 0 && (
+            {((orderType === 'market' && investmentAmount && parseFloat(investmentAmount) > 0) ||
+              (orderType === 'limit' && limitPrice && limitQuantity && parseFloat(limitPrice) > 0 && parseFloat(limitQuantity) > 0)) && (
               <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">Shares to receive:</span>
+                  <span className="text-gray-600 dark:text-gray-400">
+                    {orderType === 'market' ? 'Shares to receive:' : 'Shares to buy:'}
+                  </span>
                   <span className="font-medium text-gray-900 dark:text-white">
                     {calculatedShares.toLocaleString()}
                   </span>
                 </div>
+                {orderType === 'limit' && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600 dark:text-gray-400">Total cost:</span>
+                    <span className="font-medium text-gray-900 dark:text-white">
+                      ${(parseFloat(limitPrice || '0') * parseFloat(limitQuantity || '0')).toFixed(2)}
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600 dark:text-gray-400">Estimated annual returns:</span>
                   <span className="font-medium text-green-600 dark:text-green-400">
@@ -198,6 +375,11 @@ export const InvestmentModal: React.FC<InvestmentModalProps> = ({
                     {proposal?.financial_terms?.expected_apy || 'N/A'}
                   </span>
                 </div>
+                {orderType === 'limit' && (
+                  <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-xs text-blue-800 dark:text-blue-300">
+                    ℹ️ Limit order will execute when token price reaches ${limitPrice}
+                  </div>
+                )}
               </div>
             )}
 
@@ -247,22 +429,33 @@ export const InvestmentModal: React.FC<InvestmentModalProps> = ({
             >
               Cancel
             </button>
-            <button
-              onClick={handleInvest}
-              disabled={isProcessing || !isConnected || !investmentAmount || parseFloat(investmentAmount) <= 0}
-              className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600
-                       text-white rounded-lg font-medium transition-colors
-                       disabled:opacity-50 disabled:cursor-not-allowed"
+            <VerificationGate
+              action="invest"
+              amount={orderType === 'market' ? parseFloat(investmentAmount || '0') : parseFloat(limitPrice || '0') * parseFloat(limitQuantity || '0')}
+              proposalId={proposal?.id}
             >
-              {isProcessing ? (
-                <div className="flex items-center justify-center">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                  Processing...
-                </div>
-              ) : (
-                'Confirm Investment'
-              )}
-            </button>
+              <button
+                onClick={handleInvest}
+                disabled={
+                  isProcessing || 
+                  !isConnected || 
+                  (orderType === 'market' && (!investmentAmount || parseFloat(investmentAmount) <= 0)) ||
+                  (orderType === 'limit' && (!limitPrice || !limitQuantity || parseFloat(limitPrice) <= 0 || parseFloat(limitQuantity) <= 0))
+                }
+                className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600
+                         text-white rounded-lg font-medium transition-colors
+                         disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isProcessing ? (
+                  <div className="flex items-center justify-center">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                    Processing...
+                  </div>
+                ) : (
+                  orderType === 'market' ? 'Confirm Investment' : 'Place Limit Order'
+                )}
+              </button>
+            </VerificationGate>
           </div>
         </div>
       </div>

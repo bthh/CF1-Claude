@@ -1,6 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, Grid, List, Star, MapPin, DollarSign, TrendingUp } from 'lucide-react';
+import { Search, Filter, Grid, List, Star, MapPin, TrendingUp, SlidersHorizontal } from 'lucide-react';
+import { useSimulatedLoading } from '../hooks/useLoading';
+import { SkeletonCard, SkeletonStats } from '../components/Loading/Skeleton';
+import { useFilterPreferences } from '../hooks/useFilterPreferences';
+import { AdvancedFilters } from '../components/Filters/AdvancedFilters';
+import { FilterBadges } from '../components/Filters/FilterBadges';
+import { useFilterBadges } from '../hooks/useFilterBadges';
 
 interface AssetListingProps {
   id: string;
@@ -117,8 +123,31 @@ const AssetListing: React.FC<AssetListingProps> = ({
 
 const Marketplace: React.FC = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  
+  // Advanced filtering with persistence
+  const {
+    filters,
+    updateFilter,
+    resetFilters,
+    savePreset,
+    loadPreset,
+    deletePreset,
+    getPresets,
+    hasActiveFilters,
+    activeFilterCount
+  } = useFilterPreferences({
+    storageKey: 'marketplace_filters',
+    defaultFilters: {
+      searchTerm: '',
+      category: 'all',
+      sortBy: 'name',
+      sortOrder: 'asc',
+      priceRange: [0, 10000],
+      apyRange: [0, 20],
+      availabilityFilter: [],
+    }
+  });
 
   const categories = [
     { id: 'all', name: 'All Assets', count: 24 },
@@ -128,7 +157,8 @@ const Marketplace: React.FC = () => {
     { id: 'vehicles', name: 'Luxury Vehicles', count: 3 }
   ];
 
-  const assets: AssetListingProps[] = [
+  // Mock assets data
+  const mockAssets: AssetListingProps[] = [
     {
       id: '1',
       name: 'Manhattan Office Complex',
@@ -214,6 +244,108 @@ const Marketplace: React.FC = () => {
       tags: ['Mining', 'Commodity']
     }
   ];
+  
+  // Simulate loading state with mock data
+  const { isLoading, data: assets } = useSimulatedLoading(mockAssets, 1500);
+
+  // Filter badges for UI
+  const filterBadges = useFilterBadges(
+    filters,
+    (key) => updateFilter(key as any, key === 'priceRange' ? [0, 10000] : key === 'apyRange' ? [0, 20] : key === 'availabilityFilter' ? [] : ''),
+    {
+      categoryOptions: {
+        'real-estate': 'Real Estate',
+        'precious-metals': 'Precious Metals',
+        'art': 'Art & Collectibles',
+        'vehicles': 'Luxury Vehicles'
+      }
+    }
+  );
+
+  // Advanced search and filter logic
+  const filteredAssets = (assets || []).filter(asset => {
+    // Search term filter
+    const matchesSearch = !filters.searchTerm || 
+      asset.name.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
+      asset.type.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
+      asset.location.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
+      asset.tags.some(tag => tag.toLowerCase().includes(filters.searchTerm.toLowerCase()));
+
+    // Category filter
+    const matchesCategory = filters.category === 'all' || 
+      (filters.category === 'real-estate' && asset.type.toLowerCase().includes('real estate')) ||
+      (filters.category === 'precious-metals' && asset.type.toLowerCase().includes('metals')) ||
+      (filters.category === 'art' && (asset.type.toLowerCase().includes('art') || asset.type.toLowerCase().includes('collectibles'))) ||
+      (filters.category === 'vehicles' && asset.type.toLowerCase().includes('vehicles'));
+
+    // Price range filter
+    const tokenPrice = parseFloat(asset.tokenPrice.replace('$', '').replace(',', ''));
+    const matchesPrice = tokenPrice >= filters.priceRange[0] && tokenPrice <= filters.priceRange[1];
+
+    // APY range filter
+    const apy = parseFloat(asset.apy.replace('%', ''));
+    const matchesAPY = apy >= filters.apyRange[0] && apy <= filters.apyRange[1];
+
+    // Availability filter
+    const availabilityPercent = (asset.tokensAvailable / asset.totalTokens) * 100;
+    const matchesAvailability = filters.availabilityFilter.length === 0 || 
+      filters.availabilityFilter.some(filter => {
+        switch (filter) {
+          case 'high': return availabilityPercent > 50;
+          case 'medium': return availabilityPercent > 20 && availabilityPercent <= 50;
+          case 'low': return availabilityPercent > 0 && availabilityPercent <= 20;
+          case 'sold-out': return availabilityPercent === 0;
+          default: return true;
+        }
+      });
+
+    return matchesSearch && matchesCategory && matchesPrice && matchesAPY && matchesAvailability;
+  });
+
+  // Advanced sort logic
+  const sortedAssets = [...filteredAssets].sort((a, b) => {
+    let comparison = 0;
+    
+    switch (filters.sortBy) {
+      case 'name':
+        comparison = a.name.localeCompare(b.name);
+        break;
+      case 'apy':
+        comparison = parseFloat(a.apy.replace('%', '')) - parseFloat(b.apy.replace('%', ''));
+        break;
+      case 'price':
+        comparison = parseFloat(a.tokenPrice.replace('$', '').replace(',', '')) - parseFloat(b.tokenPrice.replace('$', '').replace(',', ''));
+        break;
+      case 'availability':
+        comparison = (a.tokensAvailable / a.totalTokens) - (b.tokensAvailable / b.totalTokens);
+        break;
+      default:
+        return 0;
+    }
+    
+    return filters.sortOrder === 'desc' ? -comparison : comparison;
+  });
+
+  // Update category counts based on current search
+  const updatedCategories = categories.map(category => ({
+    ...category,
+    count: category.id === 'all' 
+      ? filteredAssets.length 
+      : (assets || []).filter(asset => {
+          const matchesSearch = !filters.searchTerm || 
+            asset.name.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
+            asset.type.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
+            asset.location.toLowerCase().includes(filters.searchTerm.toLowerCase());
+          
+          const matchesThisCategory = category.id === 'all' || 
+            (category.id === 'real-estate' && asset.type.toLowerCase().includes('real estate')) ||
+            (category.id === 'precious-metals' && asset.type.toLowerCase().includes('metals')) ||
+            (category.id === 'art' && (asset.type.toLowerCase().includes('art') || asset.type.toLowerCase().includes('collectibles'))) ||
+            (category.id === 'vehicles' && asset.type.toLowerCase().includes('vehicles'));
+          
+          return matchesSearch && matchesThisCategory;
+        }).length
+  }));
 
   return (
     <div className="space-y-6">
@@ -238,6 +370,75 @@ const Marketplace: React.FC = () => {
         </div>
       </div>
 
+      {/* Search and Filter Bar */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search assets by name, type, location, or tags..."
+            value={filters.searchTerm}
+            onChange={(e) => updateFilter('searchTerm', e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+        <div className="flex items-center space-x-3">
+          <button
+            onClick={() => setShowAdvancedFilters(true)}
+            className={`flex items-center space-x-2 px-4 py-2 border rounded-lg transition-colors ${
+              hasActiveFilters
+                ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300'
+                : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+            }`}
+          >
+            <SlidersHorizontal className="w-4 h-4" />
+            <span>Filters</span>
+            {activeFilterCount > 0 && (
+              <span className="bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full">
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
+          
+          <select
+            value={`${filters.sortBy}_${filters.sortOrder}`}
+            onChange={(e) => {
+              const [sortBy, sortOrder] = e.target.value.split('_');
+              updateFilter('sortBy', sortBy);
+              updateFilter('sortOrder', sortOrder as 'asc' | 'desc');
+            }}
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="name_asc">Name (A-Z)</option>
+            <option value="name_desc">Name (Z-A)</option>
+            <option value="apy_desc">APY (High to Low)</option>
+            <option value="apy_asc">APY (Low to High)</option>
+            <option value="price_asc">Price (Low to High)</option>
+            <option value="price_desc">Price (High to Low)</option>
+            <option value="availability_desc">Availability (High to Low)</option>
+            <option value="availability_asc">Availability (Low to High)</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Filter Badges */}
+      {hasActiveFilters && (
+        <FilterBadges
+          badges={filterBadges}
+          onClearAll={resetFilters}
+          className="mt-4"
+        />
+      )}
+
+      {/* Search Results Info */}
+      {filters.searchTerm && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+          <p className="text-blue-800 dark:text-blue-200 text-sm">
+            Found {sortedAssets.length} asset{sortedAssets.length !== 1 ? 's' : ''} matching "{filters.searchTerm}"
+          </p>
+        </div>
+      )}
+
       {/* Categories & Search Section Divider */}
       <div className="border-t border-gray-200 dark:border-gray-700"></div>
 
@@ -246,12 +447,12 @@ const Marketplace: React.FC = () => {
           <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-4">
             <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Categories</h3>
             <div className="space-y-2">
-              {categories.map((category) => (
+              {updatedCategories.map((category) => (
                 <button
                   key={category.id}
-                  onClick={() => setSelectedCategory(category.id)}
+                  onClick={() => updateFilter('category', category.id)}
                   className={`w-full flex items-center justify-between p-2 rounded-lg text-left transition-colors ${
-                    selectedCategory === category.id
+                    filters.category === category.id
                       ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
                       : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700'
                   }`}
@@ -271,9 +472,9 @@ const Marketplace: React.FC = () => {
                   Token Price Range
                 </label>
                 <div className="flex items-center space-x-2">
-                  <input className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white h-8 text-sm flex-1" placeholder="Min" />
-                  <span className="text-gray-500 dark:text-gray-400">-</span>
-                  <input className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white h-8 text-sm flex-1" placeholder="Max" />
+                  <input className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white h-8 text-sm w-16 min-w-0" placeholder="Min" />
+                  <span className="text-gray-500 dark:text-gray-400 text-sm">-</span>
+                  <input className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white h-8 text-sm w-16 min-w-0" placeholder="Max" />
                 </div>
               </div>
               
@@ -314,31 +515,42 @@ const Marketplace: React.FC = () => {
         </div>
 
         <div className="flex-1">
-          <div className="flex items-center space-x-4 mb-6">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 dark:text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search assets..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="px-3 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white w-full"
-              />
+          {isLoading ? (
+            <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1'}`}>
+              {Array.from({ length: 6 }).map((_, index) => (
+                <SkeletonCard key={index} />
+              ))}
             </div>
-            <select className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white w-48">
-              <option>Sort by Relevance</option>
-              <option>Highest APY</option>
-              <option>Lowest Price</option>
-              <option>Most Available</option>
-              <option>Newest</option>
-            </select>
-          </div>
-
-          <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1'}`}>
-            {assets.map((asset) => (
-              <AssetListing key={asset.id} {...asset} />
-            ))}
-          </div>
+          ) : (
+            <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1'}`}>
+              {sortedAssets.length > 0 ? (
+                sortedAssets.map((asset) => (
+                  <AssetListing key={asset.id} {...asset} />
+                ))
+              ) : (
+                <div className="col-span-full text-center py-12">
+                  <Search className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No assets found</h3>
+                  <p className="text-gray-600 dark:text-gray-400 mb-4">
+                    {filters.searchTerm 
+                      ? `No assets match your search for "${filters.searchTerm}"`
+                      : hasActiveFilters
+                      ? "No assets match the selected filters"
+                      : "No assets available"
+                    }
+                  </p>
+                  {hasActiveFilters && (
+                    <button
+                      onClick={resetFilters}
+                      className="text-blue-600 hover:text-blue-700 font-medium"
+                    >
+                      Clear all filters
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="flex items-center justify-center mt-8 space-x-2">
             <button className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg px-3 py-2">Previous</button>
@@ -349,6 +561,31 @@ const Marketplace: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Advanced Filters Modal */}
+      <AdvancedFilters
+        isOpen={showAdvancedFilters}
+        onClose={() => setShowAdvancedFilters(false)}
+        filters={filters}
+        onFilterChange={updateFilter}
+        onResetFilters={resetFilters}
+        onSavePreset={savePreset}
+        onLoadPreset={loadPreset}
+        onDeletePreset={deletePreset}
+        presets={getPresets()}
+        availabilityOptions={[
+          { value: 'high', label: 'High Availability (>50%)', count: sortedAssets.filter(a => (a.tokensAvailable / a.totalTokens) > 0.5).length },
+          { value: 'medium', label: 'Medium Availability (20-50%)', count: sortedAssets.filter(a => { const p = a.tokensAvailable / a.totalTokens; return p > 0.2 && p <= 0.5; }).length },
+          { value: 'low', label: 'Low Availability (1-20%)', count: sortedAssets.filter(a => { const p = a.tokensAvailable / a.totalTokens; return p > 0 && p <= 0.2; }).length },
+          { value: 'sold-out', label: 'Sold Out', count: sortedAssets.filter(a => a.tokensAvailable === 0).length }
+        ]}
+        sortOptions={[
+          { value: 'name', label: 'Name' },
+          { value: 'apy', label: 'APY' },
+          { value: 'price', label: 'Price' },
+          { value: 'availability', label: 'Availability' }
+        ]}
+      />
     </div>
   );
 };

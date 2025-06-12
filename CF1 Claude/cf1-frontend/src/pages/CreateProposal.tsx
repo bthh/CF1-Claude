@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { 
   ArrowLeft, 
   ArrowRight, 
@@ -9,12 +9,14 @@ import {
   CheckCircle,
   Upload,
   MapPin,
-  Calendar,
   Percent,
   Users,
   Target,
-  Clock
+  Clock,
+  Save
 } from 'lucide-react';
+import { useSubmissionStore } from '../store/submissionStore';
+import { useNotifications } from '../hooks/useNotifications';
 
 interface FormData {
   // Asset Details
@@ -44,7 +46,12 @@ interface FormData {
 
 const CreateProposal: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { addSubmission, saveDraft, updateDraft, getSubmissionById } = useSubmissionStore();
+  const { success, error: showError, info } = useNotifications();
   const [currentStep, setCurrentStep] = useState(1);
+  const [isEditingDraft, setIsEditingDraft] = useState(false);
+  const [draftId, setDraftId] = useState<string | null>(null);
   const [formData, setFormData] = useState<FormData>({
     assetName: '',
     assetType: '',
@@ -63,6 +70,36 @@ const CreateProposal: React.FC = () => {
     riskFactors: '',
     useOfFunds: ''
   });
+
+  // Load draft if editing
+  useEffect(() => {
+    const draftParam = searchParams.get('draft');
+    if (draftParam) {
+      const draft = getSubmissionById(draftParam);
+      if (draft && draft.status === 'draft') {
+        setIsEditingDraft(true);
+        setDraftId(draftParam);
+        setFormData({
+          assetName: draft.assetName,
+          assetType: draft.assetType,
+          category: draft.category,
+          location: draft.location,
+          description: draft.description,
+          targetAmount: draft.targetAmount,
+          tokenPrice: draft.tokenPrice,
+          minimumInvestment: draft.minimumInvestment,
+          expectedAPY: draft.expectedAPY,
+          fundingDeadline: draft.fundingDeadline,
+          businessPlan: null, // Files can't be restored from drafts
+          financialProjections: null,
+          legalDocuments: null,
+          assetValuation: null,
+          riskFactors: draft.riskFactors,
+          useOfFunds: draft.useOfFunds
+        });
+      }
+    }
+  }, [searchParams, getSubmissionById]);
 
   const totalSteps = 4;
 
@@ -144,15 +181,103 @@ const CreateProposal: React.FC = () => {
     }
   };
 
+  const handleSaveDraft = () => {
+    const submissionData = {
+      assetName: formData.assetName,
+      assetType: formData.assetType,
+      category: formData.category,
+      location: formData.location,
+      description: formData.description,
+      targetAmount: formData.targetAmount,
+      tokenPrice: formData.tokenPrice,
+      minimumInvestment: formData.minimumInvestment,
+      expectedAPY: formData.expectedAPY,
+      fundingDeadline: formData.fundingDeadline,
+      businessPlan: formData.businessPlan?.name,
+      financialProjections: formData.financialProjections?.name,
+      legalDocuments: formData.legalDocuments?.name,
+      assetValuation: formData.assetValuation?.name,
+      riskFactors: formData.riskFactors,
+      useOfFunds: formData.useOfFunds
+    };
+
+    if (isEditingDraft && draftId) {
+      updateDraft(draftId, submissionData);
+      success('Draft Updated', 'Your proposal draft has been saved with the latest changes.');
+    } else {
+      const newDraftId = saveDraft(submissionData);
+      setDraftId(newDraftId);
+      setIsEditingDraft(true);
+      success(
+        'Draft Saved', 
+        'Your proposal has been saved as a draft. You can continue editing or submit it later.',
+        {
+          actionLabel: 'View All Drafts',
+          onAction: () => navigate('/launchpad/drafts')
+        }
+      );
+    }
+  };
+
   const handleSubmit = () => {
     if (validateStep(currentStep)) {
-      // Here you would submit the form data to your backend
-      console.log('Submitting proposal:', formData);
+      const submissionData = {
+        assetName: formData.assetName,
+        assetType: formData.assetType,
+        category: formData.category,
+        location: formData.location,
+        description: formData.description,
+        targetAmount: formData.targetAmount,
+        tokenPrice: formData.tokenPrice,
+        minimumInvestment: formData.minimumInvestment,
+        expectedAPY: formData.expectedAPY,
+        fundingDeadline: formData.fundingDeadline,
+        businessPlan: formData.businessPlan?.name,
+        financialProjections: formData.financialProjections?.name,
+        legalDocuments: formData.legalDocuments?.name,
+        assetValuation: formData.assetValuation?.name,
+        riskFactors: formData.riskFactors,
+        useOfFunds: formData.useOfFunds
+      };
       
-      // Navigate back to launchpad with success message
-      navigate('/launchpad', { 
-        state: { message: 'Proposal submitted successfully! It will be reviewed within 3-5 business days.' }
-      });
+      const result = addSubmission(submissionData);
+      
+      if (result.success && result.proposalId) {
+        success(
+          'Proposal Submitted!', 
+          'Your proposal has been submitted successfully and will be reviewed within 3-5 business days.',
+          {
+            duration: 6000,
+            actionLabel: 'View Status',
+            onAction: () => navigate('/my-submissions')
+          }
+        );
+        
+        // Show follow-up info notification
+        setTimeout(() => {
+          info(
+            'What Happens Next?',
+            'Our team will review your proposal and documentation. You\'ll receive updates via notifications and email.',
+            { duration: 10000 }
+          );
+        }, 3000);
+        
+        // Navigate to submissions page
+        navigate('/my-submissions');
+      } else {
+        // Save as draft if submission fails
+        const draftId = saveDraft(submissionData);
+        
+        showError(
+          'Submission Failed',
+          result.error || 'There was a problem submitting your proposal. It has been saved to drafts.',
+          {
+            persistent: true,
+            actionLabel: 'View Drafts',
+            onAction: () => navigate('/launchpad/drafts')
+          }
+        );
+      }
     }
   };
 
@@ -485,8 +610,12 @@ const CreateProposal: React.FC = () => {
         </button>
         
         <div className="text-center flex-1">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Submit New Proposal</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">Create a new tokenized asset proposal</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            {isEditingDraft ? 'Edit Draft Proposal' : 'Submit New Proposal'}
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
+            {isEditingDraft ? 'Edit and submit your saved draft' : 'Create a new tokenized asset proposal'}
+          </p>
         </div>
         
         <div className="w-32"></div> {/* Spacer for centering */}
@@ -516,37 +645,50 @@ const CreateProposal: React.FC = () => {
             <span>Previous</span>
           </button>
 
-          <div className="text-sm text-gray-500 dark:text-gray-400">
-            Step {currentStep} of {totalSteps}
-          </div>
+          <div className="flex items-center space-x-4">
+            {/* Save Draft Button - show if form has basic data */}
+            {formData.assetName && (
+              <button
+                onClick={handleSaveDraft}
+                className="flex items-center space-x-2 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+              >
+                <Save className="w-4 h-4" />
+                <span>{isEditingDraft ? 'Update Draft' : 'Save Draft'}</span>
+              </button>
+            )}
 
-          {currentStep < totalSteps ? (
-            <button
-              onClick={nextStep}
-              disabled={!validateStep(currentStep)}
-              className={`flex items-center space-x-2 px-6 py-2 rounded-lg transition-colors font-medium ${
-                validateStep(currentStep)
-                  ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm'
-                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              }`}
-            >
-              <span>Next</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          ) : (
-            <button
-              onClick={handleSubmit}
-              disabled={!validateStep(currentStep)}
-              className={`flex items-center space-x-2 px-6 py-2 rounded-lg transition-colors font-medium ${
-                validateStep(currentStep)
-                  ? 'bg-green-600 hover:bg-green-700 text-white shadow-sm'
-                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              }`}
-            >
-              <CheckCircle className="w-4 h-4" />
-              <span>Submit Proposal</span>
-            </button>
-          )}
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              Step {currentStep} of {totalSteps}
+            </div>
+
+            {currentStep < totalSteps ? (
+              <button
+                onClick={nextStep}
+                disabled={!validateStep(currentStep)}
+                className={`flex items-center space-x-2 px-6 py-2 rounded-lg transition-colors font-medium ${
+                  validateStep(currentStep)
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                <span>Next</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            ) : (
+              <button
+                onClick={handleSubmit}
+                disabled={!validateStep(currentStep)}
+                className={`flex items-center space-x-2 px-6 py-2 rounded-lg transition-colors font-medium ${
+                  validateStep(currentStep)
+                    ? 'bg-green-600 hover:bg-green-700 text-white shadow-sm'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                <CheckCircle className="w-4 h-4" />
+                <span>Submit Proposal</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
