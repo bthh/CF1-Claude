@@ -188,7 +188,7 @@ export const useOnboarding = (options: UseOnboardingOptions = {}) => {
     return (completedStepsInTour / tour.steps.length) * 100;
   }, [state.completedSteps]);
 
-  // Spotlight/highlight functionality
+  // Spotlight/highlight functionality without overlay
   const highlightElement = useCallback((selector: string) => {
     const element = document.querySelector(selector) as HTMLElement;
     if (!element) return null;
@@ -199,41 +199,42 @@ export const useOnboarding = (options: UseOnboardingOptions = {}) => {
       highlightRef.current.style.zIndex = '';
     }
 
-    // Add highlight to new element
+    // Add highlight to new element with stronger visual highlight
     element.classList.add('onboarding-highlight');
     element.style.zIndex = '1001';
+    element.style.position = 'relative';
     highlightRef.current = element;
 
-    // Create overlay
-    if (!overlayRef.current) {
-      const overlay = document.createElement('div');
-      overlay.className = 'onboarding-overlay';
-      overlay.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        z-index: 1000;
-        pointer-events: none;
-      `;
-      document.body.appendChild(overlay);
-      overlayRef.current = overlay;
-    }
-
+    // No overlay - just element highlighting for cleaner UI
     return element;
   }, []);
 
   const clearHighlight = useCallback(() => {
-    if (highlightRef.current) {
-      highlightRef.current.classList.remove('onboarding-highlight');
-      highlightRef.current.style.zIndex = '';
-      highlightRef.current = null;
-    }
+    try {
+      if (highlightRef.current) {
+        highlightRef.current.classList.remove('onboarding-highlight');
+        highlightRef.current.style.zIndex = '';
+        highlightRef.current.style.position = '';
+        highlightRef.current = null;
+      }
 
-    if (overlayRef.current) {
-      document.body.removeChild(overlayRef.current);
+      // Remove any existing overlays (cleanup from old instances)
+      if (overlayRef.current && overlayRef.current.parentNode) {
+        overlayRef.current.parentNode.removeChild(overlayRef.current);
+        overlayRef.current = null;
+      }
+
+      // Cleanup any stray onboarding overlays
+      const existingOverlays = document.querySelectorAll('.onboarding-overlay');
+      existingOverlays.forEach(overlay => {
+        if (overlay.parentNode) {
+          overlay.parentNode.removeChild(overlay);
+        }
+      });
+    } catch (error) {
+      console.warn('Error clearing highlight:', error);
+      // Force reset refs even if removal failed
+      highlightRef.current = null;
       overlayRef.current = null;
     }
   }, []);
@@ -280,6 +281,13 @@ export const useOnboarding = (options: UseOnboardingOptions = {}) => {
       }, timeout);
     });
   }, []);
+
+  // Clear highlights when tour becomes inactive
+  useEffect(() => {
+    if (!state.isActive) {
+      clearHighlight();
+    }
+  }, [state.isActive, clearHighlight]);
 
   // Cleanup on unmount
   useEffect(() => {

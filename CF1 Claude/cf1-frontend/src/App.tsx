@@ -26,6 +26,14 @@ import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import Verification from './pages/Verification';
 import Analytics from './pages/Analytics';
+import Trading from './pages/Trading';
+import LiquidityPools from './pages/LiquidityPools';
+import Staking from './pages/Staking';
+import Lending from './pages/Lending';
+import CreatorAdmin from './pages/CreatorAdmin';
+import SuperAdmin from './pages/SuperAdmin';
+import PlatformAdmin from './pages/PlatformAdmin';
+import { AdminAuthProvider } from './hooks/useAdminAuth';
 
 // Component for tracking page views
 const PageTracker = () => {
@@ -38,7 +46,8 @@ function App() {
     <ErrorBoundary>
       <QueryProvider>
         <NotificationProvider>
-          <OnboardingProvider>
+          <AdminAuthProvider>
+            <OnboardingProvider>
             <Router>
               <PageTracker />
               <Layout>
@@ -70,11 +79,21 @@ function App() {
               <Route path="/profile" element={<Profile />} />
               <Route path="/profile/settings" element={<Settings />} />
               <Route path="/profile/verification" element={<Verification />} />
+              <Route path="/trading/:tokenId" element={<Trading />} />
+              <Route path="/liquidity" element={<LiquidityPools />} />
+              <Route path="/staking" element={<Staking />} />
+              <Route path="/lending" element={<Lending />} />
+              
+              {/* Admin Routes */}
+              <Route path="/admin/creator" element={<CreatorAdmin />} />
+              <Route path="/admin/super" element={<SuperAdmin />} />
+              <Route path="/admin/platform" element={<PlatformAdmin />} />
               </Routes>
             </RouteErrorBoundary>
             </Layout>
           </Router>
-          </OnboardingProvider>
+            </OnboardingProvider>
+          </AdminAuthProvider>
         </NotificationProvider>
       </QueryProvider>
     </ErrorBoundary>

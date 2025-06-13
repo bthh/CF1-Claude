@@ -1,10 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ChevronDown, Zap, Plus, Vote, Eye, User, Settings, LogOut, Moon, Sun, Bell, Wallet, HelpCircle, PlayCircle, Menu } from 'lucide-react';
+import { ChevronDown, Zap, Plus, Vote, Eye, User, Settings, LogOut, Moon, Sun, Bell, Wallet, HelpCircle, PlayCircle, Menu, Shield, Crown, Users } from 'lucide-react';
 import { MobileNavigation } from './MobileNavigation';
 import { useCosmJS } from '../../hooks/useCosmJS';
 import { useOnboardingContext } from '../Onboarding/OnboardingProvider';
 import { useVerificationStore } from '../../store/verificationStore';
+import { useAdminAuth } from '../../hooks/useAdminAuth';
+import AdminLogin from '../AdminLogin';
 
 const Header: React.FC = () => {
   const location = useLocation();
@@ -17,6 +19,10 @@ const Header: React.FC = () => {
   
   // Verification store
   const { initializeUser, level } = useVerificationStore();
+  
+  // Admin authentication
+  const { isAdmin, adminRole, logoutAdmin } = useAdminAuth();
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
   
   // Simple local state for theme and notifications
   const [darkMode, setDarkMode] = useState(() => {
@@ -80,6 +86,9 @@ const Header: React.FC = () => {
   // Handle logout
   const handleLogout = () => {
     disconnect();
+    if (isAdmin) {
+      logoutAdmin();
+    }
     setIsProfileOpen(false);
   };
   
@@ -123,7 +132,23 @@ const Header: React.FC = () => {
       icon: <HelpCircle className="w-4 h-4" />,
       action: () => startTour('marketplace-tour'),
       description: 'Get help and tutorials'
-    }
+    },
+    ...(isConnected && !isAdmin ? [{
+      label: 'Admin Access',
+      icon: <Shield className="w-4 h-4" />,
+      action: () => setShowAdminLogin(true),
+      description: 'Access admin functions'
+    }] : []),
+    ...(isAdmin ? [{
+      label: `${adminRole?.replace('_', ' ')} Panel`,
+      icon: adminRole === 'creator' ? <Users className="w-4 h-4" /> : 
+            adminRole === 'super_admin' ? <Crown className="w-4 h-4" /> : 
+            <Shield className="w-4 h-4" />,
+      to: adminRole === 'creator' ? '/admin/creator' : 
+          adminRole === 'super_admin' ? '/admin/super' : 
+          '/admin/platform',
+      description: `Access ${adminRole?.replace('_', ' ')} dashboard`
+    }] : [])
   ];
 
   const profileActions = [
@@ -225,6 +250,48 @@ const Header: React.FC = () => {
           >
             Analytics
           </Link>
+          <Link 
+            to="/lending"
+            className={`px-4 py-2 rounded-lg text-sm font-medium ${
+              isActive('/lending') ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white'
+            }`}
+          >
+            Lending
+          </Link>
+          {isAdmin && (
+            <>
+              {adminRole === 'creator' && (
+                <Link 
+                  to="/admin/creator"
+                  className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                    isActive('/admin/creator') ? 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300' : 'text-orange-600 hover:text-orange-900 dark:text-orange-300 dark:hover:text-orange-100'
+                  }`}
+                >
+                  Creator Admin
+                </Link>
+              )}
+              {adminRole === 'super_admin' && (
+                <Link 
+                  to="/admin/super"
+                  className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                    isActive('/admin/super') ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300' : 'text-red-600 hover:text-red-900 dark:text-red-300 dark:hover:text-red-100'
+                  }`}
+                >
+                  Super Admin
+                </Link>
+              )}
+              {adminRole === 'platform_admin' && (
+                <Link 
+                  to="/admin/platform"
+                  className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                    isActive('/admin/platform') ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'text-green-600 hover:text-green-900 dark:text-green-300 dark:hover:text-green-100'
+                  }`}
+                >
+                  Platform Admin
+                </Link>
+              )}
+            </>
+          )}
         </nav>
 
         {/* Desktop Right Section */}
@@ -463,6 +530,13 @@ const Header: React.FC = () => {
         onClose={() => setIsMobileNavOpen(false)}
         darkMode={darkMode}
         onToggleDarkMode={toggleDarkMode}
+      />
+
+      {/* Admin Login Modal */}
+      <AdminLogin
+        isOpen={showAdminLogin}
+        onClose={() => setShowAdminLogin(false)}
+        onSuccess={() => setShowAdminLogin(false)}
       />
     </>
   );

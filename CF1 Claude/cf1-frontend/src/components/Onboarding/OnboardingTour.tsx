@@ -43,8 +43,8 @@ export const OnboardingTourComponent: React.FC<OnboardingTourProps> = ({
 }) => {
   const [tour, setTour] = useState<OnboardingTour | null>(null);
   const [currentStepData, setCurrentStepData] = useState<OnboardingStep | null>(null);
-  const [isTransitioning, setIsTransitioning] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
+  const [positionLocked, setPositionLocked] = useState(false);
 
   useEffect(() => {
     if (tourId) {
@@ -64,7 +64,18 @@ export const OnboardingTourComponent: React.FC<OnboardingTourProps> = ({
   }, [tour, currentStep]);
 
   const calculateTooltipPosition = useCallback((element: HTMLElement, position: string = 'bottom') => {
+    // Ensure element is valid and visible
+    if (!element || !element.getBoundingClientRect) {
+      return { top: window.innerHeight / 2 - 100, left: window.innerWidth / 2 - 160 };
+    }
+
     const rect = element.getBoundingClientRect();
+    
+    // Validate the rect has valid dimensions
+    if (rect.width === 0 && rect.height === 0) {
+      return { top: window.innerHeight / 2 - 100, left: window.innerWidth / 2 - 160 };
+    }
+
     const tooltipWidth = 320;
     const tooltipHeight = 200;
     const offset = 20;
@@ -96,22 +107,24 @@ export const OnboardingTourComponent: React.FC<OnboardingTourProps> = ({
         break;
     }
 
-    // Keep tooltip within viewport
-    top = Math.max(10, Math.min(top, window.innerHeight - tooltipHeight - 10));
-    left = Math.max(10, Math.min(left, window.innerWidth - tooltipWidth - 10));
+    // Keep tooltip within viewport with more conservative bounds
+    const margin = 20;
+    top = Math.max(margin, Math.min(top, window.innerHeight - tooltipHeight - margin));
+    left = Math.max(margin, Math.min(left, window.innerWidth - tooltipWidth - margin));
 
     return { top, left };
   }, []);
 
   const handleStepChange = useCallback(async (step: OnboardingStep) => {
-    setIsTransitioning(true);
-
+    // Unlock position for new step
+    setPositionLocked(false);
+    
     try {
       // Navigate to required page if specified
       if (step.page && window.location.pathname !== step.page) {
         navigateToPage(step.page);
-        // Wait for navigation
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Minimal wait for navigation
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
 
       // Perform action if specified
@@ -129,37 +142,69 @@ export const OnboardingTourComponent: React.FC<OnboardingTourProps> = ({
               scrollToElement(step.actionTarget);
               break;
             case 'wait':
-              await new Promise(resolve => setTimeout(resolve, 1000));
+              await new Promise(resolve => setTimeout(resolve, 300));
               break;
           }
         }
       }
 
+      // Clear any existing highlights first
+      clearHighlight();
+      
+      // Small delay to ensure overlay is removed
+      await new Promise(resolve => setTimeout(resolve, 50));
+      
       // Highlight target element
       if (step.target && step.placement !== 'modal') {
-        const targetElement = await waitForElement(step.target, 3000);
+        const targetElement = await waitForElement(step.target, 2000);
         if (targetElement) {
           highlightElement(step.target);
           scrollToElement(step.target);
           
-          // Calculate tooltip position
-          const position = calculateTooltipPosition(targetElement, step.position);
-          setTooltipPosition(position);
+          // Wait for any animations/transitions to complete
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          // Recalculate position after settling - query fresh to avoid stale references
+          const freshElement = document.querySelector(step.target) as HTMLElement;
+          if (freshElement && freshElement.offsetParent !== null) {
+            // Ensure element is visible and has dimensions
+            const rect = freshElement.getBoundingClientRect();
+            if (rect.width > 0 && rect.height > 0) {
+              const position = calculateTooltipPosition(freshElement, step.position);
+              setTooltipPosition(position);
+              setPositionLocked(true);
+            } else {
+              // Element not ready yet, wait a bit more
+              await new Promise(resolve => setTimeout(resolve, 100));
+              const retryElement = document.querySelector(step.target) as HTMLElement;
+              if (retryElement) {
+                const position = calculateTooltipPosition(retryElement, step.position);
+                setTooltipPosition(position);
+              } else {
+                setTooltipPosition(calculateTooltipPosition(document.body, 'center'));
+              }
+              setPositionLocked(true);
+            }
+          } else {
+            console.warn('Target element not found or not visible:', step.target);
+            setTooltipPosition(calculateTooltipPosition(document.body, 'center'));
+            setPositionLocked(true);
+          }
         } else {
           // Fallback to center if element not found
           setTooltipPosition(calculateTooltipPosition(document.body, 'center'));
+          setPositionLocked(true);
         }
       } else {
-        // Center modal
-        clearHighlight();
+        // Center modal - already cleared highlights above
         setTooltipPosition(calculateTooltipPosition(document.body, 'center'));
+        setPositionLocked(true);
       }
     } catch (error) {
       console.warn('Error during step transition:', error);
       setTooltipPosition(calculateTooltipPosition(document.body, 'center'));
+      setPositionLocked(true);
     }
-
-    setIsTransitioning(false);
   }, [navigateToPage, waitForElement, highlightElement, scrollToElement, clearHighlight, calculateTooltipPosition]);
 
   useEffect(() => {
@@ -192,10 +237,21 @@ export const OnboardingTourComponent: React.FC<OnboardingTourProps> = ({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isActive, onClose]);
 
+  // Cleanup highlights when component unmounts or becomes inactive
+  useEffect(() => {
+    return () => {
+      if (!isActive) {
+        clearHighlight();
+      }
+    };
+  }, [isActive, clearHighlight]);
+
   const handleNext = () => {
     if (!tour) return;
     
     if (currentStep >= tour.steps.length - 1) {
+      // Clear highlights immediately on completion
+      clearHighlight();
       onComplete();
     } else {
       onNext();
@@ -222,14 +278,9 @@ export const OnboardingTourComponent: React.FC<OnboardingTourProps> = ({
 
   return (
     <>
-      {/* Overlay */}
-      <div className="fixed inset-0 z-50 bg-black bg-opacity-50 transition-opacity duration-300" />
-      
-      {/* Tooltip/Modal */}
+      {/* Tooltip/Modal - No separate overlay needed as useOnboarding creates it */}
       <div
-        className={`fixed z-50 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 transition-all duration-300 ${
-          isTransitioning ? 'opacity-50' : 'opacity-100'
-        }`}
+        className="fixed z-[1002] w-80 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 opacity-100 transition-[top,left] duration-200"
         style={{
           top: `${tooltipPosition.top}px`,
           left: `${tooltipPosition.left}px`,

@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Star, MapPin, TrendingUp, DollarSign, BarChart3 } from 'lucide-react';
+import { ArrowLeft, Star, MapPin, TrendingUp, DollarSign, BarChart3, ArrowUpDown } from 'lucide-react';
 import { PriceChart } from '../components/PriceChart';
 import { InvestmentModal } from '../components/InvestmentModal';
 import { SellModal } from '../components/SellModal';
@@ -147,7 +147,7 @@ const AssetDetail: React.FC = () => {
                   disabled={!quantity}
                   className={`flex-1 px-4 py-3 rounded-lg font-medium transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed ${
                     mode === 'buy'
-                      ? 'bg-green-600 hover:bg-green-700 text-white'
+                      ? 'bg-purple-600 hover:bg-purple-700 text-white'
                       : 'bg-red-600 hover:bg-red-700 text-white'
                   }`}
                 >
@@ -271,6 +271,14 @@ const AssetDetail: React.FC = () => {
               >
                 <TrendingUp className="w-4 h-4" />
                 <span>Sell Tokens</span>
+              </button>
+              
+              <button 
+                onClick={() => navigate(`/trading/${asset.id}`)}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition-colors flex items-center justify-center space-x-2"
+              >
+                <ArrowUpDown className="w-4 h-4" />
+                <span>Advanced Trading</span>
               </button>
             </div>
           </div>

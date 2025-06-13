@@ -9,7 +9,10 @@ import {
   BarChart3,
   Users,
   FileText,
-  HelpCircle 
+  HelpCircle,
+  ArrowUpDown,
+  Droplets,
+  Lock
 } from 'lucide-react';
 
 interface NavItemProps {
@@ -81,6 +84,31 @@ const Sidebar: React.FC = () => {
             to="/analytics"
           />
         </nav>
+      </div>
+
+      <div className="px-6 mt-6">
+        <div className="border-t border-secondary-200 pt-6">
+          <h3 className="text-xs font-semibold text-secondary-500 uppercase tracking-wider mb-3">
+            DeFi Features
+          </h3>
+          <nav className="space-y-1">
+            <NavItem
+              icon={<ArrowUpDown className="w-5 h-5" />}
+              label="Trading"
+              to="/trading/RWA-1"
+            />
+            <NavItem
+              icon={<Droplets className="w-5 h-5" />}
+              label="Liquidity"
+              to="/liquidity"
+            />
+            <NavItem
+              icon={<Lock className="w-5 h-5" />}
+              label="Staking"
+              to="/staking"
+            />
+          </nav>
+        </div>
       </div>
 
       <div className="px-6">

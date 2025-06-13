@@ -60,6 +60,8 @@ export const OnboardingProvider: React.FC<OnboardingProviderProps> = ({ children
 
   const handleTourComplete = () => {
     if (currentTour) {
+      // Clear any highlights before completing
+      clearHighlight();
       completeTour(currentTour);
     }
   };

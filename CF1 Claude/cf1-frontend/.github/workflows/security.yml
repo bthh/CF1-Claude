@@ -1,0 +1,115 @@
+name: Security Audit
+
+on:
+  schedule:
+    - cron: '0 0 * * 1' # Weekly on Monday
+  workflow_dispatch: # Manual trigger
+
+jobs:
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v3
+        with:
+          fail-on-severity: moderate
+
+  supply-chain-security:
+    name: Supply Chain Security
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          artifact-name: sbom.spdx
+          format: spdx-json
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v3
+        with:
+          name: sbom
+          path: sbom.spdx
+
+  license-scan:
+    name: License Compliance
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: License Scan
+        uses: fossas/fossa-action@main
+        with:
+          api-key: ${{ secrets.FOSSA_API_KEY }}
+
+  infrastructure-scan:
+    name: Infrastructure Security
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Checkov
+        id: checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: .
+          quiet: true
+          soft_fail: true
+          framework: all
+          output_format: sarif
+          output_file_path: reports/results.sarif
+
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: reports/results.sarif
+
+  api-security:
+    name: API Security Testing
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: OWASP ZAP API Scan
+        uses: zaproxy/action-api-scan@v0.4.0
+        with:
+          target: 'https://staging-api.cf1.finance/openapi.json'
+          rules_file_name: '.zap/rules.tsv'
+          cmd_options: '-a'
+
+  smart-contract-audit:
+    name: Smart Contract Security
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Install Slither
+        run: |
+          pip3 install slither-analyzer
+          pip3 install solc-select
+
+      - name: Run Mythril
+        run: |
+          docker run -v $(pwd):/tmp mythril/myth analyze /tmp/cf1-core/contracts/**/*.rs
+
+      - name: Upload audit results
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-audit
+          path: audit-results/

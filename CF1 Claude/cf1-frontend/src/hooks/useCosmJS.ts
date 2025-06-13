@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { cosmjsClient } from '../services/cosmjs';
 import { useBusinessTracking, useUserTracking } from './useMonitoring';
+import { ErrorHandler } from '../lib/errorHandler';
 
 export interface UseCosmJSReturn {
   // Connection state
@@ -18,6 +19,28 @@ export interface UseCosmJSReturn {
   updateProposal: (params: any) => Promise<any>;
   cancelProposal: (proposalId: string) => Promise<any>;
   invest: (proposalId: string, amount: string) => Promise<any>;
+  
+  // Trading functions
+  placeOrder: (params: any) => Promise<any>;
+  cancelOrder: (orderId: string) => Promise<any>;
+  
+  // AMM functions
+  addLiquidity: (poolId: string, amountA: string, amountB: string) => Promise<any>;
+  removeLiquidity: (poolId: string, lpAmount: string) => Promise<any>;
+  swap: (poolId: string, tokenIn: string, amountIn: string) => Promise<any>;
+  
+  // Staking functions
+  stake: (poolId: string, amount: string, lockPeriod?: number) => Promise<any>;
+  unstake: (poolId: string, amount: string) => Promise<any>;
+  claimRewards: (poolId: string) => Promise<any>;
+  
+  // Lending functions
+  createLendingPool: (poolId: string, assetDenom: string) => Promise<any>;
+  supplyToPool: (poolId: string, amount: string) => Promise<any>;
+  borrowFromPool: (poolId: string, borrowAmount: string) => Promise<any>;
+  repayLoan: (poolId: string, repayAmount: string) => Promise<any>;
+  depositCollateral: (poolId: string, tokenAddress: string, tokenId: string, amount: string) => Promise<any>;
+  liquidatePosition: (borrower: string, poolId: string) => Promise<any>;
   
   // Query functions
   queryProposal: (proposalId: string) => Promise<any>;
@@ -66,7 +89,7 @@ export const useCosmJS = (): UseCosmJSReturn => {
         setBalance(bal);
       }
     } catch (err) {
-      console.error('Failed to fetch balance:', err);
+      ErrorHandler.handle(err, 'Fetch Balance');
     }
   }, []);
 
@@ -95,8 +118,9 @@ export const useCosmJS = (): UseCosmJSReturn => {
         userAgent: navigator.userAgent,
       });
     } catch (err: any) {
-      setError(err.message || 'Failed to connect wallet');
-      console.error('Connection error:', err);
+      const errorMessage = err.message || 'Failed to connect wallet';
+      setError(errorMessage);
+      ErrorHandler.handle(err, 'Wallet Connection');
     } finally {
       setIsConnecting(false);
     }
@@ -130,7 +154,9 @@ export const useCosmJS = (): UseCosmJSReturn => {
       await updateBalance(); // Update balance after transaction
       return result;
     } catch (err: any) {
-      setError(err.message || 'Failed to create proposal');
+      const errorMessage = err.message || 'Failed to create proposal';
+      setError(errorMessage);
+      ErrorHandler.handle(err, 'Create Proposal');
       throw err;
     }
   }, [updateBalance]);
@@ -142,7 +168,9 @@ export const useCosmJS = (): UseCosmJSReturn => {
       await updateBalance();
       return result;
     } catch (err: any) {
-      setError(err.message || 'Failed to update proposal');
+      const errorMessage = err.message || 'Failed to update proposal';
+      setError(errorMessage);
+      ErrorHandler.handle(err, 'Update Proposal');
       throw err;
     }
   }, [updateBalance]);
@@ -241,6 +269,202 @@ export const useCosmJS = (): UseCosmJSReturn => {
     setError(null);
   }, []);
 
+  // Trading functions
+  const placeOrder = useCallback(async (params: any) => {
+    setError(null);
+    try {
+      const result = await cosmjsClient.placeOrder(params);
+      await updateBalance();
+      return result;
+    } catch (err: any) {
+      const errorMessage = err.message || 'Failed to place order';
+      setError(errorMessage);
+      ErrorHandler.handle(err, 'Place Order');
+      throw err;
+    }
+  }, [updateBalance]);
+
+  const cancelOrder = useCallback(async (orderId: string) => {
+    setError(null);
+    try {
+      const result = await cosmjsClient.cancelOrder(orderId);
+      return result;
+    } catch (err: any) {
+      const errorMessage = err.message || 'Failed to cancel order';
+      setError(errorMessage);
+      ErrorHandler.handle(err, 'Cancel Order');
+      throw err;
+    }
+  }, []);
+
+  // AMM functions
+  const addLiquidity = useCallback(async (poolId: string, amountA: string, amountB: string) => {
+    setError(null);
+    try {
+      const result = await cosmjsClient.addLiquidity(poolId, amountA, amountB);
+      await updateBalance();
+      return result;
+    } catch (err: any) {
+      const errorMessage = err.message || 'Failed to add liquidity';
+      setError(errorMessage);
+      ErrorHandler.handle(err, 'Add Liquidity');
+      throw err;
+    }
+  }, [updateBalance]);
+
+  const removeLiquidity = useCallback(async (poolId: string, lpAmount: string) => {
+    setError(null);
+    try {
+      const result = await cosmjsClient.removeLiquidity(poolId, lpAmount);
+      await updateBalance();
+      return result;
+    } catch (err: any) {
+      const errorMessage = err.message || 'Failed to remove liquidity';
+      setError(errorMessage);
+      ErrorHandler.handle(err, 'Remove Liquidity');
+      throw err;
+    }
+  }, [updateBalance]);
+
+  const swap = useCallback(async (poolId: string, tokenIn: string, amountIn: string) => {
+    setError(null);
+    try {
+      const result = await cosmjsClient.swap(poolId, tokenIn, amountIn);
+      await updateBalance();
+      return result;
+    } catch (err: any) {
+      const errorMessage = err.message || 'Failed to swap';
+      setError(errorMessage);
+      ErrorHandler.handle(err, 'Swap');
+      throw err;
+    }
+  }, [updateBalance]);
+
+  // Staking functions
+  const stake = useCallback(async (poolId: string, amount: string, lockPeriod?: number) => {
+    setError(null);
+    try {
+      const result = await cosmjsClient.stake(poolId, amount, lockPeriod);
+      await updateBalance();
+      return result;
+    } catch (err: any) {
+      const errorMessage = err.message || 'Failed to stake';
+      setError(errorMessage);
+      ErrorHandler.handle(err, 'Stake');
+      throw err;
+    }
+  }, [updateBalance]);
+
+  const unstake = useCallback(async (poolId: string, amount: string) => {
+    setError(null);
+    try {
+      const result = await cosmjsClient.unstake(poolId, amount);
+      await updateBalance();
+      return result;
+    } catch (err: any) {
+      const errorMessage = err.message || 'Failed to unstake';
+      setError(errorMessage);
+      ErrorHandler.handle(err, 'Unstake');
+      throw err;
+    }
+  }, [updateBalance]);
+
+  const claimRewards = useCallback(async (poolId: string) => {
+    setError(null);
+    try {
+      const result = await cosmjsClient.claimRewards(poolId);
+      await updateBalance();
+      return result;
+    } catch (err: any) {
+      const errorMessage = err.message || 'Failed to claim rewards';
+      setError(errorMessage);
+      ErrorHandler.handle(err, 'Claim Rewards');
+      throw err;
+    }
+  }, [updateBalance]);
+
+  // Lending functions
+  const createLendingPool = useCallback(async (poolId: string, assetDenom: string) => {
+    setError(null);
+    try {
+      const result = await cosmjsClient.createLendingPool(poolId, assetDenom);
+      return result;
+    } catch (err: any) {
+      const errorMessage = err.message || 'Failed to create lending pool';
+      setError(errorMessage);
+      ErrorHandler.handle(err, 'Create Lending Pool');
+      throw err;
+    }
+  }, []);
+
+  const supplyToPool = useCallback(async (poolId: string, amount: string) => {
+    setError(null);
+    try {
+      const result = await cosmjsClient.supplyToPool(poolId, amount);
+      await updateBalance();
+      return result;
+    } catch (err: any) {
+      const errorMessage = err.message || 'Failed to supply to pool';
+      setError(errorMessage);
+      ErrorHandler.handle(err, 'Supply To Pool');
+      throw err;
+    }
+  }, [updateBalance]);
+
+  const borrowFromPool = useCallback(async (poolId: string, borrowAmount: string) => {
+    setError(null);
+    try {
+      const result = await cosmjsClient.borrowFromPool(poolId, borrowAmount);
+      await updateBalance();
+      return result;
+    } catch (err: any) {
+      const errorMessage = err.message || 'Failed to borrow from pool';
+      setError(errorMessage);
+      ErrorHandler.handle(err, 'Borrow From Pool');
+      throw err;
+    }
+  }, [updateBalance]);
+
+  const repayLoan = useCallback(async (poolId: string, repayAmount: string) => {
+    setError(null);
+    try {
+      const result = await cosmjsClient.repayLoan(poolId, repayAmount);
+      await updateBalance();
+      return result;
+    } catch (err: any) {
+      const errorMessage = err.message || 'Failed to repay loan';
+      setError(errorMessage);
+      ErrorHandler.handle(err, 'Repay Loan');
+      throw err;
+    }
+  }, [updateBalance]);
+
+  const depositCollateral = useCallback(async (poolId: string, tokenAddress: string, tokenId: string, amount: string) => {
+    setError(null);
+    try {
+      const result = await cosmjsClient.depositCollateral(poolId, tokenAddress, tokenId, amount);
+      return result;
+    } catch (err: any) {
+      const errorMessage = err.message || 'Failed to deposit collateral';
+      setError(errorMessage);
+      ErrorHandler.handle(err, 'Deposit Collateral');
+      throw err;
+    }
+  }, []);
+
+  const liquidatePosition = useCallback(async (borrower: string, poolId: string) => {
+    setError(null);
+    try {
+      const result = await cosmjsClient.liquidatePosition(borrower, poolId);
+      return result;
+    } catch (err: any) {
+      const errorMessage = err.message || 'Failed to liquidate position';
+      setError(errorMessage);
+      ErrorHandler.handle(err, 'Liquidate Position');
+      throw err;
+    }
+  }, []);
+
   return {
     // State
     address,
@@ -256,6 +480,20 @@ export const useCosmJS = (): UseCosmJSReturn => {
     updateProposal,
     cancelProposal,
     invest,
+    placeOrder,
+    cancelOrder,
+    addLiquidity,
+    removeLiquidity,
+    swap,
+    stake,
+    unstake,
+    claimRewards,
+    createLendingPool,
+    supplyToPool,
+    borrowFromPool,
+    repayLoan,
+    depositCollateral,
+    liquidatePosition,
     queryProposal,
     queryAllProposals,
     queryUserPortfolio,

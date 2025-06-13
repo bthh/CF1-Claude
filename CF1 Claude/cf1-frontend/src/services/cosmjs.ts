@@ -558,6 +558,685 @@ export class CF1CosmJSClient {
     const num = parseFloat(amount) * Math.pow(10, decimals);
     return Math.floor(num).toString();
   }
+
+  // Trading Functions (Order Book)
+  async placeOrder(params: {
+    tokenId: string;
+    orderType: 'market' | 'limit' | 'stop_loss';
+    side: 'buy' | 'sell';
+    price?: string;
+    amount: string;
+    stopPrice?: string;
+  }) {
+    this.requireConnection();
+    
+    // Demo mode simulation
+    if (this.demoMode) {
+      console.log(`Demo mode: Placing ${params.side} order for ${params.amount} tokens`);
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      return {
+        transactionHash: `demo_order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        orderId: `order_${Date.now()}`,
+        gasWanted: "150000",
+        gasUsed: "135000",
+        height: Math.floor(Math.random() * 1000000) + 5000000,
+        events: [],
+        logs: [{
+          msg_index: 0,
+          log: "",
+          events: [{
+            type: "wasm",
+            attributes: [
+              { key: "action", value: "place_order" },
+              { key: "order_id", value: `order_${Date.now()}` },
+              { key: "token_id", value: params.tokenId },
+              { key: "side", value: params.side },
+              { key: "amount", value: params.amount }
+            ]
+          }]
+        }]
+      };
+    }
+    
+    const msg = {
+      place_order: {
+        token_id: params.tokenId,
+        order_type: params.orderType,
+        side: params.side,
+        price: params.price || null,
+        amount: params.amount,
+        stop_price: params.stopPrice || null,
+      },
+    };
+
+    return await this.client!.execute(
+      this.signer,
+      this.config.contractAddress,
+      msg,
+      "auto"
+    );
+  }
+
+  async cancelOrder(orderId: string) {
+    this.requireConnection();
+    
+    // Demo mode simulation
+    if (this.demoMode) {
+      console.log(`Demo mode: Cancelling order ${orderId}`);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      return {
+        transactionHash: `demo_cancel_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        gasWanted: "100000",
+        gasUsed: "85000",
+        height: Math.floor(Math.random() * 1000000) + 5000000,
+        events: [],
+        logs: [{
+          msg_index: 0,
+          log: "",
+          events: [{
+            type: "wasm",
+            attributes: [
+              { key: "action", value: "cancel_order" },
+              { key: "order_id", value: orderId }
+            ]
+          }]
+        }]
+      };
+    }
+    
+    const msg = {
+      cancel_order: {
+        order_id: orderId,
+      },
+    };
+
+    return await this.client!.execute(
+      this.signer,
+      this.config.contractAddress,
+      msg,
+      "auto"
+    );
+  }
+
+  // AMM Functions (Liquidity Pools)
+  async addLiquidity(poolId: string, amountA: string, amountB: string) {
+    this.requireConnection();
+    
+    // Demo mode simulation
+    if (this.demoMode) {
+      console.log(`Demo mode: Adding liquidity to pool ${poolId} - ${amountA}/${amountB}`);
+      await new Promise(resolve => setTimeout(resolve, 2500));
+      
+      return {
+        transactionHash: `demo_add_liq_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        lpTokens: Math.floor(Math.random() * 1000 + 500).toString(),
+        gasWanted: "300000",
+        gasUsed: "275000",
+        height: Math.floor(Math.random() * 1000000) + 5000000,
+        events: [],
+        logs: [{
+          msg_index: 0,
+          log: "",
+          events: [{
+            type: "wasm",
+            attributes: [
+              { key: "action", value: "add_liquidity" },
+              { key: "pool_id", value: poolId },
+              { key: "amount_a", value: amountA },
+              { key: "amount_b", value: amountB }
+            ]
+          }]
+        }]
+      };
+    }
+    
+    const msg = {
+      add_liquidity: {
+        pool_id: poolId,
+        amount_a: amountA,
+        amount_b: amountB,
+      },
+    };
+
+    return await this.client!.execute(
+      this.signer,
+      this.config.contractAddress,
+      msg,
+      "auto"
+    );
+  }
+
+  async removeLiquidity(poolId: string, lpAmount: string) {
+    this.requireConnection();
+    
+    // Demo mode simulation
+    if (this.demoMode) {
+      console.log(`Demo mode: Removing ${lpAmount} LP tokens from pool ${poolId}`);
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      return {
+        transactionHash: `demo_rem_liq_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        amountA: Math.floor(Math.random() * 500 + 100).toString(),
+        amountB: Math.floor(Math.random() * 500 + 100).toString(),
+        gasWanted: "250000",
+        gasUsed: "230000",
+        height: Math.floor(Math.random() * 1000000) + 5000000,
+        events: [],
+        logs: [{
+          msg_index: 0,
+          log: "",
+          events: [{
+            type: "wasm",
+            attributes: [
+              { key: "action", value: "remove_liquidity" },
+              { key: "pool_id", value: poolId },
+              { key: "lp_amount", value: lpAmount }
+            ]
+          }]
+        }]
+      };
+    }
+    
+    const msg = {
+      remove_liquidity: {
+        pool_id: poolId,
+        lp_amount: lpAmount,
+      },
+    };
+
+    return await this.client!.execute(
+      this.signer,
+      this.config.contractAddress,
+      msg,
+      "auto"
+    );
+  }
+
+  async swap(poolId: string, tokenIn: string, amountIn: string) {
+    this.requireConnection();
+    
+    // Demo mode simulation
+    if (this.demoMode) {
+      console.log(`Demo mode: Swapping ${amountIn} ${tokenIn} in pool ${poolId}`);
+      await new Promise(resolve => setTimeout(resolve, 1800));
+      
+      const amountOut = Math.floor(parseFloat(amountIn) * (0.95 + Math.random() * 0.1)).toString(); // ~95-105% conversion
+      
+      return {
+        transactionHash: `demo_swap_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        amountOut,
+        gasWanted: "200000",
+        gasUsed: "185000",
+        height: Math.floor(Math.random() * 1000000) + 5000000,
+        events: [],
+        logs: [{
+          msg_index: 0,
+          log: "",
+          events: [{
+            type: "wasm",
+            attributes: [
+              { key: "action", value: "swap" },
+              { key: "pool_id", value: poolId },
+              { key: "token_in", value: tokenIn },
+              { key: "amount_in", value: amountIn },
+              { key: "amount_out", value: amountOut }
+            ]
+          }]
+        }]
+      };
+    }
+    
+    const msg = {
+      swap: {
+        pool_id: poolId,
+        token_in: tokenIn,
+        amount_in: amountIn,
+      },
+    };
+
+    return await this.client!.execute(
+      this.signer,
+      this.config.contractAddress,
+      msg,
+      "auto"
+    );
+  }
+
+  // Staking Functions
+  async stake(poolId: string, amount: string, lockPeriod?: number) {
+    this.requireConnection();
+    
+    // Demo mode simulation
+    if (this.demoMode) {
+      console.log(`Demo mode: Staking ${amount} tokens in pool ${poolId}${lockPeriod ? ` for ${lockPeriod} days` : ''}`);
+      await new Promise(resolve => setTimeout(resolve, 2200));
+      
+      return {
+        transactionHash: `demo_stake_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        stakeId: `stake_${Date.now()}`,
+        gasWanted: "180000",
+        gasUsed: "165000",
+        height: Math.floor(Math.random() * 1000000) + 5000000,
+        events: [],
+        logs: [{
+          msg_index: 0,
+          log: "",
+          events: [{
+            type: "wasm",
+            attributes: [
+              { key: "action", value: "stake" },
+              { key: "pool_id", value: poolId },
+              { key: "amount", value: amount },
+              { key: "lock_period", value: lockPeriod?.toString() || "0" }
+            ]
+          }]
+        }]
+      };
+    }
+    
+    const msg = {
+      stake: {
+        pool_id: poolId,
+        amount,
+        lock_period: lockPeriod || null,
+      },
+    };
+
+    return await this.client!.execute(
+      this.signer,
+      this.config.contractAddress,
+      msg,
+      "auto"
+    );
+  }
+
+  async unstake(poolId: string, amount: string) {
+    this.requireConnection();
+    
+    // Demo mode simulation
+    if (this.demoMode) {
+      console.log(`Demo mode: Unstaking ${amount} tokens from pool ${poolId}`);
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      return {
+        transactionHash: `demo_unstake_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        gasWanted: "160000",
+        gasUsed: "145000",
+        height: Math.floor(Math.random() * 1000000) + 5000000,
+        events: [],
+        logs: [{
+          msg_index: 0,
+          log: "",
+          events: [{
+            type: "wasm",
+            attributes: [
+              { key: "action", value: "unstake" },
+              { key: "pool_id", value: poolId },
+              { key: "amount", value: amount }
+            ]
+          }]
+        }]
+      };
+    }
+    
+    const msg = {
+      unstake: {
+        pool_id: poolId,
+        amount,
+      },
+    };
+
+    return await this.client!.execute(
+      this.signer,
+      this.config.contractAddress,
+      msg,
+      "auto"
+    );
+  }
+
+  async claimRewards(poolId: string) {
+    this.requireConnection();
+    
+    // Demo mode simulation
+    if (this.demoMode) {
+      console.log(`Demo mode: Claiming rewards from pool ${poolId}`);
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      const rewardAmount = (Math.random() * 50 + 10).toFixed(2); // 10-60 reward tokens
+      
+      return {
+        transactionHash: `demo_claim_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        rewardAmount,
+        gasWanted: "120000",
+        gasUsed: "105000",
+        height: Math.floor(Math.random() * 1000000) + 5000000,
+        events: [],
+        logs: [{
+          msg_index: 0,
+          log: "",
+          events: [{
+            type: "wasm",
+            attributes: [
+              { key: "action", value: "claim_rewards" },
+              { key: "pool_id", value: poolId },
+              { key: "reward_amount", value: rewardAmount }
+            ]
+          }]
+        }]
+      };
+    }
+    
+    const msg = {
+      claim_rewards: {
+        pool_id: poolId,
+      },
+    };
+
+    return await this.client!.execute(
+      this.signer,
+      this.config.contractAddress,
+      msg,
+      "auto"
+    );
+  }
+
+  // Lending Functions
+  async createLendingPool(poolId: string, assetDenom: string) {
+    this.requireConnection();
+    
+    // Demo mode simulation
+    if (this.demoMode) {
+      console.log(`Demo mode: Creating lending pool ${poolId} for ${assetDenom}`);
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      return {
+        transactionHash: `demo_pool_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        gasWanted: "200000",
+        gasUsed: "185000",
+        height: Math.floor(Math.random() * 1000000) + 5000000,
+        events: [],
+        logs: [{
+          msg_index: 0,
+          log: "",
+          events: [{
+            type: "wasm",
+            attributes: [
+              { key: "action", value: "create_lending_pool" },
+              { key: "pool_id", value: poolId },
+              { key: "asset_denom", value: assetDenom }
+            ]
+          }]
+        }]
+      };
+    }
+    
+    const msg = {
+      create_lending_pool: {
+        pool_id: poolId,
+        asset_denom: assetDenom,
+      },
+    };
+
+    return await this.client!.execute(
+      this.signer,
+      this.config.contractAddress,
+      msg,
+      "auto"
+    );
+  }
+
+  async supplyToPool(poolId: string, amount: string) {
+    this.requireConnection();
+    
+    // Demo mode simulation
+    if (this.demoMode) {
+      console.log(`Demo mode: Supplying ${amount} to pool ${poolId}`);
+      await new Promise(resolve => setTimeout(resolve, 2500));
+      
+      return {
+        transactionHash: `demo_supply_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        shares: Math.floor(Math.random() * 1000 + 500).toString(),
+        gasWanted: "250000",
+        gasUsed: "230000",
+        height: Math.floor(Math.random() * 1000000) + 5000000,
+        events: [],
+        logs: [{
+          msg_index: 0,
+          log: "",
+          events: [{
+            type: "wasm",
+            attributes: [
+              { key: "action", value: "supply_to_pool" },
+              { key: "pool_id", value: poolId },
+              { key: "amount", value: amount }
+            ]
+          }]
+        }]
+      };
+    }
+    
+    const msg = {
+      supply_to_pool: {
+        pool_id: poolId,
+      },
+    };
+
+    const funds = [{ denom: "untrn", amount }];
+
+    return await this.client!.execute(
+      this.signer,
+      this.config.contractAddress,
+      msg,
+      "auto",
+      undefined,
+      funds
+    );
+  }
+
+  async borrowFromPool(poolId: string, borrowAmount: string) {
+    this.requireConnection();
+    
+    // Demo mode simulation
+    if (this.demoMode) {
+      console.log(`Demo mode: Borrowing ${borrowAmount} from pool ${poolId}`);
+      await new Promise(resolve => setTimeout(resolve, 2200));
+      
+      const healthFactor = (Math.random() * 3 + 1).toFixed(2); // 1.0-4.0 health factor
+      
+      return {
+        transactionHash: `demo_borrow_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        healthFactor,
+        gasWanted: "300000",
+        gasUsed: "275000",
+        height: Math.floor(Math.random() * 1000000) + 5000000,
+        events: [],
+        logs: [{
+          msg_index: 0,
+          log: "",
+          events: [{
+            type: "wasm",
+            attributes: [
+              { key: "action", value: "borrow_from_pool" },
+              { key: "pool_id", value: poolId },
+              { key: "amount", value: borrowAmount },
+              { key: "health_factor", value: healthFactor }
+            ]
+          }]
+        }]
+      };
+    }
+    
+    const msg = {
+      borrow_from_pool: {
+        pool_id: poolId,
+        borrow_amount: borrowAmount,
+      },
+    };
+
+    return await this.client!.execute(
+      this.signer,
+      this.config.contractAddress,
+      msg,
+      "auto"
+    );
+  }
+
+  async repayLoan(poolId: string, repayAmount: string) {
+    this.requireConnection();
+    
+    // Demo mode simulation
+    if (this.demoMode) {
+      console.log(`Demo mode: Repaying ${repayAmount} to pool ${poolId}`);
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      const remainingDebt = Math.max(0, Math.floor(Math.random() * 500)).toString();
+      
+      return {
+        transactionHash: `demo_repay_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        remainingDebt,
+        gasWanted: "250000",
+        gasUsed: "230000",
+        height: Math.floor(Math.random() * 1000000) + 5000000,
+        events: [],
+        logs: [{
+          msg_index: 0,
+          log: "",
+          events: [{
+            type: "wasm",
+            attributes: [
+              { key: "action", value: "repay_loan" },
+              { key: "pool_id", value: poolId },
+              { key: "amount", value: repayAmount },
+              { key: "remaining_debt", value: remainingDebt }
+            ]
+          }]
+        }]
+      };
+    }
+    
+    const msg = {
+      repay_loan: {
+        pool_id: poolId,
+        repay_amount: repayAmount,
+      },
+    };
+
+    const funds = [{ denom: "untrn", amount: repayAmount }];
+
+    return await this.client!.execute(
+      this.signer,
+      this.config.contractAddress,
+      msg,
+      "auto",
+      undefined,
+      funds
+    );
+  }
+
+  async depositCollateral(poolId: string, tokenAddress: string, tokenId: string, amount: string) {
+    this.requireConnection();
+    
+    // Demo mode simulation
+    if (this.demoMode) {
+      console.log(`Demo mode: Depositing collateral ${amount} ${tokenId} for pool ${poolId}`);
+      await new Promise(resolve => setTimeout(resolve, 2500));
+      
+      const healthFactor = (Math.random() * 2 + 2).toFixed(2); // 2.0-4.0 health factor
+      
+      return {
+        transactionHash: `demo_collateral_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        healthFactor,
+        gasWanted: "350000",
+        gasUsed: "320000",
+        height: Math.floor(Math.random() * 1000000) + 5000000,
+        events: [],
+        logs: [{
+          msg_index: 0,
+          log: "",
+          events: [{
+            type: "wasm",
+            attributes: [
+              { key: "action", value: "deposit_collateral" },
+              { key: "pool_id", value: poolId },
+              { key: "token_address", value: tokenAddress },
+              { key: "token_id", value: tokenId },
+              { key: "amount", value: amount },
+              { key: "health_factor", value: healthFactor }
+            ]
+          }]
+        }]
+      };
+    }
+    
+    const msg = {
+      deposit_collateral: {
+        pool_id: poolId,
+        token_address: tokenAddress,
+        token_id: tokenId,
+        amount,
+      },
+    };
+
+    return await this.client!.execute(
+      this.signer,
+      this.config.contractAddress,
+      msg,
+      "auto"
+    );
+  }
+
+  async liquidatePosition(borrower: string, poolId: string) {
+    this.requireConnection();
+    
+    // Demo mode simulation
+    if (this.demoMode) {
+      console.log(`Demo mode: Liquidating position for ${borrower} in pool ${poolId}`);
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      
+      const debtCleared = Math.floor(Math.random() * 1000 + 500).toString();
+      const liquidationBonus = "5"; // 5% bonus
+      
+      return {
+        transactionHash: `demo_liquidate_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        debtCleared,
+        liquidationBonus,
+        gasWanted: "400000",
+        gasUsed: "375000",
+        height: Math.floor(Math.random() * 1000000) + 5000000,
+        events: [],
+        logs: [{
+          msg_index: 0,
+          log: "",
+          events: [{
+            type: "wasm",
+            attributes: [
+              { key: "action", value: "liquidate_position" },
+              { key: "borrower", value: borrower },
+              { key: "pool_id", value: poolId },
+              { key: "debt_cleared", value: debtCleared },
+              { key: "liquidation_bonus", value: liquidationBonus }
+            ]
+          }]
+        }]
+      };
+    }
+    
+    const msg = {
+      liquidate_position: {
+        borrower,
+        pool_id: poolId,
+      },
+    };
+
+    return await this.client!.execute(
+      this.signer,
+      this.config.contractAddress,
+      msg,
+      "auto"
+    );
+  }
 }
 
 // Global client instance

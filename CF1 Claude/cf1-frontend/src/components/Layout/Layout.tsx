@@ -83,6 +83,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       return 'governance';
     } else if (location.pathname.startsWith('/profile')) {
       return 'profile';
+    } else if (location.pathname.startsWith('/trading') || location.pathname.startsWith('/liquidity') || location.pathname.startsWith('/staking') || location.pathname.startsWith('/lending')) {
+      return 'marketplace'; // Use marketplace sidebar for DeFi features since it includes trading
     } else {
       return 'dashboard';
     }

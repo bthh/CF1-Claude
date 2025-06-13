@@ -129,7 +129,7 @@ export const InvestmentModalSimple: React.FC<InvestmentModalProps> = ({
             <button
               onClick={handleInvest}
               disabled={!investmentAmount || parseFloat(investmentAmount) < 1000 || isProcessing}
-              className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+              className="flex-1 px-4 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
             >
               {isProcessing ? 'Processing...' : 'Confirm Investment'}
             </button>

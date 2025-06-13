@@ -4,9 +4,10 @@
 .onboarding-highlight {
   position: relative;
   z-index: 1001 !important;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.5) !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.8), 0 0 20px rgba(59, 130, 246, 0.4) !important;
   border-radius: 8px !important;
-  transition: all 0.3s ease-in-out !important;
+  transition: all 0.2s ease-in-out !important;
+  background: rgba(59, 130, 246, 0.05) !important;
 }
 
 .onboarding-highlight::before {
@@ -24,9 +25,9 @@
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 1000;
+  z-index: 999;
   pointer-events: none;
-  transition: opacity 0.3s ease-in-out;
+  transition: opacity 0.2s ease-in-out;
 }
 
 /* Pulse animation for highlighted elements */

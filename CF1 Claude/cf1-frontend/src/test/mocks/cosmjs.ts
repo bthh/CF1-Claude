@@ -86,6 +86,28 @@ export const createMockUseCosmJS = (overrides: Partial<UseCosmJSReturn> = {}): U
   cancelProposal: vi.fn().mockResolvedValue({ transactionHash: 'mock_tx_hash' }),
   invest: vi.fn().mockResolvedValue({ transactionHash: 'mock_tx_hash' }),
   
+  // Trading functions
+  placeOrder: vi.fn().mockResolvedValue({ transactionHash: 'mock_order_tx', orderId: 'order_123' }),
+  cancelOrder: vi.fn().mockResolvedValue({ transactionHash: 'mock_cancel_tx' }),
+  
+  // AMM functions
+  addLiquidity: vi.fn().mockResolvedValue({ transactionHash: 'mock_liq_tx', lpTokens: '1000' }),
+  removeLiquidity: vi.fn().mockResolvedValue({ transactionHash: 'mock_rem_liq_tx', amountA: '500', amountB: '500' }),
+  swap: vi.fn().mockResolvedValue({ transactionHash: 'mock_swap_tx', amountOut: '950' }),
+  
+  // Staking functions
+  stake: vi.fn().mockResolvedValue({ transactionHash: 'mock_stake_tx', stakeId: 'stake_123' }),
+  unstake: vi.fn().mockResolvedValue({ transactionHash: 'mock_unstake_tx' }),
+  claimRewards: vi.fn().mockResolvedValue({ transactionHash: 'mock_claim_tx', rewardAmount: '25.5' }),
+  
+  // Lending functions
+  createLendingPool: vi.fn().mockResolvedValue({ transactionHash: 'mock_pool_tx' }),
+  supplyToPool: vi.fn().mockResolvedValue({ transactionHash: 'mock_supply_tx', shares: '1000' }),
+  borrowFromPool: vi.fn().mockResolvedValue({ transactionHash: 'mock_borrow_tx', healthFactor: '2.1' }),
+  repayLoan: vi.fn().mockResolvedValue({ transactionHash: 'mock_repay_tx', remainingDebt: '500' }),
+  depositCollateral: vi.fn().mockResolvedValue({ transactionHash: 'mock_collateral_tx', healthFactor: '3.2' }),
+  liquidatePosition: vi.fn().mockResolvedValue({ transactionHash: 'mock_liquidate_tx', debtCleared: '1000', liquidationBonus: '5' }),
+  
   // Query functions
   queryProposal: vi.fn().mockResolvedValue(mockProposal),
   queryAllProposals: vi.fn().mockResolvedValue({ proposals: [mockProposal] }),

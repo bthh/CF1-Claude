@@ -50,6 +50,55 @@ const SimpleSidebar: React.FC<SidebarProps> = ({ type }) => {
         </nav>
       </div>
 
+      {/* DeFi Features Section */}
+      <div>
+        <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+          DeFi Features
+        </h3>
+        <nav className="space-y-1">
+          <Link 
+            to="/trading/RWA-1" 
+            className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              location.pathname.startsWith('/trading') 
+                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' 
+                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+            }`}
+          >
+            Trading
+          </Link>
+          <Link 
+            to="/liquidity" 
+            className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              location.pathname === '/liquidity' 
+                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' 
+                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+            }`}
+          >
+            Liquidity Pools
+          </Link>
+          <Link 
+            to="/staking" 
+            className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              location.pathname === '/staking' 
+                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' 
+                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+            }`}
+          >
+            Staking
+          </Link>
+          <Link 
+            to="/lending" 
+            className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              location.pathname === '/lending' 
+                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' 
+                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+            }`}
+          >
+            Lending
+          </Link>
+        </nav>
+      </div>
+
       {/* Portfolio Summary Widget */}
       <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border border-blue-200 dark:border-blue-800 rounded-xl">
         <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-300 mb-2">
@@ -87,6 +136,27 @@ const SimpleSidebar: React.FC<SidebarProps> = ({ type }) => {
           Precious Metals
         </Link>
       </nav>
+      
+      {/* DeFi Trading Section */}
+      <div className="mt-6">
+        <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+          Trading & DeFi
+        </h3>
+        <nav className="space-y-1">
+          <Link to="/trading/RWA-1" className={`block px-3 py-2 rounded-lg ${location.pathname.startsWith('/trading') ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'}`}>
+            Trading
+          </Link>
+          <Link to="/liquidity" className={`block px-3 py-2 rounded-lg ${isActive('/liquidity') ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'}`}>
+            Liquidity Pools
+          </Link>
+          <Link to="/staking" className={`block px-3 py-2 rounded-lg ${isActive('/staking') ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'}`}>
+            Staking
+          </Link>
+          <Link to="/lending" className={`block px-3 py-2 rounded-lg ${isActive('/lending') ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'}`}>
+            Lending
+          </Link>
+        </nav>
+      </div>
     </>
   );
 

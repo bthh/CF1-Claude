@@ -1,0 +1,288 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  NODE_VERSION: '20.x'
+  RUST_VERSION: '1.75.0'
+
+jobs:
+  # Frontend Tests and Security Scanning
+  frontend:
+    name: Frontend CI
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: cf1-frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./cf1-frontend
+        run: npm ci
+
+      - name: Run ESLint
+        working-directory: ./cf1-frontend
+        run: npm run lint
+
+      - name: TypeScript type check
+        working-directory: ./cf1-frontend
+        run: npm run type-check
+
+      - name: Run unit tests
+        working-directory: ./cf1-frontend
+        run: npm run test:run
+
+      - name: Run integration tests
+        working-directory: ./cf1-frontend
+        run: npm run test:integration
+
+      - name: Build application
+        working-directory: ./cf1-frontend
+        run: npm run build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: frontend-build
+          path: cf1-frontend/dist
+
+      # Security scanning
+      - name: Run npm audit
+        working-directory: ./cf1-frontend
+        run: npm audit --audit-level=moderate
+
+      - name: Run Snyk security scan
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high --file=cf1-frontend/package.json
+
+  # Smart Contract Tests and Security
+  smart-contracts:
+    name: Smart Contracts CI
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          override: true
+          components: rustfmt, clippy
+
+      - name: Cache cargo dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Run cargo fmt
+        working-directory: ./cf1-core
+        run: cargo fmt -- --check
+
+      - name: Run cargo clippy
+        working-directory: ./cf1-core
+        run: cargo clippy -- -D warnings
+
+      - name: Run tests
+        working-directory: ./cf1-core
+        run: cargo test
+
+      - name: Build contracts
+        working-directory: ./cf1-core
+        run: cargo build --release --target wasm32-unknown-unknown
+
+      - name: Optimize contracts
+        working-directory: ./cf1-core
+        run: |
+          docker run --rm -v "$(pwd)":/code \
+            --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
+            --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+            cosmwasm/rust-optimizer:0.15.0
+
+      - name: Upload contract artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: contract-artifacts
+          path: cf1-core/artifacts/*.wasm
+
+      # Security audit for Rust
+      - name: Run cargo audit
+        working-directory: ./cf1-core
+        run: |
+          cargo install cargo-audit
+          cargo audit
+
+  # E2E Tests
+  e2e-tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: [frontend]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install dependencies
+        working-directory: ./cf1-frontend
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: ./cf1-frontend
+        run: npx playwright install --with-deps
+
+      - name: Run E2E tests
+        working-directory: ./cf1-frontend
+        run: npm run test:e2e
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: playwright-report
+          path: cf1-frontend/playwright-report
+
+  # SAST Security Scanning
+  security-scan:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Semgrep
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: >-
+            p/security-audit
+            p/secrets
+            p/owasp-top-ten
+            p/react
+            p/typescript
+
+      - name: Run CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+        with:
+          languages: 'javascript,typescript'
+
+      - name: Run TruffleHog (secrets detection)
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+
+  # Docker Security Scan
+  docker-scan:
+    name: Docker Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        working-directory: ./cf1-frontend
+        run: docker build -t cf1-frontend:${{ github.sha }} .
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'cf1-frontend:${{ github.sha }}'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  # Deploy to staging (only on develop branch)
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [frontend, smart-contracts, e2e-tests, security-scan]
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: frontend-build
+          path: ./dist
+
+      - name: Deploy to staging
+        env:
+          STAGING_SERVER: ${{ secrets.STAGING_SERVER }}
+          STAGING_SSH_KEY: ${{ secrets.STAGING_SSH_KEY }}
+        run: |
+          echo "$STAGING_SSH_KEY" > deploy_key
+          chmod 600 deploy_key
+          rsync -avz -e "ssh -i deploy_key -o StrictHostKeyChecking=no" \
+            ./dist/ user@$STAGING_SERVER:/var/www/cf1-staging/
+
+  # Production deployment (manual approval required)
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [frontend, smart-contracts, e2e-tests, security-scan]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: production
+      url: https://cf1.finance
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: frontend-build
+          path: ./dist
+
+      - name: Deploy to production
+        env:
+          PROD_SERVER: ${{ secrets.PROD_SERVER }}
+          PROD_SSH_KEY: ${{ secrets.PROD_SSH_KEY }}
+        run: |
+          echo "$PROD_SSH_KEY" > deploy_key
+          chmod 600 deploy_key
+          rsync -avz -e "ssh -i deploy_key -o StrictHostKeyChecking=no" \
+            ./dist/ user@$PROD_SERVER:/var/www/cf1-production/
+
+      - name: Notify deployment
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: 'Production deployment completed for CF1 Platform'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
