@@ -6,6 +6,9 @@ import { useCosmJS } from '../../hooks/useCosmJS';
 import { useOnboardingContext } from '../Onboarding/OnboardingProvider';
 import { useVerificationStore } from '../../store/verificationStore';
 import { useAdminAuthContext } from '../../hooks/useAdminAuth';
+import { useSessionStore, SessionRole } from '../../store/sessionStore';
+import { useFeatureToggleStore } from '../../store/featureToggleStore';
+import { RoleSelector } from '../RoleSelector';
 import AdminLogin from '../AdminLogin';
 
 const Header: React.FC = () => {
@@ -21,8 +24,21 @@ const Header: React.FC = () => {
   const { initializeUser, level } = useVerificationStore();
   
   // Admin authentication
-  const { isAdmin, adminRole, logoutAdmin } = useAdminAuthContext();
+  const { 
+    isAdmin, 
+    adminRole, 
+    logoutAdmin, 
+    hasAccessToCreatorAdmin, 
+    hasAccessToPlatformAdmin 
+  } = useAdminAuthContext();
   const [showAdminLogin, setShowAdminLogin] = useState(false);
+  
+  // Feature toggles
+  const { isFeatureEnabled } = useFeatureToggleStore();
+  
+  // Session role management
+  const { selectedRole, isRoleSelected, setRole, clearRole } = useSessionStore();
+  const [showRoleSelector, setShowRoleSelector] = useState(false);
   
   // Simple local state for theme and notifications
   const [darkMode, setDarkMode] = useState(() => {
@@ -89,7 +105,28 @@ const Header: React.FC = () => {
     if (isAdmin) {
       logoutAdmin();
     }
+    // Clear session role on logout
+    clearRole();
     setIsProfileOpen(false);
+  };
+  
+  // Handle wallet connection with role selection
+  const handleConnectWallet = () => {
+    if (!isRoleSelected) {
+      // Show role selector first
+      setShowRoleSelector(true);
+    } else {
+      // Role already selected, proceed with wallet connection
+      connect();
+    }
+  };
+  
+  // Handle role selection completion
+  const handleRoleSelected = (role: SessionRole) => {
+    setRole(role);
+    setShowRoleSelector(false);
+    // Proceed with wallet connection after role selection
+    connect();
   };
   
   const isActive = (path: string) => {
@@ -250,17 +287,20 @@ const Header: React.FC = () => {
           >
             Analytics
           </Link>
-          <Link 
-            to="/lending"
-            className={`px-4 py-2 rounded-lg text-sm font-medium ${
-              isActive('/lending') ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white'
-            }`}
-          >
-            Lending
-          </Link>
+          {isFeatureEnabled('lending') && (
+            <Link 
+              to="/lending"
+              className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                isActive('/lending') ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white'
+              }`}
+            >
+              Lending
+            </Link>
+          )}
           {isAdmin && (
             <>
-              {adminRole === 'creator' && (
+              {/* Creator Admin - Available to Creator, Platform Admin, Super Admin, and Owner */}
+              {hasAccessToCreatorAdmin() && (
                 <Link 
                   to="/admin/creator"
                   className={`px-4 py-2 rounded-lg text-sm font-medium ${
@@ -270,17 +310,9 @@ const Header: React.FC = () => {
                   Creator Admin
                 </Link>
               )}
-              {adminRole === 'super_admin' && (
-                <Link 
-                  to="/admin/super"
-                  className={`px-4 py-2 rounded-lg text-sm font-medium ${
-                    isActive('/admin/super') ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300' : 'text-red-600 hover:text-red-900 dark:text-red-300 dark:hover:text-red-100'
-                  }`}
-                >
-                  Super Admin
-                </Link>
-              )}
-              {adminRole === 'platform_admin' && (
+              
+              {/* Platform Admin - Available to Platform Admin, Super Admin, and Owner */}
+              {hasAccessToPlatformAdmin() && (
                 <Link 
                   to="/admin/platform"
                   className={`px-4 py-2 rounded-lg text-sm font-medium ${
@@ -288,6 +320,18 @@ const Header: React.FC = () => {
                   }`}
                 >
                   Platform Admin
+                </Link>
+              )}
+              
+              {/* Super Admin - Available only to Super Admin and Owner */}
+              {(adminRole === 'super_admin' || adminRole === 'owner') && (
+                <Link 
+                  to="/admin/super"
+                  className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                    isActive('/admin/super') ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300' : 'text-red-600 hover:text-red-900 dark:text-red-300 dark:hover:text-red-100'
+                  }`}
+                >
+                  Super Admin
                 </Link>
               )}
             </>
@@ -406,10 +450,7 @@ const Header: React.FC = () => {
         {!isConnected ? (
           <button 
             data-tour="wallet-connect"
-            onClick={() => {
-              console.log('Connect wallet clicked!');
-              connect();
-            }}
+            onClick={handleConnectWallet}
             className="px-4 py-2 border border-gray-300 bg-white text-gray-700 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors flex items-center space-x-2"
           >
             <Wallet className="w-4 h-4" />
@@ -510,7 +551,7 @@ const Header: React.FC = () => {
           {/* Connect Wallet / User Profile (simplified for mobile) */}
           {!isConnected ? (
             <button 
-              onClick={connect}
+              onClick={handleConnectWallet}
               className="p-2 hover:bg-blue-600 dark:hover:bg-gray-700 rounded-lg transition-colors"
               aria-label="Connect wallet"
             >
@@ -531,6 +572,14 @@ const Header: React.FC = () => {
         darkMode={darkMode}
         onToggleDarkMode={toggleDarkMode}
       />
+
+      {/* Role Selector Modal */}
+      {showRoleSelector && (
+        <RoleSelector
+          onRoleSelected={handleRoleSelected}
+          onCancel={() => setShowRoleSelector(false)}
+        />
+      )}
 
       {/* Admin Login Modal */}
       <AdminLogin

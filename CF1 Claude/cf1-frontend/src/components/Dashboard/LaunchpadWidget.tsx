@@ -119,7 +119,11 @@ const LaunchpadWidget: React.FC<LaunchpadWidgetProps> = ({ size, isEditMode = fa
           <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Recent Activity</p>
           <div className="space-y-2">
             {launchpadStats.recentProposals.slice(0, 2).map((proposal, index) => (
-              <div key={index} className="p-2 bg-gray-50 dark:bg-gray-700 rounded-lg">
+              <div 
+                key={index} 
+                className="p-2 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors cursor-pointer"
+                onClick={() => navigate(`/launchpad/proposal/${index + 1}`)}
+              >
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-sm font-medium text-gray-900 dark:text-white truncate flex-1 pr-2">
                     {proposal.name}
@@ -207,7 +211,11 @@ const LaunchpadWidget: React.FC<LaunchpadWidgetProps> = ({ size, isEditMode = fa
         <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Active Proposals</h4>
         <div className="space-y-3">
           {launchpadStats.recentProposals.map((proposal, index) => (
-            <div key={index} className="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors cursor-pointer">
+            <div 
+              key={index} 
+              className="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors cursor-pointer"
+              onClick={() => navigate(`/launchpad/proposal/${index + 1}`)}
+            >
               <div className="flex items-center justify-between mb-2">
                 <h5 className="font-medium text-gray-900 dark:text-white">{proposal.name}</h5>
                 <span className="text-sm text-gray-500 dark:text-gray-400">{proposal.progress}%</span>

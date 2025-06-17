@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useId } from 'react';
 import { ChevronDown, Check, Search, X } from 'lucide-react';
 
 interface SelectOption {
@@ -53,6 +53,7 @@ export const TouchSelect: React.FC<TouchSelectProps> = ({
   const selectRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const selectId = useId();
 
   // Filter options based on search term
   const filteredOptions = searchable
@@ -208,7 +209,7 @@ export const TouchSelect: React.FC<TouchSelectProps> = ({
     <div className={`relative ${className}`} ref={selectRef}>
       {/* Label */}
       {label && (
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <label id={selectId + '-label'} className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           {label}
           {required && <span className="text-red-500 ml-1">*</span>}
         </label>
@@ -216,6 +217,7 @@ export const TouchSelect: React.FC<TouchSelectProps> = ({
 
       {/* Select Button */}
       <div
+        id={selectId}
         className={`
           relative
           w-full
@@ -238,6 +240,7 @@ export const TouchSelect: React.FC<TouchSelectProps> = ({
         aria-expanded={isOpen}
         aria-haspopup="listbox"
         aria-required={required}
+        aria-labelledby={label ? selectId + '-label' : undefined}
       >
         <div className="flex items-center justify-between w-full h-full">
           <span

@@ -36,14 +36,14 @@ const MarketSentimentCard: React.FC<MarketSentimentProps> = ({
 
   return (
     <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Market Sentiment</h3>
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Platform Sentiment</h3>
       
       <div className="space-y-4">
         <div className={`flex items-center space-x-3 ${getSentimentColor()}`}>
           {getSentimentIcon()}
           <div>
             <p className="font-semibold text-lg capitalize">{sentiment}</p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Current market outlook</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Current platform outlook</p>
           </div>
         </div>
         
@@ -154,10 +154,10 @@ export const MarketIntelligence: React.FC = () => {
       <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-8 text-center">
         <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-4" />
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-          Market Intelligence Loading
+          Platform Intelligence Loading
         </h3>
         <p className="text-gray-600 dark:text-gray-400">
-          Gathering market data and insights...
+          Gathering platform data and insights...
         </p>
       </div>
     );
@@ -176,9 +176,9 @@ export const MarketIntelligence: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Market Intelligence</h2>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Platform Intelligence</h2>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Real-time market insights and asset analysis
+            Real-time platform insights and asset analysis
           </p>
         </div>
         
@@ -216,12 +216,12 @@ export const MarketIntelligence: React.FC = () => {
         </div>
       </div>
 
-      {/* Market Overview */}
+      {/* Platform Overview */}
       {selectedView === 'overview' && (
         <>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <MetricCard
-              title="Market Cap"
+              title="Platform Cap"
               value={formatCurrency(platformMetrics.totalValueLocked)}
               change={5.2}
               trend="up"
@@ -257,7 +257,7 @@ export const MarketIntelligence: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2">
               <ChartContainer
-                title="Market Performance"
+                title="Platform Performance"
                 subtitle="Platform-wide value trends"
                 isLoading={isLoading}
               >
@@ -333,7 +333,7 @@ export const MarketIntelligence: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <ChartContainer
             title="Sector Allocation"
-            subtitle="Market share by asset type"
+            subtitle="Platform share by asset type"
             isLoading={isLoading}
           >
             <AllocationChart
@@ -354,7 +354,7 @@ export const MarketIntelligence: React.FC = () => {
                   <div className="flex-1">
                     <h4 className="font-medium text-gray-900 dark:text-white">{sector.name}</h4>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {sector.value}% of market
+                      {sector.value}% of platform
                     </p>
                   </div>
                   <div className="text-right">
@@ -381,19 +381,19 @@ export const MarketIntelligence: React.FC = () => {
         </div>
       )}
 
-      {/* Market Alerts */}
+      {/* Platform Alerts */}
       <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-6">
         <div className="flex items-start space-x-3">
           <AlertCircle className="w-6 h-6 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
           <div>
             <h3 className="text-lg font-semibold text-amber-800 dark:text-amber-200 mb-2">
-              Market Intelligence Insights
+              Platform Intelligence Insights
             </h3>
             <div className="space-y-2 text-sm text-amber-700 dark:text-amber-300">
               <p>• Real estate assets showing strong momentum with 8.2% sector growth</p>
               <p>• Precious metals experiencing increased volatility (+12.1% this period)</p>
               <p>• Art & collectibles leading performance with 15.7% gains</p>
-              <p>• Market sentiment remains {marketInsights.marketSentiment} with healthy liquidity</p>
+              <p>• Platform sentiment remains {marketInsights.marketSentiment} with healthy liquidity</p>
             </div>
           </div>
         </div>

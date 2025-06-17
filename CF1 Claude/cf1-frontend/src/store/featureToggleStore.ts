@@ -26,7 +26,7 @@ const defaultFeatures: Record<string, FeatureToggle> = {
     id: 'lending',
     name: 'Lending & Borrowing',
     description: 'Enable lending and borrowing functionality',
-    enabled: false,
+    enabled: true,
     category: 'defi',
     requiredRole: 'platform_admin',
     lastModified: new Date().toISOString()
@@ -35,7 +35,7 @@ const defaultFeatures: Record<string, FeatureToggle> = {
     id: 'staking',
     name: 'Staking',
     description: 'Enable staking pools and rewards',
-    enabled: false,
+    enabled: true,
     category: 'defi',
     requiredRole: 'platform_admin',
     lastModified: new Date().toISOString()
@@ -44,9 +44,17 @@ const defaultFeatures: Record<string, FeatureToggle> = {
     id: 'liquidity_pools',
     name: 'Liquidity Pools',
     description: 'Enable AMM liquidity pools',
-    enabled: false,
+    enabled: true,
     category: 'defi',
     requiredRole: 'platform_admin',
+    lastModified: new Date().toISOString()
+  },
+  'primary_trading': {
+    id: 'primary_trading',
+    name: 'Primary Trading',
+    description: 'Enable primary market trading for RWA tokens',
+    enabled: true,
+    category: 'trading',
     lastModified: new Date().toISOString()
   },
   'secondary_trading': {

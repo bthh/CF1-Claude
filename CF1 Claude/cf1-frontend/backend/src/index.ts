@@ -12,6 +12,8 @@ import { config } from 'dotenv';
 import { initializeDatabase, closeDatabase } from './config/database';
 import analysisRoutes from './routes/analysis';
 import creatorToolkitRoutes from './routes/creatorToolkit';
+import assetsRoutes from './routes/assets';
+import proposalsRoutes from './routes/proposals';
 import { handleValidationError } from './middleware/validation';
 
 // Load environment variables
@@ -48,9 +50,10 @@ app.get('/health', (req, res) => {
 });
 
 // API routes
-app.use('/api/v1/proposals', analysisRoutes);
+app.use('/api/v1/proposals', proposalsRoutes);
 app.use('/api/v1/ai-analysis', analysisRoutes);
 app.use('/api/creator-toolkit', creatorToolkitRoutes);
+app.use('/api/v1/assets', assetsRoutes);
 
 // Error handling
 app.use(handleValidationError);

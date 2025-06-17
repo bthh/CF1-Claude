@@ -71,6 +71,7 @@ interface SubmissionState {
   deleteDraft: (draftId: string) => void;
   getDrafts: () => SubmittedProposal[];
   updateSubmissionStatus: (id: string, status: SubmittedProposal['status'], comments?: string) => void;
+  saveReviewComments: (id: string, comments: string) => void;
   getSubmissionById: (id: string) => SubmittedProposal | undefined;
   getSubmissionsByStatus: (status: SubmittedProposal['status']) => SubmittedProposal[];
   removeSubmission: (id: string) => void;
@@ -295,6 +296,21 @@ export const useSubmissionStore = create<SubmissionState>()(
       removeSubmission: (id) => {
         set((state) => ({
           submissions: state.submissions.filter((submission) => submission.id !== id)
+        }));
+      },
+
+      saveReviewComments: (id, comments) => {
+        set((state) => ({
+          submissions: state.submissions.map((submission) =>
+            submission.id === id
+              ? {
+                  ...submission,
+                  reviewComments: comments,
+                  reviewDate: new Date().toISOString()
+                  // Note: Status remains unchanged - only saving comments
+                }
+              : submission
+          )
         }));
       }
     }),

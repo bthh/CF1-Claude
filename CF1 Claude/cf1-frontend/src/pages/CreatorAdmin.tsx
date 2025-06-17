@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   BarChart3, 
   DollarSign, 
@@ -25,7 +26,13 @@ import {
   Filter,
   Search,
   Plus,
-  Mail
+  Mail,
+  Flag,
+  RotateCcw,
+  Forward,
+  Archive,
+  Tag,
+  ExternalLink
 } from 'lucide-react';
 import { useAdminAuthContext } from '../hooks/useAdminAuth';
 import { useCosmJS } from '../hooks/useCosmJS';
@@ -116,6 +123,7 @@ interface CreatorAnalytics {
 }
 
 const CreatorAdmin: React.FC = () => {
+  const navigate = useNavigate();
   const { currentAdmin, checkPermission } = useAdminAuthContext();
   const { isConnected } = useCosmJS();
   const { success, error } = useNotifications();
@@ -133,6 +141,13 @@ const CreatorAdmin: React.FC = () => {
   const [shareholderFilter, setShareholderFilter] = useState('');
   const [tierFilter, setTierFilter] = useState<string>('');
   const [campaignType, setCampaignType] = useState<'EMAIL' | 'SMS' | 'PUSH' | 'IN_APP'>('EMAIL');
+  
+  // Communications filters
+  const [communicationSearchTerm, setCommunicationSearchTerm] = useState('');
+  const [communicationStatusFilter, setCommunicationStatusFilter] = useState<string>('');
+  const [communicationTypeFilter, setCommunicationTypeFilter] = useState<string>('');
+  const [communicationSortBy, setCommunicationSortBy] = useState<'date' | 'title' | 'recipients' | 'openRate'>('date');
+  const [communicationSortOrder, setCommunicationSortOrder] = useState<'asc' | 'desc'>('desc');
 
   // Modal states
   const [showPublishModal, setShowPublishModal] = useState(false);
@@ -416,6 +431,98 @@ const CreatorAdmin: React.FC = () => {
     }
   };
 
+  // Additional engagement action functions
+  const reopenEngagement = async (engagementId: string) => {
+    try {
+      await new Promise(resolve => setTimeout(resolve, 600));
+      success('Engagement reopened');
+      await loadEngagements();
+    } catch (err) {
+      error('Failed to reopen engagement');
+    }
+  };
+
+  const changePriority = async (engagementId: string, newPriority: 'LOW' | 'MEDIUM' | 'HIGH') => {
+    try {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      success(`Priority changed to ${newPriority}`);
+      await loadEngagements();
+    } catch (err) {
+      error('Failed to change priority');
+    }
+  };
+
+  const sendReply = async (engagementId: string) => {
+    const message = prompt('Enter your reply:');
+    if (message) {
+      try {
+        await new Promise(resolve => setTimeout(resolve, 800));
+        success('Reply sent successfully');
+        await loadEngagements();
+      } catch (err) {
+        error('Failed to send reply');
+      }
+    }
+  };
+
+  const emailShareholder = async (engagementId: string) => {
+    try {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      success('Email sent to shareholder');
+    } catch (err) {
+      error('Failed to send email');
+    }
+  };
+
+  const forwardEngagement = async (engagementId: string) => {
+    const recipient = prompt('Forward to team member (email):');
+    if (recipient) {
+      try {
+        await new Promise(resolve => setTimeout(resolve, 600));
+        success(`Engagement forwarded to ${recipient}`);
+      } catch (err) {
+        error('Failed to forward engagement');
+      }
+    }
+  };
+
+  const archiveEngagement = async (engagementId: string) => {
+    try {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      success('Engagement archived');
+      await loadEngagements();
+    } catch (err) {
+      error('Failed to archive engagement');
+    }
+  };
+
+  const deleteEngagement = async (engagementId: string) => {
+    if (confirm('Are you sure you want to delete this engagement? This action cannot be undone.')) {
+      try {
+        await new Promise(resolve => setTimeout(resolve, 600));
+        success('Engagement deleted');
+        await loadEngagements();
+      } catch (err) {
+        error('Failed to delete engagement');
+      }
+    }
+  };
+
+  const viewEngagementDetails = (engagement: ShareholderEngagement) => {
+    // In a real implementation, this would open a modal or navigate to detail page
+    alert(`Engagement Details:\n\nType: ${engagement.type}\nPriority: ${engagement.priority}\nContent: ${engagement.content}\nTimestamp: ${engagement.timestamp}\nAsset: ${engagement.assetId}`);
+  };
+
+  const escalateEngagement = async (engagementId: string) => {
+    try {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      success('Engagement escalated to high priority');
+      await loadEngagements();
+    } catch (err) {
+      error('Failed to escalate engagement');
+    }
+  };
+
   const publishAssetUpdate = async (updateData: Partial<AssetUpdate>) => {
     try {
       // POST /api/creator-toolkit/asset-updates
@@ -511,16 +618,72 @@ const CreatorAdmin: React.FC = () => {
     return matchesSearch && matchesTier;
   });
 
-  if (!currentAdmin || !checkPermission('view_proposals')) {
+  // Communications filtering and sorting logic
+  const filteredAndSortedCommunications = campaigns
+    .filter(campaign => {
+      const matchesSearch = communicationSearchTerm === '' || 
+        campaign.title?.toLowerCase().includes(communicationSearchTerm.toLowerCase()) ||
+        (typeof campaign.content === 'object' && campaign.content?.subject?.toLowerCase().includes(communicationSearchTerm.toLowerCase()));
+      const matchesStatus = communicationStatusFilter === '' || campaign.status === communicationStatusFilter;
+      const matchesType = communicationTypeFilter === '' || campaign.type === communicationTypeFilter;
+      return matchesSearch && matchesStatus && matchesType;
+    })
+    .sort((a, b) => {
+      let aValue, bValue;
+      switch (communicationSortBy) {
+        case 'title':
+          aValue = a.title || '';
+          bValue = b.title || '';
+          break;
+        case 'recipients':
+          aValue = a.recipientCount || 0;
+          bValue = b.recipientCount || 0;
+          break;
+        case 'openRate':
+          aValue = a.openRate || 0;
+          bValue = b.openRate || 0;
+          break;
+        case 'date':
+        default:
+          aValue = new Date(a.scheduledAt || a.createdAt).getTime();
+          bValue = new Date(b.scheduledAt || b.createdAt).getTime();
+          break;
+      }
+      
+      if (communicationSortOrder === 'asc') {
+        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+      } else {
+        return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
+      }
+    });
+
+  // Clear communications filters helper
+  const clearCommunicationFilters = () => {
+    setCommunicationSearchTerm('');
+    setCommunicationStatusFilter('');
+    setCommunicationTypeFilter('');
+  };
+
+  // Get active filter count for communications
+  const activeCommunicationFilters = [
+    communicationSearchTerm,
+    communicationStatusFilter,
+    communicationTypeFilter
+  ].filter(Boolean).length;
+
+  if (!currentAdmin || !checkPermission('access_creator_admin')) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-center">
           <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-            Access Denied
+            Creator Admin Access Required
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
             You don't have permission to access the Creator Admin panel.
+            {currentAdmin?.role === 'investor' && (
+              <><br />Consider switching to a Creator, Platform Admin, or Super Admin role.</>
+            )}
           </p>
         </div>
       </div>
@@ -768,7 +931,11 @@ const CreatorAdmin: React.FC = () => {
                           </span>
                         </div>
                         <div>
-                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                          <h3 
+                            className="text-lg font-semibold text-gray-900 dark:text-white cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                            onClick={() => navigate(`/shareholder/${shareholder.id}`)}
+                            title="View shareholder details"
+                          >
                             {shareholder.name || 'Anonymous'}
                           </h3>
                           <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -844,8 +1011,9 @@ const CreatorAdmin: React.FC = () => {
                       </button>
                       
                       <button
+                        onClick={() => navigate(`/shareholder/${shareholder.id}`)}
                         className="p-2 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/20 rounded-lg transition-colors"
-                        title="View Profile"
+                        title="View Shareholder Details"
                       >
                         <Eye className="w-4 h-4" />
                       </button>
@@ -901,16 +1069,160 @@ const CreatorAdmin: React.FC = () => {
                 </div>
               </div>
 
+              {/* Communications Filters */}
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Filter Communications
+                  </h3>
+                  {activeCommunicationFilters > 0 && (
+                    <button
+                      onClick={clearCommunicationFilters}
+                      className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                    >
+                      Clear all filters
+                    </button>
+                  )}
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                  {/* Search */}
+                  <div>
+                    <label className="block text-sm text-gray-500 dark:text-gray-400 mb-1">Search</label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input
+                        type="text"
+                        placeholder="Search campaigns..."
+                        value={communicationSearchTerm}
+                        onChange={(e) => setCommunicationSearchTerm(e.target.value)}
+                        className="w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Status Filter */}
+                  <div>
+                    <label className="block text-sm text-gray-500 dark:text-gray-400 mb-1">Status</label>
+                    <select
+                      value={communicationStatusFilter}
+                      onChange={(e) => setCommunicationStatusFilter(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+                    >
+                      <option value="">All Status</option>
+                      <option value="DRAFT">Draft</option>
+                      <option value="SCHEDULED">Scheduled</option>
+                      <option value="SENT">Sent</option>
+                      <option value="FAILED">Failed</option>
+                    </select>
+                  </div>
+
+                  {/* Type Filter */}
+                  <div>
+                    <label className="block text-sm text-gray-500 dark:text-gray-400 mb-1">Type</label>
+                    <select
+                      value={communicationTypeFilter}
+                      onChange={(e) => setCommunicationTypeFilter(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+                    >
+                      <option value="">All Types</option>
+                      <option value="EMAIL">Email</option>
+                      <option value="SMS">SMS</option>
+                      <option value="PUSH">Push Notification</option>
+                      <option value="IN_APP">In-App Message</option>
+                    </select>
+                  </div>
+
+                  {/* Sort */}
+                  <div>
+                    <label className="block text-sm text-gray-500 dark:text-gray-400 mb-1">Sort By</label>
+                    <div className="flex space-x-2">
+                      <select
+                        value={communicationSortBy}
+                        onChange={(e) => setCommunicationSortBy(e.target.value as any)}
+                        className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+                      >
+                        <option value="date">Date</option>
+                        <option value="title">Title</option>
+                        <option value="recipients">Recipients</option>
+                        <option value="openRate">Open Rate</option>
+                      </select>
+                      <button
+                        onClick={() => setCommunicationSortOrder(communicationSortOrder === 'asc' ? 'desc' : 'asc')}
+                        className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+                        title={`Sort ${communicationSortOrder === 'asc' ? 'descending' : 'ascending'}`}
+                      >
+                        {communicationSortOrder === 'asc' ? '↑' : '↓'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Active Filters Display */}
+                {activeCommunicationFilters > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {communicationSearchTerm && (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-full text-xs">
+                        Search: {communicationSearchTerm}
+                        <button
+                          onClick={() => setCommunicationSearchTerm('')}
+                          className="text-blue-500 hover:text-blue-700"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    )}
+                    {communicationStatusFilter && (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300 rounded-full text-xs">
+                        Status: {communicationStatusFilter}
+                        <button
+                          onClick={() => setCommunicationStatusFilter('')}
+                          className="text-green-500 hover:text-green-700"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    )}
+                    {communicationTypeFilter && (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 rounded-full text-xs">
+                        Type: {communicationTypeFilter}
+                        <button
+                          onClick={() => setCommunicationTypeFilter('')}
+                          className="text-purple-500 hover:text-purple-700"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Campaign Results Summary */}
+              {campaigns && campaigns.length > 0 && (
+                <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
+                  <span>
+                    Showing {filteredAndSortedCommunications.length} of {campaigns.length} campaigns
+                  </span>
+                  <span>
+                    Sorted by {communicationSortBy} ({communicationSortOrder === 'asc' ? 'ascending' : 'descending'})
+                  </span>
+                </div>
+              )}
+
               {/* Campaigns List */}
-              {campaigns && campaigns.length > 0 ? (
-                campaigns.map((campaign) => {
+              {filteredAndSortedCommunications && filteredAndSortedCommunications.length > 0 ? (
+                filteredAndSortedCommunications.map((campaign) => {
                   try {
                     return (
                       <div key={campaign.id} className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <div className="flex items-center space-x-3 mb-3">
-                              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                              <h3 
+                                className="text-lg font-semibold text-gray-900 dark:text-white cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                onClick={() => setSelectedCommunication(campaign)}
+                              >
                                 {campaign.title || 'Untitled Campaign'}
                               </h3>
                               <span className={`px-2 py-1 rounded-lg text-xs font-medium ${getStatusColor(campaign.status)}`}>
@@ -1011,7 +1323,19 @@ const CreatorAdmin: React.FC = () => {
                 })
               ) : (
                 <div className="text-center py-8">
-                  <p className="text-gray-500 dark:text-gray-400">No communication campaigns found.</p>
+                  {campaigns && campaigns.length > 0 ? (
+                    <div className="space-y-2">
+                      <p className="text-gray-500 dark:text-gray-400">No campaigns match your current filters.</p>
+                      <button
+                        onClick={clearCommunicationFilters}
+                        className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium"
+                      >
+                        Clear filters to see all campaigns
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 dark:text-gray-400">No communication campaigns found.</p>
+                  )}
                 </div>
               )}
             </div>
@@ -1048,23 +1372,121 @@ const CreatorAdmin: React.FC = () => {
                       </div>
                     </div>
                     
-                    <div className="flex items-center space-x-2 ml-4">
-                      {!engagement.resolved && (
+                    <div className="flex items-center space-x-1 ml-4">
+                      {/* Primary Actions */}
+                      <div className="flex items-center space-x-1">
+                        {!engagement.resolved ? (
+                          <button
+                            onClick={() => resolveEngagement(engagement.id)}
+                            className="p-2 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/20 rounded-lg transition-colors"
+                            title="Mark as Resolved"
+                          >
+                            <CheckCircle className="w-4 h-4" />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => reopenEngagement(engagement.id)}
+                            className="p-2 text-orange-600 hover:bg-orange-100 dark:hover:bg-orange-900/20 rounded-lg transition-colors"
+                            title="Reopen Engagement"
+                          >
+                            <RotateCcw className="w-4 h-4" />
+                          </button>
+                        )}
+                        
                         <button
-                          onClick={() => resolveEngagement(engagement.id)}
-                          className="p-2 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/20 rounded-lg transition-colors"
-                          title="Mark as Resolved"
+                          onClick={() => sendReply(engagement.id)}
+                          className="p-2 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                          title="Send Reply"
                         >
-                          <CheckCircle className="w-4 h-4" />
+                          <Send className="w-4 h-4" />
                         </button>
-                      )}
-                      
-                      <button
-                        className="p-2 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                        title="Reply"
-                      >
-                        <MessageCircle className="w-4 h-4" />
-                      </button>
+                      </div>
+
+                      {/* Secondary Actions */}
+                      <div className="flex items-center space-x-1 pl-2 border-l border-gray-200 dark:border-gray-600">
+                        <button
+                          onClick={() => viewEngagementDetails(engagement)}
+                          className="p-2 text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                          title="View Details"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        
+                        <div className="relative group">
+                          <button
+                            className="p-2 text-purple-600 hover:bg-purple-100 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
+                            title="Change Priority"
+                          >
+                            <Flag className="w-4 h-4" />
+                          </button>
+                          {/* Priority dropdown */}
+                          <div className="absolute right-0 mt-1 w-32 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                            <button
+                              onClick={() => changePriority(engagement.id, 'HIGH')}
+                              className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-t-lg"
+                            >
+                              High Priority
+                            </button>
+                            <button
+                              onClick={() => changePriority(engagement.id, 'MEDIUM')}
+                              className="w-full px-3 py-2 text-left text-sm text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20"
+                            >
+                              Medium Priority
+                            </button>
+                            <button
+                              onClick={() => changePriority(engagement.id, 'LOW')}
+                              className="w-full px-3 py-2 text-left text-sm text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-b-lg"
+                            >
+                              Low Priority
+                            </button>
+                          </div>
+                        </div>
+                        
+                        <button
+                          onClick={() => emailShareholder(engagement.id)}
+                          className="p-2 text-indigo-600 hover:bg-indigo-100 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
+                          title="Email Shareholder"
+                        >
+                          <Mail className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      {/* Management Actions */}
+                      <div className="flex items-center space-x-1 pl-2 border-l border-gray-200 dark:border-gray-600">
+                        {engagement.priority !== 'HIGH' && (
+                          <button
+                            onClick={() => escalateEngagement(engagement.id)}
+                            className="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                            title="Escalate to High Priority"
+                          >
+                            <AlertTriangle className="w-4 h-4" />
+                          </button>
+                        )}
+                        
+                        <button
+                          onClick={() => forwardEngagement(engagement.id)}
+                          className="p-2 text-teal-600 hover:bg-teal-100 dark:hover:bg-teal-900/20 rounded-lg transition-colors"
+                          title="Forward to Team Member"
+                        >
+                          <Forward className="w-4 h-4" />
+                        </button>
+                        
+                        <button
+                          onClick={() => archiveEngagement(engagement.id)}
+                          className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                          title="Archive Engagement"
+                        >
+                          <Archive className="w-4 h-4" />
+                        </button>
+                        
+                        <button
+                          onClick={() => deleteEngagement(engagement.id)}
+                          className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                          title="Delete Engagement"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1103,7 +1525,10 @@ const CreatorAdmin: React.FC = () => {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center space-x-3 mb-3">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        <h3 
+                          className="text-lg font-semibold text-gray-900 dark:text-white cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                          onClick={() => setSelectedAssetUpdate(update)}
+                        >
                           {update.title}
                         </h3>
                         <span className={`px-2 py-1 rounded-lg text-xs font-medium ${getStatusColor(update.type)}`}>

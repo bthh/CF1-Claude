@@ -81,7 +81,7 @@ describe('TouchOptimized Components', () => {
 
       const input = screen.getByLabelText('Test Input');
       expect(input).toBeDisabled();
-      expect(input).toHaveClass('opacity-60');
+      expect(input).toHaveClass('disabled:opacity-60');
     });
   });
 

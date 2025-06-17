@@ -15,7 +15,7 @@ const SimpleSidebar: React.FC<SidebarProps> = ({ type }) => {
 
   const renderDashboardSidebar = () => (
     <div className="space-y-6">
-      {/* Navigation Section */}
+      {/* Main Navigation */}
       <div>
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Dashboard</h2>
         <nav className="space-y-1">
@@ -40,6 +40,16 @@ const SimpleSidebar: React.FC<SidebarProps> = ({ type }) => {
             Spotlight
           </Link>
           <Link 
+            to="/analytics" 
+            className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              isActive('/analytics') 
+                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' 
+                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+            }`}
+          >
+            Analytics
+          </Link>
+          <Link 
             to="/dashboard/activity" 
             className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
               isActive('/dashboard/activity') 
@@ -48,55 +58,6 @@ const SimpleSidebar: React.FC<SidebarProps> = ({ type }) => {
             }`}
           >
             Activity
-          </Link>
-        </nav>
-      </div>
-
-      {/* DeFi Features Section */}
-      <div>
-        <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
-          DeFi Features
-        </h3>
-        <nav className="space-y-1">
-          <Link 
-            to="/trading/RWA-1" 
-            className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-              location.pathname.startsWith('/trading') 
-                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' 
-                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
-            }`}
-          >
-            Trading
-          </Link>
-          <Link 
-            to="/liquidity" 
-            className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-              location.pathname === '/liquidity' 
-                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' 
-                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
-            }`}
-          >
-            Liquidity Pools
-          </Link>
-          <Link 
-            to="/staking" 
-            className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-              location.pathname === '/staking' 
-                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' 
-                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
-            }`}
-          >
-            Staking
-          </Link>
-          <Link 
-            to="/lending" 
-            className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-              location.pathname === '/lending' 
-                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' 
-                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
-            }`}
-          >
-            Lending
           </Link>
         </nav>
       </div>
@@ -118,153 +79,283 @@ const SimpleSidebar: React.FC<SidebarProps> = ({ type }) => {
   );
 
   const renderMarketplaceSidebar = () => (
-    <>
-      <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Marketplace</h2>
-      <div className="mb-4">
-        <input 
-          type="text" 
-          placeholder="Search assets..." 
-          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-        />
+    <div className="space-y-6">
+      {/* Main Navigation */}
+      <div>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Marketplace</h2>
+        <nav className="space-y-1">
+          <Link 
+            to="/marketplace" 
+            className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              isActive('/marketplace') 
+                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' 
+                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+            }`}
+          >
+            All Assets
+          </Link>
+        </nav>
       </div>
-      <nav className="space-y-1">
-        <Link to="/marketplace" className={`block px-3 py-2 rounded-lg ${isActive('/marketplace') ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'}`}>
-          All Assets
-        </Link>
-        <Link to="/marketplace/real-estate" className={`block px-3 py-2 rounded-lg ${isActive('/marketplace/real-estate') ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'}`}>
-          Real Estate
-        </Link>
-        <Link to="/marketplace/precious-metals" className={`block px-3 py-2 rounded-lg ${isActive('/marketplace/precious-metals') ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'}`}>
-          Precious Metals
-        </Link>
-      </nav>
       
-      {/* DeFi Trading Section */}
-      <div className="mt-6">
+      {/* DeFi Features */}
+      <div>
         <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
           Trading & DeFi
         </h3>
         <nav className="space-y-1">
-          <Link to="/trading/RWA-1" className={`block px-3 py-2 rounded-lg ${location.pathname.startsWith('/trading') ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'}`}>
+          <Link 
+            to="/trading/RWA-1" 
+            className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              location.pathname.startsWith('/trading') 
+                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' 
+                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+            }`}
+          >
             Trading
           </Link>
+          <Link 
+            to="/secondary-trading" 
+            className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              isActive('/secondary-trading') 
+                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' 
+                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+            }`}
+          >
+            Secondary Market
+          </Link>
           {isFeatureEnabled('liquidity_pools') && (
-            <Link to="/liquidity" className={`block px-3 py-2 rounded-lg ${isActive('/liquidity') ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'}`}>
+            <Link 
+              to="/liquidity" 
+              className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                isActive('/liquidity') 
+                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' 
+                  : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+              }`}
+            >
               Liquidity Pools
             </Link>
           )}
           {isFeatureEnabled('staking') && (
-            <Link to="/staking" className={`block px-3 py-2 rounded-lg ${isActive('/staking') ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'}`}>
+            <Link 
+              to="/staking" 
+              className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                isActive('/staking') 
+                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' 
+                  : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+              }`}
+            >
               Staking
             </Link>
           )}
           {isFeatureEnabled('lending') && (
-            <Link to="/lending" className={`block px-3 py-2 rounded-lg ${isActive('/lending') ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'}`}>
+            <Link 
+              to="/lending" 
+              className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                isActive('/lending') 
+                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' 
+                  : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+              }`}
+            >
               Lending
             </Link>
           )}
         </nav>
       </div>
-    </>
+    </div>
   );
 
   const renderPortfolioSidebar = () => (
-    <>
-      <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Portfolio</h2>
-      <nav className="space-y-1">
-        <Link to="/portfolio" className={`block px-3 py-2 rounded-lg ${isActive('/portfolio') ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'}`}>
-          Overview
-        </Link>
-        <Link to="/portfolio/performance" className={`block px-3 py-2 rounded-lg ${isActive('/portfolio/performance') ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'}`}>
-          Performance
-        </Link>
-        <Link to="/portfolio/transactions" className={`block px-3 py-2 rounded-lg ${isActive('/portfolio/transactions') ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'}`}>
-          Transactions
-        </Link>
-      </nav>
-    </>
+    <div className="space-y-6">
+      {/* Main Navigation */}
+      <div>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Portfolio</h2>
+        <nav className="space-y-1">
+          <Link 
+            to="/portfolio" 
+            className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              isActive('/portfolio') 
+                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' 
+                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+            }`}
+          >
+            Overview
+          </Link>
+          <Link 
+            to="/portfolio/performance" 
+            className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              isActive('/portfolio/performance') 
+                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' 
+                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+            }`}
+          >
+            Performance
+          </Link>
+          <Link 
+            to="/portfolio/transactions" 
+            className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              isActive('/portfolio/transactions') 
+                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' 
+                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+            }`}
+          >
+            Transactions
+          </Link>
+        </nav>
+      </div>
+    </div>
   );
 
   const renderLaunchpadSidebar = () => (
-    <>
-      <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Launchpad</h2>
-      <nav className="space-y-1">
-        <Link to="/launchpad" className={`block px-3 py-2 rounded-lg ${isActive('/launchpad') ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'}`}>
-          All Proposals
-        </Link>
-        <Link to="/launchpad/active" className={`block px-3 py-2 rounded-lg ${isActive('/launchpad/active') ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'}`}>
-          Active
-        </Link>
-        <Link to="/launchpad/funded" className={`block px-3 py-2 rounded-lg ${isActive('/launchpad/funded') ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'}`}>
-          Funded
-        </Link>
-        <Link to="/launchpad/upcoming" className={`block px-3 py-2 rounded-lg ${isActive('/launchpad/upcoming') ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'}`}>
-          Upcoming
-        </Link>
-        <Link to="/my-submissions" className={`block px-3 py-2 rounded-lg ${isActive('/my-submissions') ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'}`}>
-          My Submissions
-        </Link>
-        <Link to="/launchpad/drafts" className={`block px-3 py-2 rounded-lg ${isActive('/launchpad/drafts') ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'}`}>
-          Drafts
-        </Link>
-      </nav>
-      <div className="mt-8">
+    <div className="space-y-6">
+      {/* Main Navigation */}
+      <div>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Launchpad</h2>
+        <nav className="space-y-1">
+          <Link 
+            to="/launchpad" 
+            className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              isActive('/launchpad') 
+                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' 
+                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+            }`}
+          >
+            All Proposals
+          </Link>
+          <Link 
+            to="/my-submissions" 
+            className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              isActive('/my-submissions') 
+                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' 
+                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+            }`}
+          >
+            My Submissions
+          </Link>
+          <Link 
+            to="/launchpad/drafts" 
+            className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              isActive('/launchpad/drafts') 
+                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' 
+                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+            }`}
+          >
+            Drafts
+          </Link>
+        </nav>
+      </div>
+      
+      {/* Quick Action */}
+      <div>
         <button 
           onClick={() => navigate('/launchpad/create')}
-          className="w-full bg-blue-600 dark:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 dark:hover:bg-blue-800"
+          className="w-full bg-blue-600 dark:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 dark:hover:bg-blue-800 transition-colors"
         >
           Submit Proposal
         </button>
       </div>
-    </>
+    </div>
   );
 
   const renderGovernanceSidebar = () => (
-    <>
-      <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Governance</h2>
-      <nav className="space-y-1">
-        <Link to="/governance" className={`block px-3 py-2 rounded-lg ${isActive('/governance') ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'}`}>
-          All Proposals
-        </Link>
-        <Link to="/governance/active" className={`block px-3 py-2 rounded-lg ${isActive('/governance/active') ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'}`}>
-          Active Voting
-        </Link>
-        <Link to="/governance/passed" className={`block px-3 py-2 rounded-lg ${isActive('/governance/passed') ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'}`}>
-          Passed
-        </Link>
-        <Link to="/governance/rejected" className={`block px-3 py-2 rounded-lg ${isActive('/governance/rejected') ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'}`}>
-          Rejected
-        </Link>
-        <Link to="/governance/my-votes" className={`block px-3 py-2 rounded-lg ${isActive('/governance/my-votes') ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'}`}>
-          My Votes
-        </Link>
-        <Link to="/governance/drafts" className={`block px-3 py-2 rounded-lg ${isActive('/governance/drafts') ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'}`}>
-          Drafts
-        </Link>
-      </nav>
-      <div className="mt-8">
+    <div className="space-y-6">
+      {/* Main Navigation */}
+      <div>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Governance</h2>
+        <nav className="space-y-1">
+          <Link 
+            to="/governance" 
+            className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              isActive('/governance') 
+                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' 
+                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+            }`}
+          >
+            All Proposals
+          </Link>
+          <Link 
+            to="/governance/active" 
+            className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              isActive('/governance/active') 
+                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' 
+                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+            }`}
+          >
+            Active Voting
+          </Link>
+          <Link 
+            to="/governance/my-votes" 
+            className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              isActive('/governance/my-votes') 
+                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' 
+                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+            }`}
+          >
+            My Votes
+          </Link>
+          <Link 
+            to="/governance/drafts" 
+            className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              isActive('/governance/drafts') 
+                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' 
+                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+            }`}
+          >
+            Drafts
+          </Link>
+        </nav>
+      </div>
+      
+      {/* Quick Action */}
+      <div>
         <button 
           onClick={() => navigate('/governance/create')}
-          className="w-full bg-blue-600 dark:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 dark:hover:bg-blue-800"
+          className="w-full bg-blue-600 dark:bg-blue-700 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 dark:hover:bg-blue-800 transition-colors"
         >
-          Create Governance Proposal
+          Create Proposal
         </button>
       </div>
-    </>
+    </div>
   );
 
   const renderProfileSidebar = () => (
-    <>
-      <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Profile</h2>
-      <nav className="space-y-1">
-        <Link to="/profile" className={`block px-3 py-2 rounded-lg ${isActive('/profile') ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'}`}>
-          Overview
-        </Link>
-        <Link to="/profile/settings" className={`block px-3 py-2 rounded-lg ${isActive('/profile/settings') ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'}`}>
-          Settings
-        </Link>
-      </nav>
-    </>
+    <div className="space-y-6">
+      {/* Main Navigation */}
+      <div>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Profile</h2>
+        <nav className="space-y-1">
+          <Link 
+            to="/profile" 
+            className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              isActive('/profile') 
+                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' 
+                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+            }`}
+          >
+            Overview
+          </Link>
+          <Link 
+            to="/profile/settings" 
+            className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              isActive('/profile/settings') 
+                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' 
+                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+            }`}
+          >
+            Settings
+          </Link>
+          <Link 
+            to="/profile/verification" 
+            className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              isActive('/profile/verification') 
+                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' 
+                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+            }`}
+          >
+            Verification
+          </Link>
+        </nav>
+      </div>
+    </div>
   );
 
   return (

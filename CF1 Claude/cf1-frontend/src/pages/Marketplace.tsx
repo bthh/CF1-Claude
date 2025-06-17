@@ -37,7 +37,7 @@ const AssetListing: React.FC<AssetListingProps> = ({
   return (
     <div 
       className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm hover:shadow-md transition-shadow p-6 cursor-pointer"
-      onClick={() => navigate(`/marketplace/asset/${id}`)}
+      onClick={() => navigate(`/marketplace/assets/${id}`)}
     >
       <div className="aspect-video bg-gray-100 dark:bg-gray-700 rounded-lg mb-4 overflow-hidden">
         <img 
@@ -107,7 +107,7 @@ const AssetListing: React.FC<AssetListingProps> = ({
           className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2"
           onClick={(e) => {
             e.stopPropagation();
-            navigate(`/marketplace/asset/${id}`);
+            navigate(`/marketplace/assets/${id}`);
           }}
         >
           View Details

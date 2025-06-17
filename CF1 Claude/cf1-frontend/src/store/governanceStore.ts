@@ -9,7 +9,7 @@ export interface GovernanceProposal {
   assetType: string;
   assetId: string;
   proposalType: 'dividend' | 'renovation' | 'sale' | 'management' | 'expansion';
-  status: 'active' | 'passed' | 'rejected' | 'pending' | 'draft';
+  status: 'active' | 'passed' | 'rejected' | 'pending' | 'draft' | 'submitted' | 'under_review' | 'approved' | 'changes_requested';
   votesFor: number;
   votesAgainst: number;
   totalVotes: number;
@@ -48,6 +48,11 @@ export interface GovernanceProposal {
   userVotingPower?: number;
   userTokens?: number;
   userEstimatedDistribution?: number;
+  
+  // Admin review fields
+  reviewComments?: string;
+  reviewDate?: string;
+  reviewedBy?: string;
 }
 
 interface GovernanceState {
@@ -64,7 +69,13 @@ interface GovernanceState {
   getProposalsByStatus: (status: GovernanceProposal['status']) => GovernanceProposal[];
   getProposalsByType: (type: GovernanceProposal['proposalType']) => GovernanceProposal[];
   voteOnProposal: (proposalId: string, vote: 'for' | 'against', votingPower: number) => boolean;
-  updateProposalStatus: (proposalId: string, status: GovernanceProposal['status']) => void;
+  updateProposalStatus: (proposalId: string, status: GovernanceProposal['status'], comments?: string) => void;
+  getProposalsForAdmin: () => GovernanceProposal[];
+  getProposalsForVoting: () => GovernanceProposal[];
+  approveProposal: (proposalId: string, comments?: string) => void;
+  rejectProposal: (proposalId: string, comments?: string) => void;
+  requestChanges: (proposalId: string, comments?: string) => void;
+  saveReviewComments: (proposalId: string, comments: string) => void;
 }
 
 // Data validation helper
@@ -305,7 +316,7 @@ export const useGovernanceStore = create<GovernanceState>()(
             createdDate,
             endDate: timing.endDate,
             timeLeft: timing.timeLeft,
-            status: 'active' as const,
+            status: 'submitted' as const,
             votesFor: 0,
             votesAgainst: 0,
             totalVotes: 0,
@@ -490,11 +501,100 @@ export const useGovernanceStore = create<GovernanceState>()(
         return true;
       },
 
-      updateProposalStatus: (proposalId, status) => {
+      updateProposalStatus: (proposalId, status, comments) => {
         set((state) => ({
           proposals: state.proposals.map((proposal) =>
             proposal.id === proposalId
-              ? { ...proposal, status }
+              ? { 
+                  ...proposal, 
+                  status,
+                  reviewComments: comments,
+                  reviewDate: new Date().toISOString(),
+                  reviewedBy: 'Platform Admin' // TODO: Get actual admin name
+                }
+              : proposal
+          )
+        }));
+      },
+
+      getProposalsForAdmin: () => {
+        // Return proposals that need admin review
+        return get().proposals.filter(proposal => 
+          proposal.status === 'submitted' || 
+          proposal.status === 'under_review' || 
+          proposal.status === 'changes_requested'
+        );
+      },
+
+      getProposalsForVoting: () => {
+        // Return only proposals that are approved and visible to users for voting/viewing
+        return get().proposals.filter(proposal => 
+          proposal.status === 'active' || 
+          proposal.status === 'approved' ||
+          proposal.status === 'passed' ||
+          proposal.status === 'rejected'
+        );
+      },
+
+      approveProposal: (proposalId, comments) => {
+        set((state) => ({
+          proposals: state.proposals.map((proposal) =>
+            proposal.id === proposalId
+              ? { 
+                  ...proposal, 
+                  status: 'active', // Approved proposals become active for voting
+                  reviewComments: comments,
+                  reviewDate: new Date().toISOString(),
+                  reviewedBy: 'Platform Admin' // TODO: Get actual admin name
+                }
+              : proposal
+          )
+        }));
+      },
+
+      rejectProposal: (proposalId, comments) => {
+        set((state) => ({
+          proposals: state.proposals.map((proposal) =>
+            proposal.id === proposalId
+              ? { 
+                  ...proposal, 
+                  status: 'rejected',
+                  reviewComments: comments,
+                  reviewDate: new Date().toISOString(),
+                  reviewedBy: 'Platform Admin' // TODO: Get actual admin name
+                }
+              : proposal
+          )
+        }));
+      },
+
+      requestChanges: (proposalId, comments) => {
+        set((state) => ({
+          proposals: state.proposals.map((proposal) =>
+            proposal.id === proposalId
+              ? { 
+                  ...proposal, 
+                  status: 'changes_requested',
+                  reviewComments: comments,
+                  reviewDate: new Date().toISOString(),
+                  reviewedBy: 'Platform Admin' // TODO: Get actual admin name
+                }
+              : proposal
+          )
+        }));
+      },
+
+      saveReviewComments: (proposalId, comments) => {
+        set((state) => ({
+          proposals: state.proposals.map((proposal) =>
+            proposal.id === proposalId
+              ? { 
+                  ...proposal, 
+                  reviewComments: comments,
+                  reviewDate: new Date().toISOString(),
+                  reviewedBy: 'Platform Admin' // TODO: Get actual admin name
+                  // Note: Status remains unchanged - only saving comments
+                }
               : proposal
           )
         }));

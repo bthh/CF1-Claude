@@ -184,7 +184,11 @@ const MarketplaceWidget: React.FC<MarketplaceWidgetProps> = ({ size, isEditMode 
         <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Top Performing Assets</h4>
         <div className="space-y-3">
           {marketStats.topAssets.map((asset, index) => (
-            <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors cursor-pointer">
+            <div 
+              key={index} 
+              className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors cursor-pointer"
+              onClick={() => navigate(`/marketplace/assets/${index + 1}`)}
+            >
               <div className="flex-1 min-w-0 pr-3">
                 <p className="font-medium text-gray-900 dark:text-white truncate">{asset.name}</p>
                 <p className="text-sm text-gray-500 dark:text-gray-400 truncate">

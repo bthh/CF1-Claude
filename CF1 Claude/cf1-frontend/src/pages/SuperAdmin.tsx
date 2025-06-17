@@ -72,7 +72,7 @@ interface SystemLog {
 }
 
 const SuperAdmin: React.FC = () => {
-  const { currentAdmin, checkPermission } = useAdminAuthContext();
+  const { currentAdmin, checkPermission, hasAccessToSuperAdminManagement, isOwner } = useAdminAuthContext();
   const { success, error } = useNotifications();
   
   const [metrics, setMetrics] = useState<PlatformMetrics | null>(null);
@@ -80,7 +80,7 @@ const SuperAdmin: React.FC = () => {
   const [alerts, setAlerts] = useState<SecurityAlert[]>([]);
   const [logs, setLogs] = useState<SystemLog[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedTab, setSelectedTab] = useState<'overview' | 'config' | 'security' | 'logs' | 'emergency'>('overview');
+  const [selectedTab, setSelectedTab] = useState<'overview' | 'config' | 'security' | 'logs' | 'emergency' | 'admin_management'>('overview');
   const [showSensitiveData, setShowSensitiveData] = useState(false);
 
   useEffect(() => {
@@ -344,7 +344,8 @@ const SuperAdmin: React.FC = () => {
               { id: 'config', label: 'Configuration', icon: <Settings className="w-4 h-4" /> },
               { id: 'security', label: 'Security', icon: <Shield className="w-4 h-4" /> },
               { id: 'logs', label: 'System Logs', icon: <FileText className="w-4 h-4" /> },
-              { id: 'emergency', label: 'Emergency', icon: <AlertTriangle className="w-4 h-4" /> }
+              { id: 'emergency', label: 'Emergency', icon: <AlertTriangle className="w-4 h-4" /> },
+              ...(hasAccessToSuperAdminManagement() ? [{ id: 'admin_management', label: 'Admin Management', icon: <Users className="w-4 h-4" /> }] : [])
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -831,6 +832,120 @@ const SuperAdmin: React.FC = () => {
                       Freeze Transactions
                     </button>
                   </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Admin Management Tab - Owner Only */}
+          {selectedTab === 'admin_management' && hasAccessToSuperAdminManagement() && (
+            <div className="space-y-6">
+              <div className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/10 dark:to-indigo-900/10 rounded-2xl p-6 border border-purple-200 dark:border-purple-800">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center">
+                    <Users className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Super Admin Management</h2>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Manage Super Admin accounts and permissions - Owner access only</p>
+                  </div>
+                </div>
+                
+                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mt-4">
+                  <div className="flex items-start space-x-2">
+                    <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-amber-800 dark:text-amber-200">Owner Exclusive Access</p>
+                      <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+                        This section is only accessible to the Platform Owner. All actions here are permanently logged and cannot be undone.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Current Super Admins */}
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Current Super Admins</h3>
+                    <span className="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-600 text-sm font-medium rounded-lg">
+                      2 Active
+                    </span>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    {[
+                      { id: 1, name: 'Alice Johnson', email: 'alice@cf1platform.com', createdAt: '2024-01-01', lastActive: '2024-12-05', status: 'active' },
+                      { id: 2, name: 'Bob Chen', email: 'bob@cf1platform.com', createdAt: '2024-06-15', lastActive: '2024-12-04', status: 'active' }
+                    ].map((admin) => (
+                      <div key={admin.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-full flex items-center justify-center">
+                            <span className="text-white font-semibold text-sm">
+                              {admin.name.split(' ').map(n => n[0]).join('')}
+                            </span>
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900 dark:text-white">{admin.name}</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">{admin.email}</p>
+                            <p className="text-xs text-gray-400 dark:text-gray-500">
+                              Last active: {formatTimeAgo(admin.lastActive)}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className={`px-2 py-1 rounded-lg text-xs font-medium ${
+                            admin.status === 'active' 
+                              ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400'
+                              : 'bg-gray-100 text-gray-600 dark:bg-gray-900/30 dark:text-gray-400'
+                          }`}>
+                            {admin.status.charAt(0).toUpperCase() + admin.status.slice(1)}
+                          </span>
+                          <button className="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg transition-colors" title="Revoke Access">
+                            <Ban className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <button className="w-full mt-4 px-4 py-3 border-2 border-dashed border-purple-300 dark:border-purple-700 text-purple-600 dark:text-purple-400 rounded-xl hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors font-medium">
+                    + Invite New Super Admin
+                  </button>
+                </div>
+
+                {/* Admin Actions Log */}
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Recent Admin Actions</h3>
+                  
+                  <div className="space-y-3">
+                    {[
+                      { action: 'Super Admin Created', user: 'Bob Chen', timestamp: '2024-12-04T16:30:00Z', type: 'create' },
+                      { action: 'Platform Config Updated', user: 'Alice Johnson', timestamp: '2024-12-04T14:15:00Z', type: 'config' },
+                      { action: 'Emergency Action: Maintenance Mode', user: 'Alice Johnson', timestamp: '2024-12-03T09:20:00Z', type: 'emergency' },
+                      { action: 'User Account Suspended', user: 'Bob Chen', timestamp: '2024-12-02T11:45:00Z', type: 'moderation' }
+                    ].map((log, index) => (
+                      <div key={index} className="flex items-start space-x-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                        <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
+                          log.type === 'create' ? 'bg-green-500' :
+                          log.type === 'config' ? 'bg-blue-500' :
+                          log.type === 'emergency' ? 'bg-red-500' :
+                          'bg-yellow-500'
+                        }`} />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-900 dark:text-white">{log.action}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            by {log.user} • {formatTimeAgo(log.timestamp)}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <button className="w-full mt-4 px-4 py-2 text-sm text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                    View Full Audit Log
+                  </button>
                 </div>
               </div>
             </div>

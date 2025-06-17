@@ -17,6 +17,7 @@ interface PortfolioAssetProps {
 }
 
 const PortfolioAsset: React.FC<PortfolioAssetProps> = ({
+  id,
   name,
   type,
   tokens,
@@ -28,8 +29,13 @@ const PortfolioAsset: React.FC<PortfolioAssetProps> = ({
   apy,
   imageUrl
 }) => {
+  const navigate = useNavigate();
+  
   return (
-    <tr className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+    <tr 
+      className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+      onClick={() => navigate(`/marketplace/assets/${id}`)}
+    >
       <td className="px-6 py-4">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center overflow-hidden">
@@ -67,7 +73,10 @@ const PortfolioAsset: React.FC<PortfolioAssetProps> = ({
         <span className="text-green-600 font-medium">{apy}</span>
       </td>
       <td className="px-6 py-4">
-        <button className="p-1 hover:bg-secondary-200 rounded transition-colors">
+        <button 
+          className="p-1 hover:bg-secondary-200 rounded transition-colors"
+          onClick={(e) => e.stopPropagation()}
+        >
           <MoreHorizontal className="w-4 h-4 text-gray-600 dark:text-gray-400" />
         </button>
       </td>

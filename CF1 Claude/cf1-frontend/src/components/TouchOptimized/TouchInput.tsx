@@ -1,11 +1,11 @@
-import React, { useState, useRef, useEffect, forwardRef } from 'react';
+import React, { useState, useRef, useEffect, forwardRef, useId } from 'react';
 import { Eye, EyeOff, X, Check } from 'lucide-react';
 
 interface TouchInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
   label?: string;
   error?: string;
   helper?: string;
-  success?: string;
+  success?: string | boolean;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   showPasswordToggle?: boolean;
@@ -35,12 +35,15 @@ export const TouchInput = forwardRef<HTMLInputElement, TouchInputProps>(({
   type = 'text',
   value,
   placeholder,
+  id: providedId,
   ...props
 }, ref) => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const [hasValue, setHasValue] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const generatedId = useId();
+  const inputId = providedId || generatedId;
 
   // Update hasValue when value changes
   useEffect(() => {
@@ -97,7 +100,7 @@ export const TouchInput = forwardRef<HTMLInputElement, TouchInputProps>(({
     dark:placeholder:text-gray-400
     focus:outline-none
     focus:ring-0
-    disabled:opacity-50
+    disabled:opacity-60
     disabled:cursor-not-allowed
     disabled:bg-gray-50
     dark:disabled:bg-gray-900
@@ -106,10 +109,10 @@ export const TouchInput = forwardRef<HTMLInputElement, TouchInputProps>(({
   // Border and focus states
   const getBorderClasses = () => {
     if (error) {
-      return 'border-red-300 dark:border-red-600 focus:border-red-500 dark:focus:border-red-400';
+      return 'border-red-500 dark:border-red-400 focus:border-red-500 dark:focus:border-red-400';
     }
     if (success && showFeedback) {
-      return 'border-green-300 dark:border-green-600 focus:border-green-500 dark:focus:border-green-400';
+      return 'border-green-500 dark:border-green-400 focus:border-green-500 dark:focus:border-green-400';
     }
     if (isFocused) {
       return 'border-blue-500 dark:border-blue-400 shadow-lg shadow-blue-500/20 dark:shadow-blue-400/20';
@@ -165,7 +168,7 @@ export const TouchInput = forwardRef<HTMLInputElement, TouchInputProps>(({
     <div className={`relative ${className}`}>
       {/* Label for default and minimal variants */}
       {label && variant !== 'floating' && (
-        <label className={getLabelClasses()}>
+        <label htmlFor={inputId} className={getLabelClasses()}>
           {label}
         </label>
       )}
@@ -183,6 +186,7 @@ export const TouchInput = forwardRef<HTMLInputElement, TouchInputProps>(({
         {/* Input Field */}
         <input
           ref={ref || inputRef}
+          id={inputId}
           type={inputType}
           value={value}
           placeholder={variant === 'floating' ? '' : placeholder}
@@ -198,7 +202,7 @@ export const TouchInput = forwardRef<HTMLInputElement, TouchInputProps>(({
 
         {/* Floating Label */}
         {label && variant === 'floating' && (
-          <label className={getLabelClasses()}>
+          <label htmlFor={inputId} className={getLabelClasses()}>
             {label}
           </label>
         )}

@@ -29,7 +29,7 @@ export const AnalyticsDashboard: React.FC = () => {
   } = useAnalytics();
 
   const [isExporting, setIsExporting] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'portfolio' | 'market' | 'export'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'portfolio' | 'platform' | 'export'>('overview');
 
   const handleTimeRangeChange = (timeRange: AnalyticsFilter['timeRange']) => {
     updateFilter({ timeRange });
@@ -149,16 +149,16 @@ export const AnalyticsDashboard: React.FC = () => {
             </div>
           </button>
           <button
-            onClick={() => setActiveTab('market')}
+            onClick={() => setActiveTab('platform')}
             className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-              activeTab === 'market'
+              activeTab === 'platform'
                 ? 'border-blue-500 text-blue-600 dark:text-blue-400'
                 : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
             }`}
           >
             <div className="flex items-center space-x-2">
               <PieChart className="w-4 h-4" />
-              <span>Market</span>
+              <span>Platform</span>
             </div>
           </button>
           <button
@@ -373,8 +373,8 @@ export const AnalyticsDashboard: React.FC = () => {
       {/* Portfolio Tab */}
       {activeTab === 'portfolio' && <PortfolioPerformance />}
 
-      {/* Market Tab */}
-      {activeTab === 'market' && <MarketIntelligence />}
+      {/* Platform Tab */}
+      {activeTab === 'platform' && <MarketIntelligence />}
 
       {/* Export Tab */}
       {activeTab === 'export' && <DataExport />}

@@ -16,16 +16,23 @@ describe('useAdminAuth', () => {
     // Reset storage
     storage = {};
     
-    // Override localStorage with a working implementation
-    vi.spyOn(Storage.prototype, 'getItem').mockImplementation((key: string) => storage[key] || null);
-    vi.spyOn(Storage.prototype, 'setItem').mockImplementation((key: string, value: string) => {
-      storage[key] = value;
-    });
-    vi.spyOn(Storage.prototype, 'removeItem').mockImplementation((key: string) => {
-      delete storage[key];
-    });
-    vi.spyOn(Storage.prototype, 'clear').mockImplementation(() => {
-      storage = {};
+    // Mock the global localStorage object directly
+    Object.defineProperty(window, 'localStorage', {
+      value: {
+        getItem: vi.fn((key: string) => storage[key] || null),
+        setItem: vi.fn((key: string, value: string) => {
+          storage[key] = value;
+        }),
+        removeItem: vi.fn((key: string) => {
+          delete storage[key];
+        }),
+        clear: vi.fn(() => {
+          storage = {};
+        }),
+        length: 0,
+        key: vi.fn()
+      },
+      writable: true
     });
     
     mockUseCosmJS.mockReturnValue({
@@ -176,6 +183,10 @@ describe('useAdminAuth', () => {
     await act(async () => {
       await result.current.loginAsAdmin('creator');
     });
+    
+    // Debug: Check what's in our storage
+    console.log('Storage contents:', storage);
+    console.log('Keys in storage:', Object.keys(storage));
     
     // Check our storage object directly
     expect(storage['cf1_admin_session']).toBeTruthy();

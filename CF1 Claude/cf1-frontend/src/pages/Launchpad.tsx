@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Clock, Users, Target, TrendingUp, Calendar, MapPin, Eye, Plus, Search } from 'lucide-react';
+import { Clock, Users, Target, TrendingUp, Calendar, MapPin, Eye, Plus, Search, CheckCircle, Filter } from 'lucide-react';
+import { useSubmissionStore } from '../store/submissionStore';
 
 interface ProposalCardProps {
   id: string;
@@ -160,22 +161,91 @@ const ProposalCard: React.FC<ProposalCardProps> = ({
   );
 };
 
+// Convert approved submissions to proposal format - moved outside component
+const convertSubmissionToProposal = (submission: any): ProposalCardProps => {
+    try {
+      // Calculate days left based on funding deadline
+      let daysLeft = 30; // default
+      if (submission.fundingDeadline) {
+        try {
+          const deadline = new Date(submission.fundingDeadline);
+          const today = new Date();
+          const diffTime = deadline.getTime() - today.getTime();
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          
+          // If deadline is in the past, set to a reasonable future date for active proposals
+          if (diffDays <= 0) {
+            // Use a deterministic calculation based on proposal ID to avoid random values
+            const seed = submission.id.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
+            daysLeft = (seed % 45) + 15; // 15-60 days, consistent per proposal
+          } else {
+            daysLeft = Math.max(1, diffDays);
+          }
+        } catch (dateError) {
+          console.warn('Error parsing funding deadline:', submission.fundingDeadline, dateError);
+          daysLeft = 30; // fallback
+        }
+      }
+      
+      // Generate consistent funding progress based on proposal ID
+      const targetAmountNum = parseFloat(submission.targetAmount?.replace(/[^\d.]/g, '') || '0') || 0;
+      const seed = submission.id?.split('').reduce((a, b) => a + b.charCodeAt(0), 0) || 1000;
+      const raisedPercentage = (seed % 70) + 15; // 15-85% funded, consistent per proposal
+      const raisedAmount = Math.floor((targetAmountNum * raisedPercentage) / 100);
+      const backers = Math.floor(raisedPercentage * 2.2) + ((seed % 40) + 20); // Realistic backer count
+      
+      return {
+        id: submission.id || 'unknown',
+        title: submission.assetName || 'Untitled Proposal',
+        description: submission.description || 'No description available',
+        category: submission.category || 'Other',
+        location: submission.location || 'Location not specified',
+        targetAmount: `$${targetAmountNum.toLocaleString()}`,
+        raisedAmount: `$${raisedAmount.toLocaleString()}`,
+        raisedPercentage,
+        backers,
+        daysLeft,
+        expectedAPY: `${submission.expectedAPY || '0'}%`,
+        minimumInvestment: `$${parseFloat(submission.minimumInvestment || '0').toLocaleString()}`,
+        status: 'active' as const
+      };
+    } catch (error) {
+      console.error('Error converting submission to proposal:', error, submission);
+      // Return a fallback proposal to prevent the page from crashing
+      return {
+        id: submission?.id || 'error',
+        title: 'Error Loading Proposal',
+        description: 'There was an error loading this proposal',
+        category: 'Other',
+        location: 'Unknown',
+        targetAmount: '$0',
+        raisedAmount: '$0',
+        raisedPercentage: 0,
+        backers: 0,
+        daysLeft: 0,
+        expectedAPY: '0%',
+        minimumInvestment: '$0',
+        status: 'active' as const
+      };
+    }
+};
+
 const Launchpad: React.FC = () => {
   const navigate = useNavigate();
   const [selectedTab, setSelectedTab] = useState<'active' | 'funded' | 'upcoming'>('active');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Get approved submissions from the store
+  const { getSubmissionsByStatus } = useSubmissionStore();
+  const approvedSubmissions = getSubmissionsByStatus('approved');
+  
+  // Debug logging
+  console.log('🔍 Debug - All approved submissions:', approvedSubmissions);
+  console.log('🔍 Debug - Number of approved submissions:', approvedSubmissions.length);
 
-  const categories = [
-    { id: 'all', name: 'All Categories', count: 18 },
-    { id: 'real-estate', name: 'Real Estate', count: 8 },
-    { id: 'precious-metals', name: 'Precious Metals', count: 3 },
-    { id: 'art', name: 'Art & Collectibles', count: 4 },
-    { id: 'vehicles', name: 'Luxury Vehicles', count: 2 },
-    { id: 'commodities', name: 'Commodities', count: 1 }
-  ];
-
-  const proposals: ProposalCardProps[] = [
+  // Hardcoded proposals for demo purposes
+  const hardcodedProposals: ProposalCardProps[] = [
     {
       id: '1',
       title: 'Downtown Seattle Office Building',
@@ -274,6 +344,31 @@ const Launchpad: React.FC = () => {
     }
   ];
 
+  // Combine hardcoded proposals with approved submissions
+  let userProposals: ProposalCardProps[] = [];
+  try {
+    userProposals = approvedSubmissions.map(convertSubmissionToProposal);
+    console.log('🔍 Debug - Converted user proposals:', userProposals);
+    console.log('🔍 Debug - Number of converted proposals:', userProposals.length);
+  } catch (error) {
+    console.error('❌ Error converting user proposals:', error);
+  }
+  
+  const proposals: ProposalCardProps[] = [...userProposals, ...hardcodedProposals];
+  console.log('🔍 Debug - Total proposals (user + hardcoded):', proposals.length);
+  console.log('🔍 Debug - User proposals count:', userProposals.length);
+  console.log('🔍 Debug - Hardcoded proposals count:', hardcodedProposals.length);
+
+  // Static categories for now to avoid dependency issues
+  const categories = [
+    { id: 'all', name: 'All Categories', count: proposals.length },
+    { id: 'real-estate', name: 'Real Estate', count: 8 },
+    { id: 'precious-metals', name: 'Precious Metals', count: 3 },
+    { id: 'art', name: 'Art & Collectibles', count: 4 },
+    { id: 'vehicles', name: 'Luxury Vehicles', count: 2 },
+    { id: 'commodities', name: 'Commodities', count: 1 }
+  ];
+
   const filteredProposals = proposals.filter(proposal => {
     const matchesTab = proposal.status === selectedTab;
     const matchesCategory = selectedCategory === 'all' || 
@@ -293,8 +388,9 @@ const Launchpad: React.FC = () => {
     upcoming: proposals.filter(p => p.status === 'upcoming').length
   };
 
-  return (
-    <div className="space-y-6">
+  try {
+    return (
+      <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Launchpad</h1>
@@ -313,7 +409,7 @@ const Launchpad: React.FC = () => {
       <div className="border-t border-gray-200 dark:border-gray-600"></div>
 
       <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
           <div className="text-center">
             <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg mx-auto mb-3">
               <Target className="w-6 h-6 text-blue-600" />
@@ -325,7 +421,7 @@ const Launchpad: React.FC = () => {
             <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-lg mx-auto mb-3">
               <TrendingUp className="w-6 h-6 text-green-600" />
             </div>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">18</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">{tabCounts.active}</p>
             <p className="text-sm text-gray-600 dark:text-gray-400">Active Proposals</p>
           </div>
           <div className="text-center">
@@ -334,6 +430,13 @@ const Launchpad: React.FC = () => {
             </div>
             <p className="text-2xl font-bold text-gray-900 dark:text-white">1,247</p>
             <p className="text-sm text-gray-600 dark:text-gray-400">Total Investors</p>
+          </div>
+          <div className="text-center">
+            <div className="flex items-center justify-center w-12 h-12 bg-purple-100 dark:bg-purple-900/20 rounded-lg mx-auto mb-3">
+              <CheckCircle className="w-6 h-6 text-purple-600" />
+            </div>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">94%</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Success Rate</p>
           </div>
           <div className="text-center">
             <div className="flex items-center justify-center w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-lg mx-auto mb-3">
@@ -348,49 +451,35 @@ const Launchpad: React.FC = () => {
       {/* Categories & Proposals Section Divider */}
       <div className="border-t border-gray-200 dark:border-gray-600"></div>
 
-      <div className="flex flex-col lg:flex-row gap-6">
-        <div className="lg:w-64 space-y-4">
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-4">
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Categories</h3>
-            <div className="space-y-2">
-              {categories.map((category) => (
-                <button
-                  key={category.id}
-                  onClick={() => setSelectedCategory(category.id)}
-                  className={`w-full flex items-center justify-between p-2 rounded-lg text-left transition-colors ${
-                    selectedCategory === category.id
-                      ? 'bg-blue-50 text-blue-700'
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:bg-gray-800'
-                  }`}
-                >
-                  <span>{category.name}</span>
-                  <span className="text-sm">{category.count}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-4">
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Quick Stats</h3>
-            <div className="space-y-3">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600 dark:text-gray-400">Success Rate</span>
-                <span className="font-medium text-green-600">94%</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600 dark:text-gray-400">Avg. Funding Time</span>
-                <span className="font-medium">21 days</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600 dark:text-gray-400">Min. Investment</span>
-                <span className="font-medium">$500</span>
-              </div>
-            </div>
+      {/* Category Filters */}
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-4">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-2">
+            <Filter className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+            <h3 className="font-semibold text-gray-900 dark:text-white">Categories</h3>
           </div>
         </div>
+        <div className="flex flex-wrap gap-2">
+          {categories.map((category) => (
+            <button
+              key={category.id}
+              onClick={() => setSelectedCategory(category.id)}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                selectedCategory === category.id
+                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+              }`}
+            >
+              <span>{category.name}</span>
+              <span className="bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-full text-xs">
+                {category.count}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
 
-        <div className="flex-1">
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
             <div className="border-b border-gray-200 dark:border-gray-600">
               <nav className="flex space-x-8 px-6">
                 {[
@@ -465,10 +554,24 @@ const Launchpad: React.FC = () => {
               )}
             </div>
           </div>
+      </div>
+    );
+  } catch (error) {
+    console.error('Error rendering Launchpad:', error);
+    return (
+      <div className="space-y-6 p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <h2 className="text-lg font-semibold text-red-800 mb-2">Error Loading Launchpad</h2>
+          <p className="text-red-600">
+            There was an error loading the proposals. Please refresh the page or contact support.
+          </p>
+          <pre className="mt-2 text-xs text-red-500 bg-red-100 p-2 rounded overflow-auto">
+            {error instanceof Error ? error.message : String(error)}
+          </pre>
         </div>
       </div>
-    </div>
-  );
+    );
+  }
 };
 
 export default Launchpad;

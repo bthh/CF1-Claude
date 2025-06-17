@@ -646,6 +646,18 @@ export const AssistantManagementModal: React.FC<AssistantManagementModalProps> =
                 </div>
               </div>
 
+              {/* Validation Messages */}
+              {editingAssistant && editingAssistant.assetAccess.length === 0 && (
+                <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                  <div className="flex items-center space-x-2">
+                    <AlertCircle className="w-5 h-5 text-yellow-600" />
+                    <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                      Warning: This assistant will not have access to any assets.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               <div className="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">
                 <button
                   onClick={() => setEditingAssistant(null)}

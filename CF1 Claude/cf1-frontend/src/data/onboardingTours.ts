@@ -131,7 +131,7 @@ export const CF1_ONBOARDING_TOURS: OnboardingTour[] = [
         target: '[data-tour="asset-detail"]',
         placement: 'tooltip',
         position: 'top',
-        page: '/marketplace/asset/1',
+        page: '/marketplace/assets/1',
         nextButtonText: 'Continue'
       },
       {

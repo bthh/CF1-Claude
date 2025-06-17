@@ -212,7 +212,8 @@ const Governance: React.FC = () => {
   const [selectedType, setSelectedType] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   
-  const { proposals: mockProposals } = useGovernanceStore();
+  const { getProposalsForVoting } = useGovernanceStore();
+  const mockProposals = getProposalsForVoting();
   
   // Simulate loading state for proposals
   const { isLoading, data: proposals } = useSimulatedLoading(mockProposals, 1200);

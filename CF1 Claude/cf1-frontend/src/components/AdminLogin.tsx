@@ -59,6 +59,15 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ isOpen, onClose, onSuccess }) =
       permissions: ['Proposal Management', 'Token Distribution', 'Analytics View']
     },
     {
+      value: 'platform_admin' as AdminRole,
+      label: 'Platform Admin',
+      description: 'User management and system monitoring',
+      icon: <Shield className="w-6 h-6" />,
+      color: 'from-green-500 to-green-600',
+      bgColor: 'from-green-50 to-green-100',
+      permissions: ['User Management', 'Compliance Monitoring', 'Support Tickets', 'Audit Logs']
+    },
+    {
       value: 'super_admin' as AdminRole,
       label: 'Super Admin',
       description: 'Full platform access with emergency controls',
@@ -68,13 +77,13 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ isOpen, onClose, onSuccess }) =
       permissions: ['Platform Configuration', 'Emergency Controls', 'Financial Reports', 'All Creator Permissions']
     },
     {
-      value: 'platform_admin' as AdminRole,
-      label: 'Platform Admin',
-      description: 'User management and system monitoring',
-      icon: <Shield className="w-6 h-6" />,
-      color: 'from-green-500 to-green-600',
-      bgColor: 'from-green-50 to-green-100',
-      permissions: ['User Management', 'Compliance Monitoring', 'Support Tickets', 'Audit Logs']
+      value: 'owner' as AdminRole,
+      label: 'Owner',
+      description: 'Ultimate platform control with Super Admin management',
+      icon: <Crown className="w-6 h-6" />,
+      color: 'from-red-500 to-red-600',
+      bgColor: 'from-red-50 to-red-100',
+      permissions: ['Super Admin Management', 'Platform Ownership', 'All System Permissions']
     }
   ];
 

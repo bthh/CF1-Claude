@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Star, MapPin, TrendingUp, DollarSign, BarChart3, ArrowUpDown } from 'lucide-react';
+import { ArrowLeft, Star, MapPin, TrendingUp, DollarSign, BarChart3, ArrowUpDown, AlertCircle } from 'lucide-react';
 import { PriceChart } from '../components/PriceChart';
 import { InvestmentModal } from '../components/InvestmentModal';
 import { SellModal } from '../components/SellModal';
 import { AIAnalysisTab } from '../components/AIAnalysis/AIAnalysisTab';
+import { fetchAssetById, Asset } from '../services/assetService';
+import { useNotifications } from '../hooks/useNotifications';
 
 // Generate price history data for different timeframes
 const generatePriceHistory = () => {
@@ -32,29 +34,92 @@ const generatePriceHistory = () => {
 const AssetDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { error } = useNotifications();
+  
+  const [asset, setAsset] = useState<Asset | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [isBuyModalOpen, setIsBuyModalOpen] = useState(false);
   const [isSellModalOpen, setIsSellModalOpen] = useState(false);
   const [selectedTimeframe, setSelectedTimeframe] = useState<'7D' | '1M' | '3M' | '1Y'>('7D');
 
+  // Fetch asset data on component mount
+  useEffect(() => {
+    const loadAsset = async () => {
+      if (!id) {
+        setFetchError('Asset ID not provided');
+        setLoading(false);
+        return;
+      }
 
-  // Mock asset data
-  const asset = {
-    id: id || '1',
-    name: 'Manhattan Office Complex',
-    type: 'Commercial Real Estate',
-    location: 'New York, NY',
-    description: 'Prime commercial office building in Manhattan\'s financial district',
-    currentPrice: '$105.25',
-    priceChange24h: '+1.52%',
-    volume24h: '$125,400',
-    marketCap: '$2.63M',
-    expectedAPY: '8.5%',
-    rating: 4.8,
-    totalTokens: 25000,
-    availableTokens: 15000,
-    totalHolders: 1247,
-    priceHistory: generatePriceHistory(),
-  };
+      try {
+        setLoading(true);
+        setFetchError(null);
+        const assetData = await fetchAssetById(id);
+        setAsset(assetData);
+      } catch (err) {
+        console.error('Failed to load asset:', err);
+        const errorMessage = err instanceof Error ? err.message : 'Failed to load asset';
+        setFetchError(errorMessage);
+        error(errorMessage);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadAsset();
+  }, [id, error]);
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p className="text-gray-600 dark:text-gray-400">Loading asset details...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (fetchError || !asset) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center space-x-4 mb-6">
+          <button 
+            onClick={() => navigate('/marketplace')}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+          </button>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Asset Not Found</h1>
+        </div>
+        
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6">
+          <div className="flex items-center space-x-3">
+            <AlertCircle className="w-6 h-6 text-red-600" />
+            <div>
+              <h3 className="text-lg font-semibold text-red-800 dark:text-red-200">
+                Unable to Load Asset
+              </h3>
+              <p className="text-red-700 dark:text-red-300 mt-1">
+                {fetchError || 'The requested asset could not be found.'}
+              </p>
+              <button
+                onClick={() => navigate('/marketplace')}
+                className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Return to Marketplace
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Convert asset to proposal format for InvestmentModal
   const assetAsProposal = {
@@ -66,13 +131,13 @@ const AssetDetail: React.FC = () => {
       description: asset.description
     },
     financial_terms: {
-      token_price: '105250000', // $105.25 in micro units
+      token_price: (parseFloat(asset.currentPrice.replace('$', '')) * 1000000).toString(), // Convert to micro units
       minimum_investment: '100000000', // $100 minimum
       expected_apy: asset.expectedAPY,
       total_shares: asset.totalTokens
     },
     funding_progress: {
-      raised_percentage: 60
+      raised_percentage: Math.round(((asset.totalTokens - asset.availableTokens) / asset.totalTokens) * 100)
     }
   };
 
@@ -128,7 +193,7 @@ const AssetDetail: React.FC = () => {
                 />
                 {quantity && (
                   <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                    Total Cost: ${(parseFloat(quantity) * 105.25).toFixed(2)}
+                    Total Cost: ${(parseFloat(quantity) * parseFloat(asset.currentPrice.replace('$', ''))).toFixed(2)}
                   </p>
                 )}
               </div>
@@ -241,7 +306,7 @@ const AssetDetail: React.FC = () => {
           <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Price Chart</h2>
             <PriceChart
-              data={asset.priceHistory}
+              data={asset.priceHistory || generatePriceHistory()}
               currentPrice={asset.currentPrice}
               priceChange24h={asset.priceChange24h}
               volume24h={asset.volume24h}
@@ -290,8 +355,7 @@ const AssetDetail: React.FC = () => {
       <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">About This Asset</h2>
         <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-6">
-          {asset.description}. This asset represents ownership in a premium real estate 
-          investment with strong fundamentals and experienced management.
+          {asset.description}
         </p>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

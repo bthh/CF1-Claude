@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Star, MapPin, TrendingUp, Rocket, Trophy } from 'lucide-react';
+import { Star, MapPin, TrendingUp, Rocket, Trophy, DollarSign } from 'lucide-react';
 
 interface SpotlightAsset {
   id: string;
@@ -15,7 +15,9 @@ interface SpotlightAsset {
   rating: number;
   imageUrl?: string;
   tags: string[];
-  status: 'trending' | 'new' | 'ready-to-launch';
+  status: 'trending' | 'new' | 'ready-to-launch' | 'high-yield';
+  volume24h?: number;
+  performance?: number;
 }
 
 const SpotlightCard: React.FC<SpotlightAsset> = ({
@@ -36,7 +38,7 @@ const SpotlightCard: React.FC<SpotlightAsset> = ({
   
   const handleClick = () => {
     console.log('Spotlight asset clicked:', name, 'ID:', id);
-    navigate(`/marketplace/asset/${id}`);
+    navigate(`/marketplace/assets/${id}`);
   };
 
   return (
@@ -122,8 +124,20 @@ const SpotlightCard: React.FC<SpotlightAsset> = ({
   );
 };
 
+interface SpotlightCategory {
+  id: string;
+  title: string;
+  subtitle: string;
+  icon: React.ReactNode;
+  iconColor: string;
+  filter: (assets: SpotlightAsset[]) => SpotlightAsset[];
+}
+
 const Performance: React.FC = () => {
-  const trendingAssets: SpotlightAsset[] = [
+  const [selectedCategory, setSelectedCategory] = useState<string>('trending');
+
+  // All assets in one centralized array
+  const allAssets: SpotlightAsset[] = [
     {
       id: '1',
       name: 'AI Data Center Complex',
@@ -137,7 +151,9 @@ const Performance: React.FC = () => {
       rating: 4.8,
       imageUrl: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=400&h=300&fit=crop',
       tags: ['AI', 'Infrastructure'],
-      status: 'trending'
+      status: 'trending',
+      volume24h: 2340000,
+      performance: 8.5
     },
     {
       id: '2',
@@ -152,7 +168,9 @@ const Performance: React.FC = () => {
       rating: 4.7,
       imageUrl: 'https://images.unsplash.com/photo-1466611653911-95081537e5b7?w=400&h=300&fit=crop',
       tags: ['Renewable', 'ESG'],
-      status: 'trending'
+      status: 'trending',
+      volume24h: 1850000,
+      performance: 6.2
     },
     {
       id: '3',
@@ -167,11 +185,10 @@ const Performance: React.FC = () => {
       rating: 4.9,
       imageUrl: 'https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=400&h=300&fit=crop',
       tags: ['Tech', 'Manufacturing'],
-      status: 'trending'
-    }
-  ];
-
-  const newAssets: SpotlightAsset[] = [
+      status: 'trending',
+      volume24h: 1950000,
+      performance: 12.1
+    },
     {
       id: '4',
       name: 'Electric Vehicle Fleet',
@@ -185,7 +202,9 @@ const Performance: React.FC = () => {
       rating: 4.5,
       imageUrl: 'https://images.unsplash.com/photo-1563720223185-11003d516935?w=400&h=300&fit=crop',
       tags: ['EV', 'Transport'],
-      status: 'new'
+      status: 'new',
+      volume24h: 980000,
+      performance: 4.1
     },
     {
       id: '5',
@@ -200,7 +219,9 @@ const Performance: React.FC = () => {
       rating: 4.6,
       imageUrl: 'https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=400&h=300&fit=crop',
       tags: ['AgTech', 'Sustainable'],
-      status: 'new'
+      status: 'new',
+      volume24h: 650000,
+      performance: 7.3
     },
     {
       id: '6',
@@ -215,11 +236,10 @@ const Performance: React.FC = () => {
       rating: 4.8,
       imageUrl: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=400&h=300&fit=crop',
       tags: ['Quantum', 'R&D'],
-      status: 'new'
-    }
-  ];
-
-  const readyToLaunchAssets: SpotlightAsset[] = [
+      status: 'new',
+      volume24h: 1200000,
+      performance: 9.8
+    },
     {
       id: '7',
       name: 'Luxury Hotel Portfolio',
@@ -233,7 +253,9 @@ const Performance: React.FC = () => {
       rating: 4.7,
       imageUrl: 'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=400&h=300&fit=crop',
       tags: ['Hospitality', 'Luxury'],
-      status: 'ready-to-launch'
+      status: 'ready-to-launch',
+      volume24h: 0,
+      performance: 0
     },
     {
       id: '8',
@@ -248,7 +270,9 @@ const Performance: React.FC = () => {
       rating: 4.9,
       imageUrl: 'https://images.unsplash.com/photo-1516849677043-ef67c9557e16?w=400&h=300&fit=crop',
       tags: ['Space', 'Innovation'],
-      status: 'ready-to-launch'
+      status: 'ready-to-launch',
+      volume24h: 0,
+      performance: 0
     },
     {
       id: '9',
@@ -259,69 +283,171 @@ const Performance: React.FC = () => {
       tokenPrice: '$310.00',
       tokensAvailable: 20000,
       totalTokens: 20000,
-      apy: '19.5%',
+      apy: '22.5%',
       rating: 4.8,
       imageUrl: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=300&fit=crop',
       tags: ['Biotech', 'Research'],
-      status: 'ready-to-launch'
+      status: 'high-yield',
+      volume24h: 1800000,
+      performance: 15.2
+    },
+    {
+      id: '10',
+      name: 'Cryptocurrency Mining Facility',
+      type: 'Digital Infrastructure',
+      location: 'Iceland',
+      totalValue: '$3.8M',
+      tokenPrice: '$190.00',
+      tokensAvailable: 8000,
+      totalTokens: 20000,
+      apy: '25.3%',
+      rating: 4.6,
+      imageUrl: 'https://images.unsplash.com/photo-1518186233392-c232efbf2373?w=400&h=300&fit=crop',
+      tags: ['Crypto', 'Mining'],
+      status: 'high-yield',
+      volume24h: 2100000,
+      performance: 18.7
+    },
+    {
+      id: '11',
+      name: 'Oil & Gas Reserve',
+      type: 'Energy',
+      location: 'Texas, US',
+      totalValue: '$7.2M',
+      tokenPrice: '$360.00',
+      tokensAvailable: 5000,
+      totalTokens: 20000,
+      apy: '21.8%',
+      rating: 4.5,
+      imageUrl: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop',
+      tags: ['Energy', 'Commodities'],
+      status: 'high-yield',
+      volume24h: 2800000,
+      performance: 14.9
     }
   ];
+
+  // Define the 4 dynamic categories with filtering logic
+  const categories: SpotlightCategory[] = [
+    {
+      id: 'trending',
+      title: 'Trending',
+      subtitle: 'Hot Assets',
+      icon: <Trophy className="w-5 h-5" />,
+      iconColor: 'text-yellow-500',
+      filter: (assets) => assets.filter(asset => 
+        asset.volume24h && asset.volume24h > 1500000 && 
+        asset.performance && asset.performance > 5
+      ).slice(0, 6)
+    },
+    {
+      id: 'new',
+      title: 'New Launches',
+      subtitle: 'Recently Added',
+      icon: <Star className="w-5 h-5" />,
+      iconColor: 'text-blue-500',
+      filter: (assets) => assets.filter(asset => 
+        asset.status === 'new'
+      ).slice(0, 6)
+    },
+    {
+      id: 'high-yield',
+      title: 'High Yield',
+      subtitle: 'Premium Returns',
+      icon: <DollarSign className="w-5 h-5" />,
+      iconColor: 'text-green-500',
+      filter: (assets) => assets.filter(asset => 
+        parseFloat(asset.apy.replace('%', '')) > 15
+      ).sort((a, b) => 
+        parseFloat(b.apy.replace('%', '')) - parseFloat(a.apy.replace('%', ''))
+      ).slice(0, 6)
+    },
+    {
+      id: 'ready-to-launch',
+      title: 'Ready to Launch',
+      subtitle: 'Coming Soon',
+      icon: <Rocket className="w-5 h-5" />,
+      iconColor: 'text-purple-500',
+      filter: (assets) => assets.filter(asset => 
+        asset.status === 'ready-to-launch'
+      ).slice(0, 6)
+    }
+  ];
+
+  // Get current category data
+  const currentCategory = categories.find(cat => cat.id === selectedCategory) || categories[0];
+  const displayedAssets = useMemo(() => 
+    currentCategory.filter(allAssets), 
+    [currentCategory, allAssets]
+  );
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Spotlight</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">Discover trending assets and premium investment opportunities.</p>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">Discover trending assets and premium investment opportunities across 4 dynamic categories.</p>
         </div>
       </div>
 
-      {/* Trending Section */}
-      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Trending</h2>
-          <div className="flex items-center space-x-2">
-            <Trophy className="w-5 h-5 text-yellow-500" />
-            <span className="text-sm text-gray-600 dark:text-gray-400">Hot Assets</span>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {trendingAssets.map((asset) => (
-            <SpotlightCard key={asset.id} {...asset} />
+      {/* Category Navigation */}
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-4">
+        <div className="flex flex-wrap gap-2">
+          {categories.map((category) => (
+            <button
+              key={category.id}
+              onClick={() => setSelectedCategory(category.id)}
+              className={`flex items-center space-x-2 px-4 py-2.5 rounded-lg font-medium transition-all duration-200 ${
+                selectedCategory === category.id
+                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 shadow-sm'
+                  : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+              }`}
+            >
+              <span className={category.iconColor}>
+                {category.icon}
+              </span>
+              <span>{category.title}</span>
+              <span className="text-xs bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 px-2 py-1 rounded-full">
+                {currentCategory.id === category.id ? displayedAssets.length : category.filter(allAssets).length}
+              </span>
+            </button>
           ))}
         </div>
       </div>
 
-      {/* New Section */}
+      {/* Selected Category Content */}
       <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">New</h2>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{currentCategory.title}</h2>
           <div className="flex items-center space-x-2">
-            <Star className="w-5 h-5 text-blue-500" />
-            <span className="text-sm text-gray-600 dark:text-gray-400">Latest Launches</span>
+            <span className={currentCategory.iconColor}>
+              {currentCategory.icon}
+            </span>
+            <span className="text-sm text-gray-600 dark:text-gray-400">{currentCategory.subtitle}</span>
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {newAssets.map((asset) => (
-            <SpotlightCard key={asset.id} {...asset} />
-          ))}
-        </div>
-      </div>
-
-      {/* Ready to Launch Section */}
-      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Ready to Launch</h2>
-          <div className="flex items-center space-x-2">
-            <Rocket className="w-5 h-5 text-purple-500" />
-            <span className="text-sm text-gray-600 dark:text-gray-400">Coming Soon</span>
+        
+        {displayedAssets.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {displayedAssets.map((asset) => (
+              <SpotlightCard key={asset.id} {...asset} />
+            ))}
           </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {readyToLaunchAssets.map((asset) => (
-            <SpotlightCard key={asset.id} {...asset} />
-          ))}
-        </div>
+        ) : (
+          <div className="text-center py-12">
+            <div className="text-gray-400 dark:text-gray-500 mb-4">
+              <span className={`${currentCategory.iconColor} inline-block`}>
+                {React.cloneElement(currentCategory.icon as React.ReactElement, { className: "w-16 h-16 mx-auto" })}
+              </span>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+              No {currentCategory.title.toLowerCase()} assets found
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400">
+              Check back soon for new assets in this category.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

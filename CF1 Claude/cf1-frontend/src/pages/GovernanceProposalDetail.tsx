@@ -12,19 +12,23 @@ import {
   Eye, 
   DollarSign,
   Calendar,
-  User
+  User,
+  Zap
 } from 'lucide-react';
 import { useGovernanceStore } from '../store/governanceStore';
 import { useNotifications } from '../hooks/useNotifications';
+import { useSessionStore } from '../store/sessionStore';
 
 const GovernanceProposalDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [showVoteConfirmation, setShowVoteConfirmation] = useState(false);
   const [pendingVote, setPendingVote] = useState<'for' | 'against' | null>(null);
+  const [isSimulatingPass, setIsSimulatingPass] = useState(false);
   
   const { getProposalById, voteOnProposal } = useGovernanceStore();
   const { success, error: showError, info } = useNotifications();
+  const { selectedRole } = useSessionStore();
   
   // Get proposal from store
   const proposal = getProposalById(id || '');
@@ -132,6 +136,63 @@ const GovernanceProposalDetail: React.FC = () => {
     setShowVoteConfirmation(false);
   };
 
+  // Check if user has admin privileges for simulate pass
+  const canSimulatePass = selectedRole === 'super_admin' || selectedRole === 'owner';
+
+  // Handle simulate pass (Super Admin only)
+  const handleSimulatePass = async () => {
+    if (!canSimulatePass) {
+      showError('Access Denied', 'You do not have permission to perform this action.');
+      return;
+    }
+
+    if (!proposal) return;
+
+    setIsSimulatingPass(true);
+    try {
+      // Simulate passing the proposal by adding enough votes
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Calculate votes needed to pass (quorum + majority)
+      const votesNeeded = Math.max(
+        proposal.quorumRequired - proposal.totalVotes, // Reach quorum
+        proposal.quorumRequired * 0.6 - proposal.votesFor // Ensure 60% majority
+      );
+      
+      const simulatedVotes = Math.max(votesNeeded + 100, 1000); // Add buffer
+      
+      // Simulate voting to pass the proposal
+      const passSuccess = voteOnProposal(proposal.id, 'for', simulatedVotes);
+      
+      if (passSuccess) {
+        success(
+          'Proposal Simulated to Pass!',
+          `${proposal.title} now has enough votes to pass and is ready for execution.`,
+          { 
+            duration: 5000,
+            actionLabel: 'View All Proposals',
+            onAction: () => navigate('/governance')
+          }
+        );
+
+        // Show additional context about what happens next
+        setTimeout(() => {
+          info(
+            'Execution Ready',
+            'The proposal has reached the required quorum and majority. It can now be executed by the governance system.',
+            { duration: 8000 }
+          );
+        }, 2000);
+      } else {
+        showError('Simulation Failed', 'Unable to simulate proposal passing. The proposal may already be passed or ended.');
+      }
+    } catch (err) {
+      showError('Simulation Failed', 'An error occurred while simulating the proposal pass.');
+    } finally {
+      setIsSimulatingPass(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -154,13 +215,38 @@ const GovernanceProposalDetail: React.FC = () => {
           </div>
         </div>
         <div className="text-right">
-          <div className="flex items-center space-x-2 mb-1">
-            <Clock className="w-4 h-4 text-gray-500" />
-            <span className="text-lg font-semibold text-gray-900 dark:text-white">{proposal.timeLeft}</span>
+          <div className="flex items-center justify-end space-x-3 mb-1">
+            {/* Admin: Simulate Pass Button (Super Admin/Owner only) */}
+            {canSimulatePass && proposal.status === 'active' && !proposal.userVoted && (
+              <button
+                onClick={handleSimulatePass}
+                disabled={isSimulatingPass}
+                className="bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white px-3 py-2 rounded-lg font-medium transition-colors flex items-center space-x-2 text-sm"
+              >
+                {isSimulatingPass ? (
+                  <>
+                    <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Simulating...</span>
+                  </>
+                ) : (
+                  <>
+                    <Zap className="w-3 h-3" />
+                    <span>Admin: Simulate Pass</span>
+                  </>
+                )}
+              </button>
+            )}
+            
+            <div className="flex items-center space-x-2">
+              <Clock className="w-4 h-4 text-gray-500" />
+              <span className="text-lg font-semibold text-gray-900 dark:text-white">{proposal.timeLeft}</span>
+            </div>
           </div>
-          <span className="bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 text-sm px-3 py-1 rounded-full">
-            Active Voting
-          </span>
+          <div className="flex justify-end">
+            <span className="bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 text-sm px-3 py-1 rounded-full">
+              Active Voting
+            </span>
+          </div>
         </div>
       </div>
 

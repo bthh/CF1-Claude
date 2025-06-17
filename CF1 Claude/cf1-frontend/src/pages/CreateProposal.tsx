@@ -13,27 +13,37 @@ import {
   Users,
   Target,
   Clock,
-  Save
+  Save,
+  AlertTriangle
 } from 'lucide-react';
 import { useSubmissionStore } from '../store/submissionStore';
 import { useNotifications } from '../hooks/useNotifications';
 import { TouchInput, TouchSelect, TouchTextarea } from '../components/TouchOptimized';
 import { aiAnalysisService } from '../services/aiAnalysis';
+import { 
+  getPlatformConfig, 
+  calculateMinimumInvestment, 
+  calculateTotalSupply, 
+  validateTokenPrice,
+  getFundingDeadlineOptions,
+  validateProposalFinancials
+} from '../services/platformConfig';
+import { createProposal, validateProposalData } from '../services/proposalService';
 
 interface FormData {
   // Asset Details
   assetName: string;
   assetType: string;
   category: string;
+  customCategory: string;
   location: string;
   description: string;
   
   // Financial Terms
   targetAmount: string;
   tokenPrice: string;
-  minimumInvestment: string;
   expectedAPY: string;
-  fundingDeadline: string;
+  fundingDays: number | null; // Changed from fundingDeadline string to days number
   
   // Documentation
   businessPlan: File | null;
@@ -54,17 +64,19 @@ const CreateProposal: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isEditingDraft, setIsEditingDraft] = useState(false);
   const [draftId, setDraftId] = useState<string | null>(null);
+  const [platformConfig] = useState(() => getPlatformConfig());
+  const [tokenPriceError, setTokenPriceError] = useState<string | null>(null);
   const [formData, setFormData] = useState<FormData>({
     assetName: '',
     assetType: '',
     category: '',
+    customCategory: '',
     location: '',
     description: '',
     targetAmount: '',
     tokenPrice: '',
-    minimumInvestment: '',
     expectedAPY: '',
-    fundingDeadline: '',
+    fundingDays: null,
     businessPlan: null,
     financialProjections: null,
     legalDocuments: null,
@@ -81,17 +93,28 @@ const CreateProposal: React.FC = () => {
       if (draft && draft.status === 'draft') {
         setIsEditingDraft(true);
         setDraftId(draftParam);
+        
+        // Convert old funding deadline to days if needed
+        let fundingDays = null;
+        if (draft.fundingDeadline) {
+          const deadlineDate = new Date(draft.fundingDeadline);
+          const today = new Date();
+          const diffTime = deadlineDate.getTime() - today.getTime();
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          fundingDays = diffDays > 0 ? diffDays : null;
+        }
+        
         setFormData({
           assetName: draft.assetName,
           assetType: draft.assetType,
           category: draft.category,
+          customCategory: draft.customCategory || '',
           location: draft.location,
           description: draft.description,
           targetAmount: draft.targetAmount,
           tokenPrice: draft.tokenPrice,
-          minimumInvestment: draft.minimumInvestment,
           expectedAPY: draft.expectedAPY,
-          fundingDeadline: draft.fundingDeadline,
+          fundingDays: fundingDays,
           businessPlan: null, // Files can't be restored from drafts
           financialProjections: null,
           legalDocuments: null,
@@ -144,11 +167,93 @@ const CreateProposal: React.FC = () => {
     'Other'
   ];
 
-  const handleInputChange = (field: keyof FormData, value: string | File | null) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+  // Auto-calculation and formatting helpers
+  const formatCurrency = (value: string): string => {
+    const numericValue = value.replace(/[^\d.]/g, '');
+    const parts = numericValue.split('.');
+    if (parts.length > 2) {
+      return parts[0] + '.' + parts[1];
+    }
+    if (parts[0]) {
+      parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+    return parts.join('.');
+  };
+
+  const formatPercentage = (value: string): string => {
+    const numericValue = value.replace(/[^\d.]/g, '');
+    const parts = numericValue.split('.');
+    if (parts.length > 2) {
+      return parts[0] + '.' + parts[1];
+    }
+    // Limit to 2 decimal places
+    if (parts[1] && parts[1].length > 2) {
+      parts[1] = parts[1].substring(0, 2);
+    }
+    return parts.join('.');
+  };
+
+  const parseNumericValue = (value: string): number => {
+    return parseFloat(value.replace(/[^\d.]/g, '')) || 0;
+  };
+
+  // Calculate derived values using platform config
+  const targetAmountNum = parseNumericValue(formData.targetAmount);
+  const tokenPriceNum = parseNumericValue(formData.tokenPrice);
+  
+  const calculatedValues = {
+    totalSupply: targetAmountNum > 0 && tokenPriceNum > 0 
+      ? calculateTotalSupply(targetAmountNum, tokenPriceNum)
+      : 0,
+    minimumInvestment: targetAmountNum > 0 
+      ? calculateMinimumInvestment(targetAmountNum, platformConfig.maxInvestorsPerProposal)
+      : 0,
+    minimumTokens: targetAmountNum > 0 && tokenPriceNum > 0
+      ? Math.ceil(calculateMinimumInvestment(targetAmountNum, platformConfig.maxInvestorsPerProposal) / tokenPriceNum)
+      : 0,
+    maxInvestors: platformConfig.maxInvestorsPerProposal
+  };
+
+  const handleInputChange = (field: keyof FormData, value: string | File | null | number) => {
+    let processedValue = value;
+    
+    // Auto-format financial fields
+    if (typeof value === 'string') {
+      switch (field) {
+        case 'targetAmount':
+        case 'tokenPrice':
+          processedValue = formatCurrency(value);
+          break;
+        case 'expectedAPY':
+          processedValue = formatPercentage(value);
+          break;
+      }
+    }
+
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        [field]: processedValue
+      };
+      
+      // Clear custom category when category changes from "Other" to something else
+      if (field === 'category' && prev.category === 'Other' && value !== 'Other') {
+        newData.customCategory = '';
+      }
+      
+      return newData;
+    });
+
+    // Validate token price in real-time
+    if (field === 'tokenPrice' && typeof value === 'string') {
+      const numericPrice = parseNumericValue(value);
+      if (numericPrice > 0) {
+        const validation = validateTokenPrice(numericPrice);
+        setTokenPriceError(validation.isValid ? null : validation.error || null);
+      } else {
+        setTokenPriceError(null);
+      }
+    }
   };
 
   const handleFileUpload = (field: keyof FormData, event: React.ChangeEvent<HTMLInputElement>) => {
@@ -159,9 +264,12 @@ const CreateProposal: React.FC = () => {
   const validateStep = (step: number): boolean => {
     switch (step) {
       case 1:
-        return !!(formData.assetName && formData.assetType && formData.category && formData.location && formData.description);
+        const categoryValid = formData.category && (formData.category !== 'Other' || formData.customCategory.trim());
+        return !!(formData.assetName && formData.assetType && categoryValid && formData.location && formData.description);
       case 2:
-        return !!(formData.targetAmount && formData.tokenPrice && formData.minimumInvestment && formData.expectedAPY && formData.fundingDeadline);
+        const hasRequiredFields = !!(formData.targetAmount && formData.tokenPrice && formData.expectedAPY && formData.fundingDays);
+        const hasValidTokenPrice = !tokenPriceError && parseNumericValue(formData.tokenPrice) >= platformConfig.minTokenPrice;
+        return hasRequiredFields && hasValidTokenPrice;
       case 3:
         return !!(formData.businessPlan && formData.financialProjections && formData.legalDocuments);
       case 4:
@@ -224,17 +332,23 @@ const CreateProposal: React.FC = () => {
   };
 
   const handleSaveDraft = () => {
+    // Calculate deadline date from funding days
+    const fundingDeadline = formData.fundingDays 
+      ? new Date(Date.now() + formData.fundingDays * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      : '';
+    
     const submissionData = {
       assetName: formData.assetName,
       assetType: formData.assetType,
       category: formData.category,
+      customCategory: formData.customCategory,
       location: formData.location,
       description: formData.description,
       targetAmount: formData.targetAmount,
       tokenPrice: formData.tokenPrice,
-      minimumInvestment: formData.minimumInvestment,
+      minimumInvestment: calculatedValues.minimumInvestment.toString(), // Use calculated value
       expectedAPY: formData.expectedAPY,
-      fundingDeadline: formData.fundingDeadline,
+      fundingDeadline: fundingDeadline,
       businessPlan: formData.businessPlan?.name,
       financialProjections: formData.financialProjections?.name,
       legalDocuments: formData.legalDocuments?.name,
@@ -261,19 +375,117 @@ const CreateProposal: React.FC = () => {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (!validateStep(currentStep)) {
+      showError('Please complete all required fields before submitting.');
+      return;
+    }
+    
+    // Calculate deadline date from funding days
+    const fundingDeadline = formData.fundingDays 
+      ? new Date(Date.now() + formData.fundingDays * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      : '';
+    
+    const submissionData = {
+      assetName: formData.assetName,
+      assetType: formData.assetType,
+      category: formData.category,
+      customCategory: formData.customCategory,
+      location: formData.location,
+      description: formData.description,
+      targetAmount: formData.targetAmount,
+      tokenPrice: formData.tokenPrice,
+      minimumInvestment: calculatedValues.minimumInvestment.toString(), // Use calculated value
+      totalSupply: calculatedValues.totalSupply.toString(), // Add calculated total supply
+      expectedAPY: formData.expectedAPY,
+      fundingDeadline: fundingDeadline,
+      businessPlan: formData.businessPlan?.name || '',
+      financialProjections: formData.financialProjections?.name || '',
+      legalDocuments: formData.legalDocuments?.name || '',
+      assetValuation: formData.assetValuation?.name || '',
+      riskFactors: formData.riskFactors,
+      useOfFunds: formData.useOfFunds
+    };
+    
+    // Client-side validation
+    const validation = validateProposalData(submissionData);
+    if (!validation.isValid) {
+      showError(`Validation failed: ${validation.errors.join(', ')}`);
+      return;
+    }
+    
+    try {
+      // Submit to backend API
+      const result = await createProposal(submissionData);
+      
+      if (result.success && result.data) {
+        // Also save to local store for backwards compatibility
+        const localResult = addSubmission({
+          ...submissionData,
+          minimumInvestment: calculatedValues.minimumInvestment.toString(),
+          fundingDeadline: fundingDeadline
+        });
+        
+        // Trigger AI analysis if suitable documents are available
+        if (localResult.proposalId) {
+          triggerAIAnalysis(localResult.proposalId);
+        }
+        
+        success(
+          'Proposal Submitted!', 
+          'Your proposal has been created successfully with server-side validation and will be reviewed within 3-5 business days.',
+          {
+            duration: 6000,
+            actionLabel: 'View Status',
+            onAction: () => navigate('/my-submissions')
+          }
+        );
+        
+        // Show follow-up info notification
+        setTimeout(() => {
+          info(
+            'What Happens Next?',
+            'Our team will review your proposal and documentation. You\'ll receive updates via notifications and email.',
+            { duration: 10000 }
+          );
+        }, 3000);
+        
+        // Navigate to submissions page
+        navigate('/my-submissions');
+      } else {
+        // Handle API errors
+        if (result.code === 'VALIDATION_ERROR' && result.details) {
+          showError(`Server validation failed: ${result.details.join(', ')}`);
+        } else {
+          showError(result.error || 'Failed to submit proposal. Please try again.');
+        }
+      }
+    } catch (error) {
+      console.error('Error submitting proposal:', error);
+      showError('An unexpected error occurred. Please try again.');
+    }
+  };
+
+  // Keep the old mock submission as fallback
+  const handleMockSubmit = () => {
     if (validateStep(currentStep)) {
+      // Calculate deadline date from funding days
+      const fundingDeadline = formData.fundingDays 
+        ? new Date(Date.now() + formData.fundingDays * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+        : '';
+      
       const submissionData = {
         assetName: formData.assetName,
         assetType: formData.assetType,
         category: formData.category,
+        customCategory: formData.customCategory,
         location: formData.location,
         description: formData.description,
         targetAmount: formData.targetAmount,
         tokenPrice: formData.tokenPrice,
-        minimumInvestment: formData.minimumInvestment,
+        minimumInvestment: calculatedValues.minimumInvestment.toString(), // Use calculated value
         expectedAPY: formData.expectedAPY,
-        fundingDeadline: formData.fundingDeadline,
+        fundingDeadline: fundingDeadline,
         businessPlan: formData.businessPlan?.name,
         financialProjections: formData.financialProjections?.name,
         legalDocuments: formData.legalDocuments?.name,
@@ -411,10 +623,29 @@ const CreateProposal: React.FC = () => {
           size="lg"
           searchable
           clearable
-          onClear={() => handleInputChange('category', '')}
+          onClear={() => {
+            handleInputChange('category', '');
+            handleInputChange('customCategory', '');
+          }}
           required
         />
       </div>
+
+      {/* Conditional "Other" category input */}
+      {formData.category === 'Other' && (
+        <TouchInput
+          label="Custom Category *"
+          type="text"
+          value={formData.customCategory}
+          onChange={(e) => handleInputChange('customCategory', e.target.value)}
+          placeholder="e.g., Cryptocurrency Mining Equipment, Digital Assets"
+          size="lg"
+          clearable
+          onClear={() => handleInputChange('customCategory', '')}
+          helper="Specify your custom asset category"
+          required
+        />
+      )}
 
       <TouchInput
         label="Location *"
@@ -445,83 +676,179 @@ const CreateProposal: React.FC = () => {
     </div>
   );
 
-  const renderFinancialTerms = () => (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 sm:p-8 space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  const renderFinancialTerms = () => {
+    const fundingDeadlineOptions = getFundingDeadlineOptions();
+    
+    return (
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 sm:p-8 space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <TouchInput
+            label="Target Funding Amount *"
+            type="text"
+            value={formData.targetAmount}
+            onChange={(e) => handleInputChange('targetAmount', e.target.value)}
+            placeholder="3,200,000"
+            size="lg"
+            leftIcon={<Target />}
+            rightIcon={<span className="text-gray-500 dark:text-gray-400 text-sm">USD</span>}
+            clearable
+            onClear={() => handleInputChange('targetAmount', '')}
+            helper="Enter the total amount you want to raise"
+            required
+          />
+
+          <TouchInput
+            label="Token Price *"
+            type="text"
+            value={formData.tokenPrice}
+            onChange={(e) => handleInputChange('tokenPrice', e.target.value)}
+            placeholder={`${platformConfig.minTokenPrice.toFixed(2)}`}
+            size="lg"
+            leftIcon={<DollarSign />}
+            clearable
+            onClear={() => handleInputChange('tokenPrice', '')}
+            helper={`Price per token in USD (min: $${platformConfig.minTokenPrice.toFixed(2)})`}
+            error={tokenPriceError}
+            required
+          />
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Minimum Investment - READ ONLY */}
+          <TouchInput
+            label="Minimum Investment (Auto-calculated)"
+            type="text"
+            value={calculatedValues.minimumInvestment > 0 ? `$${calculatedValues.minimumInvestment.toLocaleString()}` : ''}
+            onChange={() => {}} // No-op function for read-only
+            placeholder="Calculated automatically"
+            size="lg"
+            leftIcon={<Users />}
+            helper={`Automatically calculated: Target Amount ÷ ${platformConfig.maxInvestorsPerProposal} max investors`}
+            disabled
+            readOnly
+          />
+
+          <TouchInput
+            label="Expected APY *"
+            type="text"
+            value={formData.expectedAPY}
+            onChange={(e) => handleInputChange('expectedAPY', e.target.value)}
+            placeholder="9.2"
+            size="lg"
+            leftIcon={<Percent />}
+            rightIcon={<span className="text-gray-500 dark:text-gray-400 text-sm">%</span>}
+            clearable
+            onClear={() => handleInputChange('expectedAPY', '')}
+            helper="Projected annual percentage yield"
+            required
+          />
+        </div>
+
+        {/* Total Supply - READ ONLY */}
         <TouchInput
-          label="Target Funding Amount *"
+          label="Total Supply (Auto-calculated)"
           type="text"
-          value={formData.targetAmount}
-          onChange={(e) => handleInputChange('targetAmount', e.target.value)}
-          placeholder="3,200,000"
+          value={calculatedValues.totalSupply > 0 ? calculatedValues.totalSupply.toLocaleString() : ''}
+          onChange={() => {}} // No-op function for read-only
+          placeholder="Calculated automatically"
           size="lg"
           leftIcon={<Target />}
-          rightIcon={<span className="text-gray-500 dark:text-gray-400 text-sm">USD</span>}
-          clearable
-          onClear={() => handleInputChange('targetAmount', '')}
-          helper="Enter the total amount you want to raise"
-          required
+          rightIcon={<span className="text-gray-500 dark:text-gray-400 text-sm">Tokens</span>}
+          helper="Automatically calculated: Target Amount ÷ Token Price"
+          disabled
+          readOnly
         />
 
-        <TouchInput
-          label="Token Price *"
-          type="text"
-          value={formData.tokenPrice}
-          onChange={(e) => handleInputChange('tokenPrice', e.target.value)}
-          placeholder="100"
+        {/* Funding Deadline - DROPDOWN */}
+        <TouchSelect
+          label="Funding Deadline *"
+          value={formData.fundingDays ? formData.fundingDays.toString() : ''}
+          onChange={(value) => handleInputChange('fundingDays', parseInt(value as string))}
+          options={fundingDeadlineOptions.map(option => ({
+            value: option.value.toString(),
+            label: option.label,
+            description: `Deadline: ${new Date(option.date).toLocaleDateString()}`
+          }))}
+          placeholder="Select funding period"
           size="lg"
-          leftIcon={<DollarSign />}
-          clearable
-          onClear={() => handleInputChange('tokenPrice', '')}
-          helper="Price per token in USD"
-          required
-        />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <TouchInput
-          label="Minimum Investment *"
-          type="text"
-          value={formData.minimumInvestment}
-          onChange={(e) => handleInputChange('minimumInvestment', e.target.value)}
-          placeholder="500"
-          size="lg"
-          leftIcon={<Users />}
-          rightIcon={<span className="text-gray-500 dark:text-gray-400 text-sm">USD</span>}
-          clearable
-          onClear={() => handleInputChange('minimumInvestment', '')}
-          helper="Minimum amount investors can invest"
+          leftIcon={<Clock />}
+          helper={`Choose from ${platformConfig.fundingDeadlineRange.minDays} to ${platformConfig.fundingDeadlineRange.maxDays} days`}
+          searchable
           required
         />
 
-        <TouchInput
-          label="Expected APY *"
-          type="text"
-          value={formData.expectedAPY}
-          onChange={(e) => handleInputChange('expectedAPY', e.target.value)}
-          placeholder="9.2"
-          size="lg"
-          leftIcon={<Percent />}
-          rightIcon={<span className="text-gray-500 dark:text-gray-400 text-sm">%</span>}
-          clearable
-          onClear={() => handleInputChange('expectedAPY', '')}
-          helper="Projected annual percentage yield"
-          required
-        />
-      </div>
-
-      <TouchInput
-        label="Funding Deadline *"
-        type="date"
-        value={formData.fundingDeadline}
-        onChange={(e) => handleInputChange('fundingDeadline', e.target.value)}
-        size="lg"
-        leftIcon={<Clock />}
-        helper="Last date to accept investments"
-        required
-      />
+      {/* Platform Configuration Display */}
+      {(formData.targetAmount || formData.tokenPrice) && (
+        <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border border-blue-200 dark:border-blue-800 rounded-xl p-6 space-y-4">
+          <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-300 mb-4 flex items-center">
+            <Target className="w-5 h-5 mr-2" />
+            Proposal Summary
+          </h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Supply</p>
+              <p className="text-xl font-bold text-gray-900 dark:text-white">
+                {calculatedValues.totalSupply > 0 ? calculatedValues.totalSupply.toLocaleString() : '--'}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Tokens to be issued
+              </p>
+            </div>
+            
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Minimum Investment</p>
+              <p className="text-xl font-bold text-gray-900 dark:text-white">
+                {calculatedValues.minimumInvestment > 0 ? `$${calculatedValues.minimumInvestment.toLocaleString()}` : '--'}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Per investor minimum
+              </p>
+            </div>
+            
+            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Maximum Investors</p>
+              <p className="text-xl font-bold text-gray-900 dark:text-white">
+                {calculatedValues.maxInvestors.toLocaleString()}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Platform limit
+              </p>
+            </div>
+          </div>
+          
+          {/* Validation messages */}
+          {formData.targetAmount && formData.tokenPrice && !tokenPriceError && (
+            <div className="flex items-center space-x-2 text-sm">
+              <CheckCircle className="w-4 h-4 text-green-600" />
+              <span className="text-green-700 dark:text-green-400 font-medium">
+                All calculations are valid and ready for submission
+              </span>
+            </div>
+          )}
+          
+          {tokenPriceError && (
+            <div className="flex items-center space-x-2 text-sm">
+              <AlertTriangle className="w-4 h-4 text-red-500" />
+              <span className="text-red-700 dark:text-red-400">
+                {tokenPriceError}
+              </span>
+            </div>
+          )}
+          
+          {(!formData.targetAmount || !formData.tokenPrice) && (
+            <div className="flex items-center space-x-2 text-sm">
+              <Clock className="w-4 h-4 text-orange-500" />
+              <span className="text-orange-700 dark:text-orange-400">
+                Enter Target Amount and Token Price to see calculations
+              </span>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
+};
 
   const renderDocumentation = () => (
     <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 space-y-6">
@@ -621,7 +948,9 @@ const CreateProposal: React.FC = () => {
           <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
             <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Category</p>
             <p className="font-semibold text-gray-900 dark:text-white text-sm truncate">
-              {formData.category || 'Not specified'}
+              {formData.category === 'Other' && formData.customCategory 
+                ? formData.customCategory 
+                : formData.category || 'Not specified'}
             </p>
           </div>
           <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">

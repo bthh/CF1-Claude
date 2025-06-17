@@ -51,7 +51,7 @@ const getPageNameFromPath = (path: string): string => {
   };
 
   // Handle dynamic routes
-  if (path.startsWith('/marketplace/asset/')) return 'Asset Detail';
+  if (path.startsWith('/marketplace/assets/')) return 'Asset Detail';
   if (path.startsWith('/launchpad/proposal/')) return 'Proposal Detail';
   
   return routes[path] || 'Unknown Page';

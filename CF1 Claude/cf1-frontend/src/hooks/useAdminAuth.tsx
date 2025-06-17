@@ -1,7 +1,8 @@
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { useCosmJS } from './useCosmJS';
+import { useSessionStore } from '../store/sessionStore';
 
-export type AdminRole = 'creator' | 'super_admin' | 'platform_admin' | null;
+export type AdminRole = 'creator' | 'super_admin' | 'platform_admin' | 'owner' | null;
 
 export interface AdminUser {
   address: string;
@@ -20,8 +21,13 @@ export interface AdminAuthContextType {
   isCreatorAdmin: boolean;
   isSuperAdmin: boolean;
   isPlatformAdmin: boolean;
+  isOwner: boolean;
   adminRole: AdminRole;
   checkPermission: (permission: string) => boolean;
+  hasAccessToCreatorAdmin: () => boolean;
+  hasAccessToPlatformAdmin: () => boolean;
+  hasAccessToFeatureToggles: () => boolean;
+  hasAccessToSuperAdminManagement: () => boolean;
   loginAsAdmin: (role: AdminRole) => Promise<void>;
   logoutAdmin: () => void;
   refreshAdminData: () => Promise<void>;
@@ -32,10 +38,11 @@ const AdminAuthContext = createContext<AdminAuthContextType | null>(null);
 
 export const useAdminAuth = (): AdminAuthContextType => {
   const { address, isConnected } = useCosmJS();
+  const { selectedRole, isRoleSelected } = useSessionStore();
   const [currentAdmin, setCurrentAdmin] = useState<AdminUser | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Define role permissions
+  // Define role permissions with granular access control
   const rolePermissions: Record<string, string[]> = {
     creator: [
       'view_proposals',
@@ -43,7 +50,23 @@ export const useAdminAuth = (): AdminAuthContextType => {
       'delete_proposals',
       'manage_tokens',
       'view_analytics',
-      'manage_distribution'
+      'manage_distribution',
+      'access_creator_admin'
+    ],
+    platform_admin: [
+      'manage_users',
+      'view_system_logs',
+      'manage_compliance',
+      'view_analytics',
+      'moderate_content',
+      'manage_support_tickets',
+      'view_audit_logs',
+      'access_platform_admin',
+      'access_creator_admin',  // Bug fix: Platform Admin can access Creator Admin
+      'manage_user_roles',
+      'view_financial_reports',
+      'manage_launchpad_proposals',
+      'manage_governance_proposals'
     ],
     super_admin: [
       'view_proposals',
@@ -57,16 +80,39 @@ export const useAdminAuth = (): AdminAuthContextType => {
       'view_system_logs',
       'manage_compliance',
       'emergency_controls',
-      'financial_reports'
+      'financial_reports',
+      'access_creator_admin',
+      'access_platform_admin',
+      'manage_feature_toggles',
+      'manage_admin_users',
+      'system_maintenance',
+      'manage_launchpad_proposals',
+      'manage_governance_proposals'
     ],
-    platform_admin: [
+    owner: [
+      'view_proposals',
+      'edit_proposals',
+      'delete_proposals',
+      'manage_tokens',
+      'view_analytics',
+      'manage_distribution',
+      'manage_platform_config',
       'manage_users',
       'view_system_logs',
       'manage_compliance',
-      'view_analytics',
-      'moderate_content',
-      'manage_support_tickets',
-      'view_audit_logs'
+      'emergency_controls',
+      'financial_reports',
+      'access_creator_admin',
+      'access_platform_admin',
+      'manage_feature_toggles',
+      'manage_admin_users',
+      'manage_super_admins',  // Owner exclusive
+      'system_maintenance',
+      'platform_ownership',   // Owner exclusive
+      'manage_billing',       // Owner exclusive
+      'data_export',          // Owner exclusive
+      'manage_launchpad_proposals',
+      'manage_governance_proposals'
     ]
   };
 
@@ -161,10 +207,47 @@ export const useAdminAuth = (): AdminAuthContextType => {
     }
   };
 
-  // Load admin session on mount
+  // Auto-set admin based on session role
+  useEffect(() => {
+    if (isConnected && address && selectedRole && isRoleSelected) {
+      // Map session roles to admin roles
+      const adminRoleMapping: Record<string, AdminRole> = {
+        'creator': 'creator',
+        'platform_admin': 'platform_admin', 
+        'super_admin': 'super_admin',
+        'owner': 'owner' // Owner gets full ownership privileges
+      };
+      
+      const mappedRole = adminRoleMapping[selectedRole];
+      if (mappedRole) {
+        const adminUser: AdminUser = {
+          address,
+          role: mappedRole,
+          permissions: rolePermissions[mappedRole] || [],
+          name: `Test ${selectedRole.replace('_', ' ')}`,
+          email: `${selectedRole}@test.com`,
+          createdAt: new Date().toISOString(),
+          lastActive: new Date().toISOString(),
+          isActive: true
+        };
+        setCurrentAdmin(adminUser);
+        localStorage.setItem('cf1_admin_session', JSON.stringify(adminUser));
+      } else if (selectedRole === 'investor') {
+        // Investor role should clear admin status
+        setCurrentAdmin(null);
+        localStorage.removeItem('cf1_admin_session');
+      }
+    } else if (!isRoleSelected || !selectedRole) {
+      // No role selected, clear admin status
+      setCurrentAdmin(null);
+      localStorage.removeItem('cf1_admin_session');
+    }
+  }, [address, isConnected, selectedRole, isRoleSelected]);
+
+  // Load admin session on mount (legacy support)
   useEffect(() => {
     const savedSession = localStorage.getItem('cf1_admin_session');
-    if (savedSession && isConnected) {
+    if (savedSession && isConnected && !isRoleSelected) {
       try {
         const adminData = JSON.parse(savedSession);
         if (adminData.address === address) {
@@ -177,7 +260,7 @@ export const useAdminAuth = (): AdminAuthContextType => {
         localStorage.removeItem('cf1_admin_session');
       }
     }
-  }, [address, isConnected]);
+  }, [address, isConnected, isRoleSelected]);
 
   // Clear admin session if wallet disconnected
   useEffect(() => {
@@ -186,10 +269,28 @@ export const useAdminAuth = (): AdminAuthContextType => {
     }
   }, [isConnected]);
 
+  // Access control helper functions
+  const hasAccessToCreatorAdmin = (): boolean => {
+    return checkPermission('access_creator_admin');
+  };
+
+  const hasAccessToPlatformAdmin = (): boolean => {
+    return checkPermission('access_platform_admin');
+  };
+
+  const hasAccessToFeatureToggles = (): boolean => {
+    return checkPermission('manage_feature_toggles');
+  };
+
+  const hasAccessToSuperAdminManagement = (): boolean => {
+    return checkPermission('manage_super_admins');
+  };
+
   const isAdmin = currentAdmin !== null;
   const isCreatorAdmin = currentAdmin?.role === 'creator';
   const isSuperAdmin = currentAdmin?.role === 'super_admin';
   const isPlatformAdmin = currentAdmin?.role === 'platform_admin';
+  const isOwner = currentAdmin?.role === 'owner';
   const adminRole = currentAdmin?.role || null;
 
   return {
@@ -198,8 +299,13 @@ export const useAdminAuth = (): AdminAuthContextType => {
     isCreatorAdmin,
     isSuperAdmin,
     isPlatformAdmin,
+    isOwner,
     adminRole,
     checkPermission,
+    hasAccessToCreatorAdmin,
+    hasAccessToPlatformAdmin,
+    hasAccessToFeatureToggles,
+    hasAccessToSuperAdminManagement,
     loginAsAdmin,
     logoutAdmin,
     refreshAdminData,

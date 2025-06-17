@@ -21,7 +21,10 @@ import {
   FileText,
   MessageSquare,
   Star,
-  Settings
+  Settings,
+  X,
+  Target,
+  Vote
 } from 'lucide-react';
 import { useAdminAuthContext } from '../hooks/useAdminAuth';
 import { useNotifications } from '../hooks/useNotifications';
@@ -29,6 +32,8 @@ import { formatTimeAgo } from '../utils/format';
 import UserManagement from '../components/AdminEnhancements/UserManagement';
 import FeatureToggleManager from '../components/AdminEnhancements/FeatureToggleManager';
 import RolePermissionsManager from '../components/AdminEnhancements/RolePermissionsManager';
+import LaunchpadAdmin from '../components/Admin/LaunchpadAdmin';
+import GovernanceAdmin from '../components/Admin/GovernanceAdmin';
 
 interface PlatformUser {
   id: string;
@@ -77,14 +82,21 @@ interface SupportTicket {
 }
 
 const PlatformAdmin: React.FC = () => {
-  const { currentAdmin, checkPermission } = useAdminAuthContext();
+  const { 
+    currentAdmin, 
+    checkPermission, 
+    hasAccessToPlatformAdmin, 
+    hasAccessToFeatureToggles, 
+    hasAccessToSuperAdminManagement 
+  } = useAdminAuthContext();
   const { success, error } = useNotifications();
   
   const [users, setUsers] = useState<PlatformUser[]>([]);
   const [complianceCases, setComplianceCases] = useState<ComplianceCase[]>([]);
   const [supportTickets, setSupportTickets] = useState<SupportTicket[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedTab, setSelectedTab] = useState<'users' | 'roles' | 'features' | 'compliance' | 'support' | 'analytics'>('users');
+  const [selectedTab, setSelectedTab] = useState<'users' | 'roles' | 'features' | 'launchpad' | 'governance' | 'compliance' | 'support' | 'analytics'>('users');
+  const [selectedSubTab, setSelectedSubTab] = useState<string>('proposals');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showUserDetails, setShowUserDetails] = useState<string | null>(null);
@@ -344,7 +356,7 @@ const PlatformAdmin: React.FC = () => {
     return matchesSearch && matchesStatus;
   });
 
-  if (!currentAdmin || !checkPermission('manage_users')) {
+  if (!currentAdmin || !hasAccessToPlatformAdmin()) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-center">
@@ -354,6 +366,9 @@ const PlatformAdmin: React.FC = () => {
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
             You don't have sufficient permissions to access the Platform Admin panel.
+            {currentAdmin?.role === 'creator' && (
+              <><br />Try accessing the Creator Admin panel instead.</>
+            )}
           </p>
         </div>
       </div>
@@ -387,31 +402,58 @@ const PlatformAdmin: React.FC = () => {
 
       {/* Navigation Tabs */}
       <div className="mb-8">
-        <div className="border-b border-gray-200 dark:border-gray-700">
-          <nav className="-mb-px flex space-x-8">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-2 border border-gray-200 dark:border-gray-700 shadow-lg">
+          <nav className="flex flex-wrap gap-2" role="tablist">
             {[
-              { id: 'users', label: 'User Management', icon: <Users className="w-4 h-4" />, count: users.length },
-              { id: 'roles', label: 'Roles & Permissions', icon: <Shield className="w-4 h-4" /> },
-              { id: 'features', label: 'Feature Toggles', icon: <Settings className="w-4 h-4" /> },
-              { id: 'compliance', label: 'Compliance', icon: <Shield className="w-4 h-4" />, count: complianceCases.filter(c => c.status !== 'resolved').length },
-              { id: 'support', label: 'Support Tickets', icon: <MessageSquare className="w-4 h-4" />, count: supportTickets.filter(t => t.status === 'open' || t.status === 'in_progress').length },
-              { id: 'analytics', label: 'Analytics', icon: <FileText className="w-4 h-4" /> }
-            ].map((tab) => (
+              { id: 'users', label: 'User Management', icon: <Users className="w-4 h-4" />, count: users.length, color: 'blue', permission: 'manage_users' },
+              { id: 'roles', label: 'Roles & Permissions', icon: <Shield className="w-4 h-4" />, color: 'purple', permission: 'manage_user_roles' },
+              { id: 'features', label: 'Feature Toggles', icon: <Settings className="w-4 h-4" />, color: 'indigo', requiresFeatureToggleAccess: true },
+              { id: 'launchpad', label: 'Launchpad', icon: <Target className="w-4 h-4" />, color: 'orange', permission: 'manage_launchpad_proposals' },
+              { id: 'governance', label: 'Governance', icon: <Vote className="w-4 h-4" />, color: 'teal', permission: 'manage_governance_proposals' },
+              { id: 'compliance', label: 'Compliance', icon: <AlertCircle className="w-4 h-4" />, count: complianceCases.filter(c => c.status !== 'resolved').length, color: 'red', permission: 'manage_compliance' },
+              { id: 'support', label: 'Support Tickets', icon: <MessageSquare className="w-4 h-4" />, count: supportTickets.filter(t => t.status === 'open' || t.status === 'in_progress').length, color: 'green', permission: 'manage_support_tickets' },
+              { id: 'analytics', label: 'Analytics', icon: <FileText className="w-4 h-4" />, color: 'yellow', permission: 'view_analytics' }
+            ].filter((tab) => {
+              // Role-based tab filtering
+              if (tab.requiresFeatureToggleAccess) {
+                return hasAccessToFeatureToggles();
+              }
+              if (tab.permission) {
+                return checkPermission(tab.permission);
+              }
+              return true; // Show tab if no specific permission required
+            }).map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setSelectedTab(tab.id as any)}
-                className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                role="tab"
+                aria-selected={selectedTab === tab.id}
+                aria-controls={`${tab.id}-panel`}
+                className={`flex items-center space-x-2 px-4 py-3 rounded-xl font-medium text-sm transition-all duration-200 relative ${
                   selectedTab === tab.id
-                    ? 'border-green-500 text-green-600 dark:text-green-400'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 hover:border-gray-300'
+                    ? `bg-${tab.color}-600 text-white shadow-lg transform scale-105`
+                    : `text-gray-600 dark:text-gray-400 hover:bg-${tab.color}-50 dark:hover:bg-${tab.color}-900/20 hover:text-${tab.color}-600 dark:hover:text-${tab.color}-400`
                 }`}
               >
-                {tab.icon}
-                <span>{tab.label}</span>
-                {tab.count !== undefined && (
-                  <span className="px-2 py-1 bg-gray-200 dark:bg-gray-600 text-xs rounded-full">
+                <div className={`p-1 rounded-lg ${
+                  selectedTab === tab.id
+                    ? 'bg-white/20'
+                    : `bg-${tab.color}-100 dark:bg-${tab.color}-900/30`
+                }`}>
+                  {tab.icon}
+                </div>
+                <span className="hidden sm:inline">{tab.label}</span>
+                {tab.count !== undefined && tab.count > 0 && (
+                  <span className={`px-2 py-1 text-xs rounded-full font-bold ${
+                    selectedTab === tab.id
+                      ? 'bg-white/20 text-white'
+                      : `bg-${tab.color}-100 dark:bg-${tab.color}-900/50 text-${tab.color}-600 dark:text-${tab.color}-400`
+                  }`}>
                     {tab.count}
                   </span>
+                )}
+                {tab.count !== undefined && tab.count > 0 && selectedTab !== tab.id && (
+                  <div className={`absolute -top-1 -right-1 w-3 h-3 bg-${tab.color}-500 rounded-full animate-pulse`} />
                 )}
               </button>
             ))}
@@ -433,7 +475,24 @@ const PlatformAdmin: React.FC = () => {
           
           {selectedTab === 'features' && <FeatureToggleManager />}
           
-          {selectedTab === 'users' && false && (
+          {/* Launchpad Tab */}
+          {selectedTab === 'launchpad' && (
+            <LaunchpadAdmin 
+              selectedSubTab={selectedSubTab} 
+              setSelectedSubTab={setSelectedSubTab} 
+            />
+          )}
+          
+          {/* Governance Tab */}
+          {selectedTab === 'governance' && (
+            <GovernanceAdmin 
+              selectedSubTab={selectedSubTab} 
+              setSelectedSubTab={setSelectedSubTab} 
+            />
+          )}
+          
+          {/* Remove the hidden duplicate user management section */}
+          {false && selectedTab === 'users' && (
             <div className="space-y-6">
               {/* Search and Filters */}
               <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg">
@@ -675,25 +734,61 @@ const PlatformAdmin: React.FC = () => {
 
           {/* Compliance Tab */}
           {selectedTab === 'compliance' && (
-            <div className="space-y-6">
+            <div className="space-y-6" role="tabpanel" id="compliance-panel">
+              <div className="bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-900/10 dark:to-orange-900/10 rounded-2xl p-6 border border-red-200 dark:border-red-800">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
+                    <AlertCircle className="w-5 h-5 text-red-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Compliance Cases</h2>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Monitor and manage compliance issues and investigations</p>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                  {['open', 'in_review', 'resolved', 'escalated'].map((status) => {
+                    const count = complianceCases.filter(c => c.status === status).length;
+                    return (
+                      <div key={status} className="text-center p-3 bg-white dark:bg-gray-800 rounded-xl">
+                        <div className={`text-2xl font-bold ${getStatusColor(status).split(' ')[0]}`}>
+                          {count}
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400 capitalize">
+                          {status.replace('_', ' ')}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              
               {complianceCases.map((case_) => (
-                <div key={case_.id} className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg">
-                  <div className="flex items-start justify-between">
+                <div key={case_.id} className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg hover:shadow-xl transition-all duration-300">
+                  <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                     <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                          {case_.userName}
-                        </h3>
-                        <span className={`px-2 py-1 rounded-lg text-xs font-medium ${getStatusColor(case_.status)}`}>
+                      <div className="flex flex-wrap items-center gap-3 mb-3">
+                        <div className="flex items-center space-x-2">
+                          <div className={`w-3 h-3 rounded-full ${
+                            case_.severity === 'critical' ? 'bg-red-500' :
+                            case_.severity === 'high' ? 'bg-orange-500' :
+                            case_.severity === 'medium' ? 'bg-yellow-500' :
+                            'bg-blue-500'
+                          }`} />
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                            {case_.userName}
+                          </h3>
+                        </div>
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(case_.status)}`}>
                           {case_.status.replace('_', ' ').charAt(0).toUpperCase() + case_.status.replace('_', ' ').slice(1)}
                         </span>
-                        <span className={`px-2 py-1 rounded-lg text-xs font-medium ${
-                          case_.severity === 'critical' ? 'bg-red-100 text-red-600' :
-                          case_.severity === 'high' ? 'bg-orange-100 text-orange-600' :
-                          case_.severity === 'medium' ? 'bg-yellow-100 text-yellow-600' :
-                          'bg-blue-100 text-blue-600'
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                          case_.severity === 'critical' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' :
+                          case_.severity === 'high' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400' :
+                          case_.severity === 'medium' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' :
+                          'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
                         }`}>
-                          {case_.severity.toUpperCase()}
+                          {case_.severity.toUpperCase()} PRIORITY
                         </span>
                       </div>
                       
@@ -765,19 +860,55 @@ const PlatformAdmin: React.FC = () => {
 
           {/* Support Tab */}
           {selectedTab === 'support' && (
-            <div className="space-y-6">
+            <div className="space-y-6" role="tabpanel" id="support-panel">
+              <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/10 dark:to-blue-900/10 rounded-2xl p-6 border border-green-200 dark:border-green-800">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                    <MessageSquare className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Support Tickets</h2>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Manage user support requests and technical issues</p>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                  {['open', 'in_progress', 'resolved', 'closed'].map((status) => {
+                    const count = supportTickets.filter(t => t.status === status).length;
+                    return (
+                      <div key={status} className="text-center p-3 bg-white dark:bg-gray-800 rounded-xl">
+                        <div className={`text-2xl font-bold ${getStatusColor(status).split(' ')[0]}`}>
+                          {count}
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400 capitalize">
+                          {status.replace('_', ' ')}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              
               {supportTickets.map((ticket) => (
-                <div key={ticket.id} className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg">
-                  <div className="flex items-start justify-between">
+                <div key={ticket.id} className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg hover:shadow-xl transition-all duration-300">
+                  <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                     <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                          {ticket.subject}
-                        </h3>
-                        <span className={`px-2 py-1 rounded-lg text-xs font-medium ${getPriorityColor(ticket.priority)}`}>
-                          {ticket.priority.toUpperCase()}
+                      <div className="flex flex-wrap items-center gap-3 mb-3">
+                        <div className="flex items-center space-x-2">
+                          <div className={`w-3 h-3 rounded-full ${
+                            ticket.priority === 'urgent' ? 'bg-red-500 animate-pulse' :
+                            ticket.priority === 'high' ? 'bg-orange-500' :
+                            ticket.priority === 'medium' ? 'bg-yellow-500' :
+                            'bg-blue-500'
+                          }`} />
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                            {ticket.subject}
+                          </h3>
+                        </div>
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${getPriorityColor(ticket.priority)}`}>
+                          {ticket.priority.toUpperCase()} PRIORITY
                         </span>
-                        <span className={`px-2 py-1 rounded-lg text-xs font-medium ${getStatusColor(ticket.status)}`}>
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(ticket.status)}`}>
                           {ticket.status.replace('_', ' ').charAt(0).toUpperCase() + ticket.status.replace('_', ' ').slice(1)}
                         </span>
                       </div>
@@ -801,30 +932,36 @@ const PlatformAdmin: React.FC = () => {
                       </div>
                     </div>
                     
-                    <div className="flex items-center space-x-2 ml-4">
+                    <div className="flex flex-wrap gap-2 lg:ml-4">
                       {ticket.status === 'open' && (
                         <button
                           onClick={() => handleTicketAction(ticket.id, 'assign')}
-                          className="px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+                          className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white text-sm rounded-xl hover:bg-blue-700 transition-all duration-200 hover:scale-105 shadow-lg"
+                          aria-label={`Assign ticket ${ticket.id}`}
                         >
-                          Assign
+                          <UserCheck className="w-4 h-4" />
+                          <span>Assign</span>
                         </button>
                       )}
                       
                       {(ticket.status === 'open' || ticket.status === 'in_progress') && (
                         <button
                           onClick={() => handleTicketAction(ticket.id, 'resolve')}
-                          className="px-3 py-1 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
+                          className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white text-sm rounded-xl hover:bg-green-700 transition-all duration-200 hover:scale-105 shadow-lg"
+                          aria-label={`Resolve ticket ${ticket.id}`}
                         >
-                          Resolve
+                          <CheckCircle className="w-4 h-4" />
+                          <span>Resolve</span>
                         </button>
                       )}
                       
                       <button
                         onClick={() => handleTicketAction(ticket.id, 'close')}
-                        className="px-3 py-1 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 transition-colors"
+                        className="flex items-center space-x-2 px-4 py-2 bg-gray-600 text-white text-sm rounded-xl hover:bg-gray-700 transition-all duration-200 hover:scale-105 shadow-lg"
+                        aria-label={`Close ticket ${ticket.id}`}
                       >
-                        Close
+                        <X className="w-4 h-4" />
+                        <span>Close</span>
                       </button>
                     </div>
                   </div>
@@ -835,8 +972,20 @@ const PlatformAdmin: React.FC = () => {
 
           {/* Analytics Tab */}
           {selectedTab === 'analytics' && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="space-y-6" role="tabpanel" id="analytics-panel">
+              <div className="bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/10 dark:to-amber-900/10 rounded-2xl p-6 border border-yellow-200 dark:border-yellow-800">
+                <div className="flex items-center space-x-3 mb-6">
+                  <div className="w-10 h-10 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center">
+                    <FileText className="w-5 h-5 text-yellow-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Platform Analytics</h2>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Overview of platform metrics and user statistics</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg">
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-sm text-gray-500 dark:text-gray-400">Total Users</p>

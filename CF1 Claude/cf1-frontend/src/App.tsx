@@ -18,6 +18,7 @@ import CreateProposal from './pages/CreateProposal';
 import ProposalDetail from './pages/ProposalDetail';
 import LaunchpadDrafts from './pages/LaunchpadDrafts';
 import MySubmissions from './pages/MySubmissions';
+import './utils/testProposalFlow'; // Load test utilities
 import Governance from './pages/Governance';
 import CreateGovernanceProposal from './pages/CreateGovernanceProposal';
 import GovernanceProposalDetail from './pages/GovernanceProposalDetail';
@@ -31,6 +32,7 @@ import SecondaryTrading from './pages/SecondaryTrading';
 import LiquidityPools from './pages/LiquidityPools';
 import Staking from './pages/Staking';
 import Lending from './pages/Lending';
+import ShareholderDetail from './pages/ShareholderDetail';
 import CreatorAdmin from './pages/CreatorAdmin';
 import SuperAdmin from './pages/SuperAdmin';
 import PlatformAdmin from './pages/PlatformAdmin';
@@ -61,7 +63,7 @@ function App() {
               <Route path="/dashboard/performance" element={<Performance />} />
               <Route path="/dashboard/activity" element={<Activity />} />
               <Route path="/marketplace" element={<Marketplace />} />
-              <Route path="/marketplace/asset/:id" element={<AssetDetail />} />
+              <Route path="/marketplace/assets/:id" element={<AssetDetail />} />
               <Route path="/portfolio" element={<Portfolio />} />
               <Route path="/portfolio/performance" element={<PortfolioPerformance />} />
               <Route path="/portfolio/transactions" element={<PortfolioTransactions />} />
@@ -87,6 +89,7 @@ function App() {
               <Route path="/liquidity" element={<LiquidityPools />} />
               <Route path="/staking" element={<Staking />} />
               <Route path="/lending" element={<Lending />} />
+              <Route path="/shareholder/:id" element={<ShareholderDetail />} />
               
               {/* Admin Routes */}
               <Route path="/admin/creator" element={<CreatorAdmin />} />

@@ -19,6 +19,7 @@ interface TouchModalProps {
   overlayClassName?: string;
   onSwipeDown?: () => void;
   swipeThreshold?: number;
+  swipeToClose?: boolean;
 }
 
 export const TouchModal: React.FC<TouchModalProps> = ({
@@ -37,7 +38,8 @@ export const TouchModal: React.FC<TouchModalProps> = ({
   className = '',
   overlayClassName = '',
   onSwipeDown,
-  swipeThreshold = 100
+  swipeThreshold = 100,
+  swipeToClose = false
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -77,9 +79,17 @@ export const TouchModal: React.FC<TouchModalProps> = ({
     }
   };
 
+  // Handle backdrop direct click
+  const handleDirectBackdropClick = (e: React.MouseEvent) => {
+    if (closeOnBackdrop) {
+      e.stopPropagation();
+      onClose();
+    }
+  };
+
   // Touch/drag handlers for mobile swipe-to-dismiss
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (!isMobile || position !== 'bottom') return;
+    if (!swipeToClose) return;
     
     const touch = e.touches[0];
     const modalRect = modalRef.current?.getBoundingClientRect();
@@ -92,7 +102,7 @@ export const TouchModal: React.FC<TouchModalProps> = ({
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging || !isMobile || position !== 'bottom') return;
+    if (!isDragging || !swipeToClose) return;
     
     const touch = e.touches[0];
     const deltaY = touch.clientY - dragStart.y;
@@ -104,12 +114,13 @@ export const TouchModal: React.FC<TouchModalProps> = ({
   };
 
   const handleTouchEnd = () => {
-    if (!isDragging || !isMobile || position !== 'bottom') return;
+    if (!isDragging || !swipeToClose) return;
     
     setIsDragging(false);
     
-    // If dragged down far enough, close modal
-    if (dragOffset > swipeThreshold) {
+    // If dragged down far enough, close modal  
+    const currentThreshold = swipeToClose ? Math.min(swipeThreshold, 50) : swipeThreshold;
+    if (dragOffset > currentThreshold) {
       onSwipeDown ? onSwipeDown() : onClose();
     }
     
@@ -192,11 +203,18 @@ export const TouchModal: React.FC<TouchModalProps> = ({
       onClick={handleBackdropClick}
     >
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm" />
+      <div 
+        className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm" 
+        data-testid="modal-backdrop"
+        onClick={handleDirectBackdropClick}
+      />
 
       {/* Modal */}
       <div
         ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? 'modal-title' : undefined}
         className={`${getModalClasses()} ${className}`}
         style={{
           transform: getModalTransform(),
@@ -219,7 +237,7 @@ export const TouchModal: React.FC<TouchModalProps> = ({
           <div className="flex items-start justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
             <div className="flex-1 min-w-0">
               {title && (
-                <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white truncate">
+                <h3 id="modal-title" className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white truncate">
                   {title}
                 </h3>
               )}
@@ -233,6 +251,7 @@ export const TouchModal: React.FC<TouchModalProps> = ({
             {showCloseButton && (
               <button
                 onClick={onClose}
+                aria-label="Close modal"
                 className="
                   ml-4
                   p-2

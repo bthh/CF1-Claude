@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, forwardRef } from 'react';
+import React, { useState, useRef, useEffect, forwardRef, useId } from 'react';
 import { X } from 'lucide-react';
 
 interface TouchTextareaProps extends Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, 'size'> {
@@ -36,12 +36,15 @@ export const TouchTextarea = forwardRef<HTMLTextAreaElement, TouchTextareaProps>
   placeholder,
   maxLength,
   rows = 4,
+  id: providedId,
   ...props
 }, ref) => {
   const [isFocused, setIsFocused] = useState(false);
   const [hasValue, setHasValue] = useState(false);
   const [charCount, setCharCount] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const generatedId = useId();
+  const textareaId = providedId || generatedId;
 
   // Update hasValue and charCount when value changes
   useEffect(() => {
@@ -114,10 +117,10 @@ export const TouchTextarea = forwardRef<HTMLTextAreaElement, TouchTextareaProps>
   // Border and focus states
   const getBorderClasses = () => {
     if (error) {
-      return 'border-red-300 dark:border-red-600 focus:border-red-500 dark:focus:border-red-400';
+      return 'border-red-500 dark:border-red-400 focus:border-red-500 dark:focus:border-red-400';
     }
     if (success && showFeedback) {
-      return 'border-green-300 dark:border-green-600 focus:border-green-500 dark:focus:border-green-400';
+      return 'border-green-500 dark:border-green-400 focus:border-green-500 dark:focus:border-green-400';
     }
     if (isFocused) {
       return 'border-blue-500 dark:border-blue-400 shadow-lg shadow-blue-500/20 dark:shadow-blue-400/20';
@@ -159,7 +162,7 @@ export const TouchTextarea = forwardRef<HTMLTextAreaElement, TouchTextareaProps>
     <div className={`relative ${className}`}>
       {/* Label for default and minimal variants */}
       {label && variant !== 'floating' && (
-        <label className={getLabelClasses()}>
+        <label htmlFor={textareaId} className={getLabelClasses()}>
           {label}
         </label>
       )}
@@ -168,6 +171,7 @@ export const TouchTextarea = forwardRef<HTMLTextAreaElement, TouchTextareaProps>
         {/* Textarea Field */}
         <textarea
           ref={ref || textareaRef}
+          id={textareaId}
           value={value}
           placeholder={variant === 'floating' ? '' : placeholder}
           rows={autoResize ? 1 : rows}
@@ -188,7 +192,7 @@ export const TouchTextarea = forwardRef<HTMLTextAreaElement, TouchTextareaProps>
 
         {/* Floating Label */}
         {label && variant === 'floating' && (
-          <label className={getLabelClasses()}>
+          <label htmlFor={textareaId} className={getLabelClasses()}>
             {label}
           </label>
         )}

@@ -1,15 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Clock, Users, Target, TrendingUp } from 'lucide-react';
+import { ArrowLeft, Clock, Users, Target, TrendingUp, Zap } from 'lucide-react';
 import { InvestmentModal } from '../components/InvestmentModal';
 import { useBusinessTracking } from '../hooks/useMonitoring';
 import { AIAnalysisTab } from '../components/AIAnalysis/AIAnalysisTab';
+import { useSessionStore } from '../store/sessionStore';
+import { useNotifications } from '../hooks/useNotifications';
 
 const ProposalDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [showInvestModal, setShowInvestModal] = useState(false);
   const { trackProposal } = useBusinessTracking();
+  const { selectedRole } = useSessionStore();
+  const { success, error } = useNotifications();
+  const [isInstantFunding, setIsInstantFunding] = useState(false);
 
   // Track proposal view
   useEffect(() => {
@@ -19,8 +24,51 @@ const ProposalDetail: React.FC = () => {
     }
   }, [id, trackProposal]);
 
-  // Mock proposal data
-  const proposal = {
+  // Check if user has admin privileges for instant funding
+  const canInstantFund = selectedRole === 'super_admin' || selectedRole === 'owner';
+
+  // Handle instant funding (Super Admin only)
+  const handleInstantFund = async () => {
+    if (!canInstantFund) {
+      error('Access Denied', 'You do not have permission to perform this action.');
+      return;
+    }
+
+    setIsInstantFunding(true);
+    try {
+      // Simulate instant funding process
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Update proposal status to fully funded
+      setProposalData(prev => ({
+        ...prev,
+        funding_status: {
+          ...prev.funding_status,
+          raised_amount: prev.financial_terms.target_amount, // Fully funded
+          investor_count: prev.funding_status.investor_count + 25, // Add simulated investors
+          is_funded: true,
+        },
+        status: 'Funded'
+      }));
+
+      success(
+        'Proposal Instantly Funded!',
+        `${proposalData.asset_details.name} has been fully funded and is ready for finalization.`,
+        { 
+          duration: 5000,
+          actionLabel: 'View Details',
+          onAction: () => window.location.reload()
+        }
+      );
+    } catch (err) {
+      error('Funding Failed', 'An error occurred while processing the instant funding.');
+    } finally {
+      setIsInstantFunding(false);
+    }
+  };
+
+  // Proposal data state (to allow updates)
+  const [proposalData, setProposalData] = useState({
     id: id || '1',
     asset_details: {
       name: 'Downtown Seattle Office',
@@ -44,7 +92,10 @@ const ProposalDetail: React.FC = () => {
       tokens_minted: false,
     },
     status: 'Active',
-  };
+  });
+
+  // Use proposalData instead of proposal for the rest of the component
+  const proposal = proposalData;
 
   return (
     <div className="space-y-6">
@@ -67,12 +118,41 @@ const ProposalDetail: React.FC = () => {
           </div>
         </div>
         
-        <button
-          onClick={() => setShowInvestModal(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
-        >
-          Invest Now
-        </button>
+        <div className="flex items-center space-x-3">
+          {/* Admin: Instant Fund Button (Super Admin/Owner only) */}
+          {canInstantFund && proposal.status === 'Active' && !proposal.funding_status.is_funded && (
+            <button
+              onClick={handleInstantFund}
+              disabled={isInstantFunding}
+              className="bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white px-4 py-3 rounded-lg font-semibold transition-colors flex items-center space-x-2"
+            >
+              {isInstantFunding ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Funding...</span>
+                </>
+              ) : (
+                <>
+                  <Zap className="w-4 h-4" />
+                  <span>Admin: Instant Fund</span>
+                </>
+              )}
+            </button>
+          )}
+
+          {/* Regular Invest Button */}
+          <button
+            onClick={() => setShowInvestModal(true)}
+            disabled={proposal.funding_status.is_funded}
+            className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
+              proposal.funding_status.is_funded
+                ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
+                : 'bg-blue-600 hover:bg-blue-700 text-white'
+            }`}
+          >
+            {proposal.funding_status.is_funded ? 'Fully Funded' : 'Invest Now'}
+          </button>
+        </div>
       </div>
 
       {/* Overview Cards */}
@@ -92,7 +172,9 @@ const ProposalDetail: React.FC = () => {
             <TrendingUp className="w-8 h-8 text-green-600" />
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">Raised</p>
-              <p className="text-xl font-bold text-gray-900 dark:text-white">$2.5M</p>
+              <p className="text-xl font-bold text-gray-900 dark:text-white">
+                ${proposal.funding_status.is_funded ? '5.0M' : '2.5M'}
+              </p>
             </div>
           </div>
         </div>
@@ -102,7 +184,9 @@ const ProposalDetail: React.FC = () => {
             <Users className="w-8 h-8 text-purple-600" />
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">Investors</p>
-              <p className="text-xl font-bold text-gray-900 dark:text-white">25</p>
+              <p className="text-xl font-bold text-gray-900 dark:text-white">
+                {proposal.funding_status.investor_count}
+              </p>
             </div>
           </div>
         </div>
@@ -124,11 +208,25 @@ const ProposalDetail: React.FC = () => {
         <div className="space-y-4">
           <div className="flex justify-between text-sm">
             <span className="text-gray-600 dark:text-gray-400">Progress</span>
-            <span className="font-medium">50% ($2.5M of $5.0M)</span>
+            <span className="font-medium">
+              {proposal.funding_status.is_funded ? '100%' : '50%'} 
+              ({proposal.funding_status.is_funded ? '$5.0M' : '$2.5M'} of $5.0M)
+            </span>
           </div>
           <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
-            <div className="bg-blue-600 h-3 rounded-full" style={{ width: '50%' }}></div>
+            <div 
+              className={`h-3 rounded-full transition-all duration-1000 ${
+                proposal.funding_status.is_funded ? 'bg-green-600' : 'bg-blue-600'
+              }`} 
+              style={{ width: proposal.funding_status.is_funded ? '100%' : '50%' }}
+            ></div>
           </div>
+          {proposal.funding_status.is_funded && (
+            <div className="flex items-center justify-center space-x-2 text-green-600 dark:text-green-400 text-sm font-medium mt-3">
+              <Zap className="w-4 h-4" />
+              <span>Fully Funded - Ready for Finalization!</span>
+            </div>
+          )}
         </div>
       </div>
 

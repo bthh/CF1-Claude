@@ -13,8 +13,10 @@ import {
   ArrowUpDown,
   Droplets,
   Lock,
-  ArrowLeftRight
+  ArrowLeftRight,
+  DollarSign
 } from 'lucide-react';
+import { useFeatureToggleStore } from '../../store/featureToggleStore';
 
 interface NavItemProps {
   icon: React.ReactNode;
@@ -48,6 +50,8 @@ const NavItem: React.FC<NavItemProps> = ({ icon, label, to, badge }) => {
 };
 
 const Sidebar: React.FC = () => {
+  const { isFeatureEnabled } = useFeatureToggleStore();
+  
   return (
     <aside className="w-64 bg-blue-100 border-r border-secondary-200 h-full flex flex-col">
       <div className="p-6 space-y-1">
@@ -90,29 +94,45 @@ const Sidebar: React.FC = () => {
       <div className="px-6 mt-6">
         <div className="border-t border-secondary-200 pt-6">
           <h3 className="text-xs font-semibold text-secondary-500 uppercase tracking-wider mb-3">
-            DeFi Features
+            Trading & DeFi
           </h3>
           <nav className="space-y-1">
+            {/* Always show primary trading */}
             <NavItem
               icon={<ArrowUpDown className="w-5 h-5" />}
               label="Trading"
               to="/trading/RWA-1"
             />
-            <NavItem
-              icon={<ArrowLeftRight className="w-5 h-5" />}
-              label="Secondary Trading"
-              to="/secondary-trading"
-            />
-            <NavItem
-              icon={<Droplets className="w-5 h-5" />}
-              label="Liquidity"
-              to="/liquidity"
-            />
-            <NavItem
-              icon={<Lock className="w-5 h-5" />}
-              label="Staking"
-              to="/staking"
-            />
+            {/* Feature-gated secondary trading */}
+            {isFeatureEnabled('secondary_trading') && (
+              <NavItem
+                icon={<ArrowLeftRight className="w-5 h-5" />}
+                label="Secondary Trading"
+                to="/secondary-trading"
+              />
+            )}
+            {/* Feature-gated DeFi modules */}
+            {isFeatureEnabled('liquidity_pools') && (
+              <NavItem
+                icon={<Droplets className="w-5 h-5" />}
+                label="Liquidity Pools"
+                to="/liquidity"
+              />
+            )}
+            {isFeatureEnabled('staking') && (
+              <NavItem
+                icon={<Lock className="w-5 h-5" />}
+                label="Staking"
+                to="/staking"
+              />
+            )}
+            {isFeatureEnabled('lending') && (
+              <NavItem
+                icon={<DollarSign className="w-5 h-5" />}
+                label="Lending"
+                to="/lending"
+              />
+            )}
           </nav>
         </div>
       </div>

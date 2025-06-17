@@ -178,8 +178,8 @@ const CreateGovernanceProposal: React.FC = () => {
     const result = addProposal(proposalData);
     
     if (result.success && result.proposalId) {
-      alert('Governance proposal submitted successfully!');
-      navigate(`/governance/proposal/${result.proposalId}`);
+      alert('Governance proposal submitted successfully! Your proposal will be reviewed by platform administrators before being made available for voting. You will be notified of the review decision.');
+      navigate('/governance'); // Redirect to main governance page since proposal won't be immediately visible
     } else {
       // Save as draft if submission fails
       const draftId = saveDraft(proposalData);
@@ -504,8 +504,8 @@ const CreateGovernanceProposal: React.FC = () => {
                 <div>
                   <h4 className="font-medium text-yellow-800 dark:text-yellow-200">Important Notice</h4>
                   <p className="text-yellow-700 dark:text-yellow-300 text-sm mt-1">
-                    Once submitted, this proposal will be visible to all token holders and cannot be modified. 
-                    Voting will begin immediately and last for {formData.votingDuration} days.
+                    Once submitted, your proposal will be reviewed by platform administrators before becoming visible to token holders. 
+                    If approved, voting will begin and last for {formData.votingDuration} days.
                   </p>
                 </div>
               </div>

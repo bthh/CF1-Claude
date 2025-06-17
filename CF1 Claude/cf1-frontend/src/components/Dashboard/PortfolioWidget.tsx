@@ -234,7 +234,11 @@ const PortfolioWidget: React.FC<PortfolioWidgetProps> = ({ size, isEditMode = fa
         <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Asset Allocation</h4>
         <div className="space-y-3">
           {portfolioStats.assets.map((asset, index) => (
-            <div key={index} className="p-3 bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors cursor-pointer">
+            <div 
+              key={index} 
+              className="p-3 bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors cursor-pointer"
+              onClick={() => navigate(`/marketplace/assets/${index + 1}`)}
+            >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex-1 min-w-0 pr-3">
                   <h5 className="font-medium text-gray-900 dark:text-white truncate">{asset.name}</h5>
