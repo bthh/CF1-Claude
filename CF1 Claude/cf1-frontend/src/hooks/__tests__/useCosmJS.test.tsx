@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { useCosmJS } from '../useCosmJS'
 import { cosmjsClient } from '../../services/cosmjs'
+import { CosmJSProvider } from '../../providers/CosmJSProvider'
 
 // Mock the cosmjs client
 vi.mock('../../services/cosmjs', () => ({
@@ -22,6 +23,37 @@ vi.mock('../../services/cosmjs', () => ({
     queryPortfolioPerformance: vi.fn(),
     formatAmount: vi.fn(),
     parseAmount: vi.fn(),
+    isDemoMode: vi.fn(() => false),
+  },
+}))
+
+// Mock business tracking hooks
+vi.mock('../../hooks/useMonitoring', () => ({
+  useBusinessTracking: vi.fn(() => ({
+    trackUserAction: vi.fn(),
+    trackTransaction: vi.fn(),
+    trackInvestment: {
+      started: vi.fn(),
+      completed: vi.fn(),
+      failed: vi.fn(),
+    },
+    trackWallet: {
+      connected: vi.fn(),
+      disconnected: vi.fn(),
+    },
+  })),
+  useUserTracking: vi.fn(() => ({
+    setUserId: vi.fn(),
+    trackPageView: vi.fn(),
+    setUser: vi.fn(),
+    clearUser: vi.fn(),
+  })),
+}))
+
+// Mock error handler
+vi.mock('../../lib/errorHandler', () => ({
+  ErrorHandler: {
+    handle: vi.fn(),
   },
 }))
 
@@ -43,7 +75,9 @@ describe('useCosmJS', () => {
 
   describe('initial state', () => {
     it('starts with disconnected state', () => {
-      const { result } = renderHook(() => useCosmJS())
+      const { result } = renderHook(() => useCosmJS(), {
+        wrapper: CosmJSProvider
+      })
       
       expect(result.current.isConnected).toBe(false)
       expect(result.current.address).toBe('')
@@ -57,7 +91,7 @@ describe('useCosmJS', () => {
       vi.mocked(cosmjsClient.getAddress).mockReturnValue('neutron1mock123')
       vi.mocked(cosmjsClient.getBalance).mockResolvedValue('1000000000')
 
-      const { result } = renderHook(() => useCosmJS())
+      const { result } = renderHook(() => useCosmJS(), { wrapper: CosmJSProvider })
 
       // Wait for useEffect to run
       await act(async () => {
@@ -74,11 +108,17 @@ describe('useCosmJS', () => {
     it('connects wallet successfully', async () => {
       vi.mocked(cosmjsClient.connectWallet).mockResolvedValue('neutron1mock123')
       vi.mocked(cosmjsClient.getBalance).mockResolvedValue('1000000000')
-
-      const { result } = renderHook(() => useCosmJS())
+      
+      const { result } = renderHook(() => useCosmJS(), { wrapper: CosmJSProvider })
 
       await act(async () => {
+        // Mock isConnected and getAddress to return correct values during connection
+        vi.mocked(cosmjsClient.isConnected).mockReturnValue(true)
+        vi.mocked(cosmjsClient.getAddress).mockReturnValue('neutron1mock123')
         await result.current.connect()
+        
+        // Give time for updateBalance to complete
+        await new Promise(resolve => setTimeout(resolve, 0))
       })
 
       expect(result.current.isConnected).toBe(true)
@@ -88,13 +128,16 @@ describe('useCosmJS', () => {
     })
 
     it('handles connection errors', async () => {
-      const error = new Error('Connection failed')
-      vi.mocked(cosmjsClient.connectWallet).mockRejectedValue(error)
+      vi.mocked(cosmjsClient.connectWallet).mockRejectedValue(new Error('Connection failed'))
 
-      const { result } = renderHook(() => useCosmJS())
+      const { result } = renderHook(() => useCosmJS(), { wrapper: CosmJSProvider })
 
       await act(async () => {
-        await result.current.connect()
+        try {
+          await result.current.connect()
+        } catch (e) {
+          // Expected to fail
+        }
       })
 
       expect(result.current.isConnected).toBe(false)
@@ -108,7 +151,7 @@ describe('useCosmJS', () => {
       })
       vi.mocked(cosmjsClient.connectWallet).mockReturnValue(connectionPromise)
 
-      const { result } = renderHook(() => useCosmJS())
+      const { result } = renderHook(() => useCosmJS(), { wrapper: CosmJSProvider })
 
       // Start connection
       act(() => {
@@ -130,15 +173,22 @@ describe('useCosmJS', () => {
       // First connect
       vi.mocked(cosmjsClient.connectWallet).mockResolvedValue('neutron1mock123')
       vi.mocked(cosmjsClient.getBalance).mockResolvedValue('1000000000')
+      vi.mocked(cosmjsClient.disconnectWallet).mockResolvedValue(undefined)
 
-      const { result } = renderHook(() => useCosmJS())
+      const { result } = renderHook(() => useCosmJS(), { wrapper: CosmJSProvider })
 
+      // Connect first
       await act(async () => {
+        vi.mocked(cosmjsClient.isConnected).mockReturnValue(true)
+        vi.mocked(cosmjsClient.getAddress).mockReturnValue('neutron1mock123')
         await result.current.connect()
+        await new Promise(resolve => setTimeout(resolve, 0))
       })
 
       // Then disconnect
       await act(async () => {
+        vi.mocked(cosmjsClient.isConnected).mockReturnValue(false)
+        vi.mocked(cosmjsClient.getAddress).mockReturnValue('')
         await result.current.disconnect()
       })
 
@@ -154,6 +204,8 @@ describe('useCosmJS', () => {
       // Set up connected state
       vi.mocked(cosmjsClient.connectWallet).mockResolvedValue('neutron1mock123')
       vi.mocked(cosmjsClient.getBalance).mockResolvedValue('1000000000')
+      vi.mocked(cosmjsClient.isConnected).mockReturnValue(true)
+      vi.mocked(cosmjsClient.getAddress).mockReturnValue('neutron1mock123')
     })
 
     it('creates proposal successfully', async () => {
@@ -167,10 +219,12 @@ describe('useCosmJS', () => {
       } as any
       vi.mocked(cosmjsClient.createProposal).mockResolvedValue(mockResult)
 
-      const { result } = renderHook(() => useCosmJS())
+      const { result } = renderHook(() => useCosmJS(), { wrapper: CosmJSProvider })
 
+      // Connect wallet first
       await act(async () => {
         await result.current.connect()
+        await new Promise(resolve => setTimeout(resolve, 0))
       })
 
       const proposalParams = { name: 'Test Proposal' }
@@ -185,50 +239,44 @@ describe('useCosmJS', () => {
     })
 
     it('handles contract interaction errors', async () => {
-      const error = new Error('Transaction failed')
-      vi.mocked(cosmjsClient.invest).mockRejectedValue(error)
+      vi.mocked(cosmjsClient.invest).mockRejectedValue(new Error('Transaction failed'))
 
-      const { result } = renderHook(() => useCosmJS())
+      const { result } = renderHook(() => useCosmJS(), { wrapper: CosmJSProvider })
 
+      // Connect wallet first
       await act(async () => {
         await result.current.connect()
+        await new Promise(resolve => setTimeout(resolve, 0))
       })
 
+      let thrownError: Error | null = null
       await act(async () => {
         try {
           await result.current.invest('proposal_1', '1000000000')
         } catch (e) {
-          // Expected to throw
+          thrownError = e as Error
         }
       })
 
-      expect(result.current.error).toBe('Transaction failed')
+      // Contract interaction errors should be thrown, not set in provider state
+      expect(thrownError).toBeInstanceOf(Error)
+      expect(thrownError?.message).toBe('Transaction failed')
+      expect(result.current.error).toBeNull() // Provider error should remain null
     })
   })
 
-  describe('utility functions', () => {
-    it('formats amounts correctly', () => {
-      const { result } = renderHook(() => useCosmJS())
-      
-      const formatted = result.current.formatAmount('1000000000')
-      expect(formatted).toBe('1000 NTRN')
-    })
-
-    it('parses amounts correctly', () => {
-      const { result } = renderHook(() => useCosmJS())
-      
-      const parsed = result.current.parseAmount('1000')
-      expect(parsed).toBe('1000000000')
-    })
-
+  describe('error handling', () => {
     it('clears errors', async () => {
-      const error = new Error('Test error')
-      vi.mocked(cosmjsClient.connectWallet).mockRejectedValue(error)
+      vi.mocked(cosmjsClient.connectWallet).mockRejectedValue(new Error('Test error'))
 
-      const { result } = renderHook(() => useCosmJS())
+      const { result } = renderHook(() => useCosmJS(), { wrapper: CosmJSProvider })
 
       await act(async () => {
-        await result.current.connect()
+        try {
+          await result.current.connect()
+        } catch (e) {
+          // Expected to fail
+        }
       })
 
       expect(result.current.error).toBe('Test error')

@@ -18,6 +18,7 @@ import {
 import { useSubmissionStore } from '../store/submissionStore';
 import { useNotifications } from '../hooks/useNotifications';
 import { TouchInput, TouchSelect, TouchTextarea } from '../components/TouchOptimized';
+import { aiAnalysisService } from '../services/aiAnalysis';
 
 interface FormData {
   // Asset Details
@@ -182,6 +183,46 @@ const CreateProposal: React.FC = () => {
     }
   };
 
+  // Function to trigger AI analysis for a submitted proposal
+  const triggerAIAnalysis = async (proposalId: string) => {
+    try {
+      // Get the best document for analysis
+      const readiness = aiAnalysisService.getAnalysisReadiness({
+        businessPlan: formData.businessPlan,
+        financialProjections: formData.financialProjections,
+        legalDocuments: formData.legalDocuments,
+        assetValuation: formData.assetValuation
+      });
+
+      if (readiness.bestDocument) {
+        console.log(`Initiating AI analysis for proposal ${proposalId}`);
+        
+        const analysisResult = await aiAnalysisService.initiateAnalysis(
+          proposalId,
+          readiness.bestDocument
+        );
+
+        if (analysisResult.success) {
+          // Show success notification about AI analysis
+          setTimeout(() => {
+            info(
+              'AI Analysis Started',
+              'Your proposal is being analyzed by our AI system. Results will be available shortly.',
+              { duration: 5000 }
+            );
+          }, 8000); // Show after the submission success message
+        } else {
+          console.warn('AI analysis initiation failed:', analysisResult.message);
+        }
+      } else {
+        console.log('No suitable documents found for AI analysis');
+      }
+    } catch (error) {
+      console.error('Error triggering AI analysis:', error);
+      // Don't show error to user as this is a background process
+    }
+  };
+
   const handleSaveDraft = () => {
     const submissionData = {
       assetName: formData.assetName,
@@ -244,6 +285,9 @@ const CreateProposal: React.FC = () => {
       const result = addSubmission(submissionData);
       
       if (result.success && result.proposalId) {
+        // Trigger AI analysis if suitable documents are available
+        triggerAIAnalysis(result.proposalId);
+        
         success(
           'Proposal Submitted!', 
           'Your proposal has been submitted successfully and will be reviewed within 3-5 business days.',
@@ -690,7 +734,7 @@ const CreateProposal: React.FC = () => {
                 disabled={!validateStep(currentStep)}
                 className={`flex items-center space-x-2 px-6 py-2 rounded-lg transition-colors font-medium ${
                   validateStep(currentStep)
-                    ? 'bg-green-600 hover:bg-green-700 text-white shadow-sm'
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm'
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 }`}
               >

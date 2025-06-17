@@ -1,9 +1,9 @@
-// @ts-nocheck
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Clock, Users, Target, TrendingUp } from 'lucide-react';
 import { InvestmentModal } from '../components/InvestmentModal';
 import { useBusinessTracking } from '../hooks/useMonitoring';
+import { AIAnalysisTab } from '../components/AIAnalysis/AIAnalysisTab';
 
 const ProposalDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -169,6 +169,12 @@ const ProposalDetail: React.FC = () => {
             </ul>
           </div>
         </div>
+      </div>
+
+      {/* AI Analysis Section */}
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">AI Analysis</h2>
+        <AIAnalysisTab proposalId={proposal.id} />
       </div>
 
       {/* Investment Modal */}

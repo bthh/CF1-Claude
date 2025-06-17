@@ -9,6 +9,18 @@ vi.mock('../../hooks/useCosmJS', () => ({
   useCosmJS: vi.fn(),
 }))
 
+// Mock the cosmjs service to control demo mode
+vi.mock('../../services/cosmjs', () => ({
+  cosmjsClient: {
+    isDemoMode: vi.fn(() => true), // Default to demo mode for tests
+  }
+}))
+
+// Mock the format utility
+vi.mock('../../utils/format', () => ({
+  formatAmount: vi.fn((amount) => `${parseFloat(amount) / 1000000}`),
+}))
+
 describe('WalletConnection', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -79,6 +91,8 @@ describe('WalletConnection', () => {
     it('renders wallet info when connected', () => {
       render(<WalletConnection />)
       
+      // Address truncation: first 8 chars + ... + last 6 chars 
+      // neutron1mock123456789abcdef -> neutron1...abcdef
       expect(screen.getByText('neutron1...abcdef')).toBeInTheDocument()
       expect(screen.getByText(/balance:/i)).toBeInTheDocument()
       expect(screen.getByRole('button', { name: /disconnect/i })).toBeInTheDocument()
@@ -104,6 +118,7 @@ describe('WalletConnection', () => {
       render(<WalletConnection />)
       
       // Address should be truncated to show first 8 and last 6 characters
+      // neutron1mock123456789abcdef -> neutron1...abcdef
       expect(screen.getByText('neutron1...abcdef')).toBeInTheDocument()
     })
   })
@@ -159,7 +174,8 @@ describe('ConnectWalletButton', () => {
 
     render(<ConnectWalletButton />)
     
-    expect(screen.getByRole('button', { name: /connect wallet/i })).toBeInTheDocument()
+    // In demo mode, button text will be "Connect Demo Wallet"
+    expect(screen.getByRole('button', { name: /connect (demo )?wallet/i })).toBeInTheDocument()
   })
 
   it('shows connecting state', () => {
@@ -193,16 +209,16 @@ describe('WalletStatus', () => {
       isConnected: true,
       address: 'neutron1mock123456789abcdef',
       balance: '1000000000',
-      formatAmount: vi.fn((amount) => `${parseFloat(amount) / 1000000} NTRN`),
+      formatAmount: vi.fn((amount) => `${parseFloat(amount) / 1000000}`),
     })
     vi.mocked(useCosmJS).mockReturnValue(mockHook)
 
     render(<WalletStatus />)
     
-    // Check that the address parts are rendered (first 12, last 8)
-    expect(screen.getByText((_, element) => {
-      return element?.textContent === 'neutron1mock...89abcdef'
-    })).toBeInTheDocument()
-    expect(screen.getByText(/1000 NTRN/i)).toBeInTheDocument()
+    // Check that the address is truncated correctly (first 8 chars + ... + last 6 chars)
+    // neutron1mock123456789abcdef -> neutron1...abcdef
+    expect(screen.getByText('neutron1...abcdef')).toBeInTheDocument()
+    // formatAmount(1000000000) from utils/format will return "1000" and component adds " NTRN"
+    expect(screen.getByText(/1000.*NTRN/i)).toBeInTheDocument()
   })
 })

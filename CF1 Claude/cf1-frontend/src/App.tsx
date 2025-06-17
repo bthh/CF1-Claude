@@ -27,6 +27,7 @@ import Settings from './pages/Settings';
 import Verification from './pages/Verification';
 import Analytics from './pages/Analytics';
 import Trading from './pages/Trading';
+import SecondaryTrading from './pages/SecondaryTrading';
 import LiquidityPools from './pages/LiquidityPools';
 import Staking from './pages/Staking';
 import Lending from './pages/Lending';
@@ -34,6 +35,7 @@ import CreatorAdmin from './pages/CreatorAdmin';
 import SuperAdmin from './pages/SuperAdmin';
 import PlatformAdmin from './pages/PlatformAdmin';
 import { AdminAuthProvider } from './hooks/useAdminAuth';
+import { CosmJSProvider } from './providers/CosmJSProvider';
 
 // Component for tracking page views
 const PageTracker = () => {
@@ -45,14 +47,15 @@ function App() {
   return (
     <ErrorBoundary>
       <QueryProvider>
-        <NotificationProvider>
-          <AdminAuthProvider>
-            <OnboardingProvider>
-            <Router>
-              <PageTracker />
-              <Layout>
-            <RouteErrorBoundary>
-              <Routes>
+        <CosmJSProvider>
+          <NotificationProvider>
+            <AdminAuthProvider>
+              <OnboardingProvider>
+              <Router>
+                <PageTracker />
+                <Layout>
+              <RouteErrorBoundary>
+                <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/dashboard/performance" element={<Performance />} />
@@ -80,6 +83,7 @@ function App() {
               <Route path="/profile/settings" element={<Settings />} />
               <Route path="/profile/verification" element={<Verification />} />
               <Route path="/trading/:tokenId" element={<Trading />} />
+              <Route path="/secondary-trading" element={<SecondaryTrading />} />
               <Route path="/liquidity" element={<LiquidityPools />} />
               <Route path="/staking" element={<Staking />} />
               <Route path="/lending" element={<Lending />} />
@@ -95,6 +99,7 @@ function App() {
             </OnboardingProvider>
           </AdminAuthProvider>
         </NotificationProvider>
+        </CosmJSProvider>
       </QueryProvider>
     </ErrorBoundary>
   );

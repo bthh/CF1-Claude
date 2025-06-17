@@ -1,10 +1,10 @@
-// @ts-nocheck
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Star, MapPin, TrendingUp, DollarSign, BarChart3, ArrowUpDown } from 'lucide-react';
 import { PriceChart } from '../components/PriceChart';
 import { InvestmentModal } from '../components/InvestmentModal';
 import { SellModal } from '../components/SellModal';
+import { AIAnalysisTab } from '../components/AIAnalysis/AIAnalysisTab';
 
 // Generate price history data for different timeframes
 const generatePriceHistory = () => {
@@ -35,6 +35,7 @@ const AssetDetail: React.FC = () => {
   const [isBuyModalOpen, setIsBuyModalOpen] = useState(false);
   const [isSellModalOpen, setIsSellModalOpen] = useState(false);
   const [selectedTimeframe, setSelectedTimeframe] = useState<'7D' | '1M' | '3M' | '1Y'>('7D');
+
 
   // Mock asset data
   const asset = {
@@ -333,6 +334,12 @@ const AssetDetail: React.FC = () => {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* AI Analysis Section */}
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">AI Analysis</h2>
+        <AIAnalysisTab proposalId={asset.id} />
       </div>
 
       {/* Investment Modal with Limit Buy */}

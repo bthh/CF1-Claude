@@ -20,11 +20,15 @@ import {
   Eye,
   FileText,
   MessageSquare,
-  Star
+  Star,
+  Settings
 } from 'lucide-react';
-import { useAdminAuth } from '../hooks/useAdminAuth';
+import { useAdminAuthContext } from '../hooks/useAdminAuth';
 import { useNotifications } from '../hooks/useNotifications';
 import { formatTimeAgo } from '../utils/format';
+import UserManagement from '../components/AdminEnhancements/UserManagement';
+import FeatureToggleManager from '../components/AdminEnhancements/FeatureToggleManager';
+import RolePermissionsManager from '../components/AdminEnhancements/RolePermissionsManager';
 
 interface PlatformUser {
   id: string;
@@ -73,14 +77,14 @@ interface SupportTicket {
 }
 
 const PlatformAdmin: React.FC = () => {
-  const { currentAdmin, checkPermission } = useAdminAuth();
+  const { currentAdmin, checkPermission } = useAdminAuthContext();
   const { success, error } = useNotifications();
   
   const [users, setUsers] = useState<PlatformUser[]>([]);
   const [complianceCases, setComplianceCases] = useState<ComplianceCase[]>([]);
   const [supportTickets, setSupportTickets] = useState<SupportTicket[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedTab, setSelectedTab] = useState<'users' | 'compliance' | 'support' | 'analytics'>('users');
+  const [selectedTab, setSelectedTab] = useState<'users' | 'roles' | 'features' | 'compliance' | 'support' | 'analytics'>('users');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showUserDetails, setShowUserDetails] = useState<string | null>(null);
@@ -387,6 +391,8 @@ const PlatformAdmin: React.FC = () => {
           <nav className="-mb-px flex space-x-8">
             {[
               { id: 'users', label: 'User Management', icon: <Users className="w-4 h-4" />, count: users.length },
+              { id: 'roles', label: 'Roles & Permissions', icon: <Shield className="w-4 h-4" /> },
+              { id: 'features', label: 'Feature Toggles', icon: <Settings className="w-4 h-4" /> },
               { id: 'compliance', label: 'Compliance', icon: <Shield className="w-4 h-4" />, count: complianceCases.filter(c => c.status !== 'resolved').length },
               { id: 'support', label: 'Support Tickets', icon: <MessageSquare className="w-4 h-4" />, count: supportTickets.filter(t => t.status === 'open' || t.status === 'in_progress').length },
               { id: 'analytics', label: 'Analytics', icon: <FileText className="w-4 h-4" /> }
@@ -421,7 +427,13 @@ const PlatformAdmin: React.FC = () => {
       ) : (
         <>
           {/* Users Tab */}
-          {selectedTab === 'users' && (
+          {selectedTab === 'users' && <UserManagement />}
+          
+          {selectedTab === 'roles' && <RolePermissionsManager />}
+          
+          {selectedTab === 'features' && <FeatureToggleManager />}
+          
+          {selectedTab === 'users' && false && (
             <div className="space-y-6">
               {/* Search and Filters */}
               <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg">

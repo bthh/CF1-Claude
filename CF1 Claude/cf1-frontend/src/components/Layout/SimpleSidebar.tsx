@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useFeatureToggleStore } from '../../store/featureToggleStore';
 
 interface SidebarProps {
   type: 'dashboard' | 'marketplace' | 'portfolio' | 'launchpad' | 'governance' | 'profile';
@@ -8,6 +9,7 @@ interface SidebarProps {
 const SimpleSidebar: React.FC<SidebarProps> = ({ type }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { isFeatureEnabled } = useFeatureToggleStore();
   
   const isActive = (path: string) => location.pathname === path;
 
@@ -146,15 +148,21 @@ const SimpleSidebar: React.FC<SidebarProps> = ({ type }) => {
           <Link to="/trading/RWA-1" className={`block px-3 py-2 rounded-lg ${location.pathname.startsWith('/trading') ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'}`}>
             Trading
           </Link>
-          <Link to="/liquidity" className={`block px-3 py-2 rounded-lg ${isActive('/liquidity') ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'}`}>
-            Liquidity Pools
-          </Link>
-          <Link to="/staking" className={`block px-3 py-2 rounded-lg ${isActive('/staking') ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'}`}>
-            Staking
-          </Link>
-          <Link to="/lending" className={`block px-3 py-2 rounded-lg ${isActive('/lending') ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'}`}>
-            Lending
-          </Link>
+          {isFeatureEnabled('liquidity_pools') && (
+            <Link to="/liquidity" className={`block px-3 py-2 rounded-lg ${isActive('/liquidity') ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'}`}>
+              Liquidity Pools
+            </Link>
+          )}
+          {isFeatureEnabled('staking') && (
+            <Link to="/staking" className={`block px-3 py-2 rounded-lg ${isActive('/staking') ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'}`}>
+              Staking
+            </Link>
+          )}
+          {isFeatureEnabled('lending') && (
+            <Link to="/lending" className={`block px-3 py-2 rounded-lg ${isActive('/lending') ? 'bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'}`}>
+              Lending
+            </Link>
+          )}
         </nav>
       </div>
     </>

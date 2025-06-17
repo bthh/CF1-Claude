@@ -2,6 +2,7 @@ import React from 'react';
 import { Wallet } from 'lucide-react';
 import { useCosmJS } from '../hooks/useCosmJS';
 import { cosmjsClient } from '../services/cosmjs';
+import { formatAmount } from '../utils/format';
 
 interface WalletConnectionProps {
   className?: string;
@@ -15,7 +16,6 @@ export const WalletConnection: React.FC<WalletConnectionProps> = ({ className = 
     balance, 
     connect, 
     disconnect, 
-    formatAmount,
     error,
     clearError
   } = useCosmJS();

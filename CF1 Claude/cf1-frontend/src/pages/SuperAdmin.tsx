@@ -23,7 +23,7 @@ import {
   FileText,
   Bell
 } from 'lucide-react';
-import { useAdminAuth } from '../hooks/useAdminAuth';
+import { useAdminAuthContext } from '../hooks/useAdminAuth';
 import { useNotifications } from '../hooks/useNotifications';
 import { formatAmount, formatPercentage, formatTimeAgo } from '../utils/format';
 
@@ -72,7 +72,7 @@ interface SystemLog {
 }
 
 const SuperAdmin: React.FC = () => {
-  const { currentAdmin, checkPermission } = useAdminAuth();
+  const { currentAdmin, checkPermission } = useAdminAuthContext();
   const { success, error } = useNotifications();
   
   const [metrics, setMetrics] = useState<PlatformMetrics | null>(null);

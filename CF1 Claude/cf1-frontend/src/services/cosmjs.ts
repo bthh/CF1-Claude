@@ -82,6 +82,12 @@ export class CF1CosmJSClient {
   }
 
   async connectWallet(): Promise<string> {
+    // Return existing connection if already connected
+    if (this.isConnected()) {
+      console.log("Wallet already connected:", this.signer);
+      return this.signer;
+    }
+    
     // Demo mode fallback
     if (this.demoMode) {
       this.signer = "neutron1demo2user3address4for5testing6purposes7890abc";
@@ -1236,6 +1242,35 @@ export class CF1CosmJSClient {
       msg,
       "auto"
     );
+  }
+
+  async queryLaunchpadProposals(status?: string, startAfter?: string, limit?: number) {
+    // In demo mode, return mock data
+    if (this.demoMode) {
+      return {
+        proposals: [
+          { id: "1", title: "Green Energy Project", status: "active", funded_amount: 750000, goal: 1000000 },
+          { id: "2", title: "Tech Startup Fund", status: "funded", funded_amount: 2000000, goal: 2000000 }
+        ]
+      };
+    }
+
+    let queryClient: CosmWasmClient | SigningCosmWasmClient;
+    
+    if (this.client) {
+      queryClient = this.client;
+    } else {
+      // Create query-only client
+      queryClient = await CosmWasmClient.connect(this.config.rpcEndpoint);
+    }
+    
+    return await queryClient.queryContractSmart(this.config.contractAddress, {
+      launchpad_proposals: { 
+        status,
+        start_after: startAfter,
+        limit: limit || 10
+      }
+    });
   }
 }
 

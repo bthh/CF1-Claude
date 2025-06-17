@@ -12,7 +12,8 @@ import {
   HelpCircle,
   ArrowUpDown,
   Droplets,
-  Lock
+  Lock,
+  ArrowLeftRight
 } from 'lucide-react';
 
 interface NavItemProps {
@@ -96,6 +97,11 @@ const Sidebar: React.FC = () => {
               icon={<ArrowUpDown className="w-5 h-5" />}
               label="Trading"
               to="/trading/RWA-1"
+            />
+            <NavItem
+              icon={<ArrowLeftRight className="w-5 h-5" />}
+              label="Secondary Trading"
+              to="/secondary-trading"
             />
             <NavItem
               icon={<Droplets className="w-5 h-5" />}

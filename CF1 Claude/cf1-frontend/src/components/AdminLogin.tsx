@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Shield, Key, Users, Crown, X } from 'lucide-react';
-import { useAdminAuth, AdminRole } from '../hooks/useAdminAuth';
+import { useAdminAuthContext, AdminRole } from '../hooks/useAdminAuth';
 import { useCosmJS } from '../hooks/useCosmJS';
 import { useNotifications } from '../hooks/useNotifications';
 
@@ -13,20 +13,21 @@ interface AdminLoginProps {
 const AdminLogin: React.FC<AdminLoginProps> = ({ isOpen, onClose, onSuccess }) => {
   const [selectedRole, setSelectedRole] = useState<AdminRole>('creator');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const { loginAsAdmin } = useAdminAuth();
-  const { isConnected, connectWallet } = useCosmJS();
+  const { loginAsAdmin } = useAdminAuthContext();
+  const { isConnected, connect, address } = useCosmJS();
   const { success, error } = useNotifications();
+  
+  console.log('AdminLogin render - isConnected:', isConnected, 'address:', address);
 
   if (!isOpen) return null;
 
   const handleLogin = async () => {
+    console.log('AdminLogin - isConnected:', isConnected);
+    console.log('AdminLogin - selectedRole:', selectedRole);
+    
     if (!isConnected) {
-      try {
-        await connectWallet();
-      } catch (err) {
-        error('Please connect your wallet first');
-        return;
-      }
+      error('Please connect your wallet first');
+      return;
     }
 
     if (!selectedRole) {

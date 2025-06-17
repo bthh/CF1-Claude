@@ -5,6 +5,7 @@ import { useNotifications } from '../hooks/useNotifications';
 import { VerificationGate } from './Verification/VerificationGate';
 import { TouchModal, TouchModalActions, TouchModalButton } from './TouchOptimized/TouchModal';
 import { TouchInput } from './TouchOptimized/TouchInput';
+import { formatAmount, parseAmount } from '../utils/format';
 
 interface InvestmentModalProps {
   isOpen: boolean;
@@ -29,8 +30,6 @@ export const InvestmentModal: React.FC<InvestmentModalProps> = ({
   
   const { 
     invest, 
-    formatAmount, 
-    parseAmount, 
     isConnected, 
     balance,
     error,

@@ -5,7 +5,7 @@ import { MobileNavigation } from './MobileNavigation';
 import { useCosmJS } from '../../hooks/useCosmJS';
 import { useOnboardingContext } from '../Onboarding/OnboardingProvider';
 import { useVerificationStore } from '../../store/verificationStore';
-import { useAdminAuth } from '../../hooks/useAdminAuth';
+import { useAdminAuthContext } from '../../hooks/useAdminAuth';
 import AdminLogin from '../AdminLogin';
 
 const Header: React.FC = () => {
@@ -21,7 +21,7 @@ const Header: React.FC = () => {
   const { initializeUser, level } = useVerificationStore();
   
   // Admin authentication
-  const { isAdmin, adminRole, logoutAdmin } = useAdminAuth();
+  const { isAdmin, adminRole, logoutAdmin } = useAdminAuthContext();
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   
   // Simple local state for theme and notifications

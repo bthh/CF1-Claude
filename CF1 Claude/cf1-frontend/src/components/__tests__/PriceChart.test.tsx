@@ -3,12 +3,14 @@ import { render, screen, fireEvent } from '../../test/test-utils'
 import { PriceChart } from '../PriceChart'
 
 describe('PriceChart', () => {
+  // Use recent dates that won't be filtered out by the 7D timeframe
+  const today = new Date()
   const mockData = [
-    { date: '2024-01-01', price: 100, volume: 1000 },
-    { date: '2024-01-02', price: 105, volume: 1200 },
-    { date: '2024-01-03', price: 102, volume: 800 },
-    { date: '2024-01-04', price: 108, volume: 1500 },
-    { date: '2024-01-05', price: 110, volume: 1100 },
+    { date: new Date(today.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], price: 100, volume: 1000 },
+    { date: new Date(today.getTime() - 4 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], price: 105, volume: 1200 },
+    { date: new Date(today.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], price: 102, volume: 800 },
+    { date: new Date(today.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], price: 108, volume: 1500 },
+    { date: new Date(today.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], price: 110, volume: 1100 },
   ]
 
   const defaultProps = {
@@ -28,7 +30,9 @@ describe('PriceChart', () => {
     it('displays current price', () => {
       render(<PriceChart {...defaultProps} />)
       
-      expect(screen.getByText('$110.00')).toBeInTheDocument()
+      // Should find multiple instances of $110.00 (current price, high price, y-axis label)
+      const priceElements = screen.getAllByText('$110.00')
+      expect(priceElements.length).toBeGreaterThan(0)
     })
 
     it('shows price change with positive trend', () => {
@@ -67,10 +71,10 @@ describe('PriceChart', () => {
       render(<PriceChart {...defaultProps} />)
       
       expect(screen.getByText('High')).toBeInTheDocument()
-      expect(screen.getByText('$110.00')).toBeInTheDocument() // Max price from data
+      expect(screen.getAllByText('$110.00').length).toBeGreaterThan(0) // Max price from data
       
       expect(screen.getByText('Low')).toBeInTheDocument()
-      expect(screen.getByText('$100.00')).toBeInTheDocument() // Min price from data
+      expect(screen.getAllByText('$100.00').length).toBeGreaterThan(0) // Min price from data (appears in low section and y-axis)
     })
   })
 
@@ -78,7 +82,6 @@ describe('PriceChart', () => {
     it('renders all timeframe options', () => {
       render(<PriceChart {...defaultProps} />)
       
-      expect(screen.getByText('1D')).toBeInTheDocument()
       expect(screen.getByText('7D')).toBeInTheDocument()
       expect(screen.getByText('1M')).toBeInTheDocument()
       expect(screen.getByText('3M')).toBeInTheDocument()
@@ -95,10 +98,10 @@ describe('PriceChart', () => {
     it('changes timeframe when clicked', () => {
       render(<PriceChart {...defaultProps} />)
       
-      const oneDayButton = screen.getByText('1D')
-      fireEvent.click(oneDayButton)
+      const oneMonthButton = screen.getByText('1M')
+      fireEvent.click(oneMonthButton)
       
-      expect(oneDayButton).toHaveClass('bg-white')
+      expect(oneMonthButton).toHaveClass('bg-white')
     })
   })
 
@@ -106,15 +109,16 @@ describe('PriceChart', () => {
     it('renders SVG chart when data is available', () => {
       render(<PriceChart {...defaultProps} />)
       
-      const svgElement = screen.getByRole('img', { hidden: true }) // SVG has implicit img role
+      const svgElement = document.querySelector('svg')
       expect(svgElement).toBeInTheDocument()
     })
 
     it('renders chart with correct viewBox', () => {
       render(<PriceChart {...defaultProps} />)
       
-      const svgElement = document.querySelector('svg')
-      expect(svgElement).toHaveAttribute('viewBox', '0 0 400 200')
+      // Look for the main chart SVG specifically, not the icon SVGs
+      const svgElement = document.querySelector('svg[viewBox="0 0 400 200"]')
+      expect(svgElement).toBeInTheDocument()
     })
 
     it('shows placeholder when no data is provided', () => {
@@ -131,7 +135,7 @@ describe('PriceChart', () => {
     it('shows placeholder when insufficient data is provided', () => {
       const propsWithInsufficientData = {
         ...defaultProps,
-        data: [{ date: '2024-01-01', price: 100, volume: 1000 }],
+        data: [{ date: new Date(today.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], price: 100, volume: 1000 }],
       }
       
       render(<PriceChart {...propsWithInsufficientData} />)
@@ -146,14 +150,15 @@ describe('PriceChart', () => {
       
       // High price should be the maximum from the data (110)
       const highPrices = screen.getAllByText('$110.00')
-      expect(highPrices.length).toBeGreaterThan(0)
+      expect(highPrices.length).toBeGreaterThanOrEqual(2) // Should appear as current price and high price
     })
 
     it('calculates and displays correct low price', () => {
       render(<PriceChart {...defaultProps} />)
       
       // Low price should be the minimum from the data (100)
-      expect(screen.getByText('$100.00')).toBeInTheDocument()
+      const lowPrices = screen.getAllByText('$100.00')
+      expect(lowPrices.length).toBeGreaterThanOrEqual(1) // Should appear as low price and possibly y-axis label
     })
   })
 

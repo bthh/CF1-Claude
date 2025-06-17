@@ -42,9 +42,10 @@ export function formatDateTime(timestamp: number | string): string {
   });
 }
 
-export function formatTimeAgo(timestamp: number): string {
+export function formatTimeAgo(timestamp: number | string): string {
   const now = Date.now();
-  const diff = now - timestamp;
+  const time = typeof timestamp === 'string' ? new Date(timestamp).getTime() : timestamp;
+  const diff = now - time;
   
   const seconds = Math.floor(diff / 1000);
   const minutes = Math.floor(seconds / 60);
@@ -55,6 +56,12 @@ export function formatTimeAgo(timestamp: number): string {
   if (hours > 0) return `${hours}h ago`;
   if (minutes > 0) return `${minutes}m ago`;
   return `${seconds}s ago`;
+}
+
+export function parseAmount(amount: string): string {
+  // Convert human-readable amount to micro units (6 decimal places for NTRN)
+  const num = parseFloat(amount);
+  return Math.floor(num * 1_000_000).toString();
 }
 
 export function formatCurrency(amount: number, currency = 'USD'): string {

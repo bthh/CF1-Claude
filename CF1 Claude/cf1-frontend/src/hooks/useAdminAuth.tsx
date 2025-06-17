@@ -1,4 +1,4 @@
-import { useState, useEffect, createContext, useContext } from 'react';
+import React, { useState, useEffect, createContext, useContext } from 'react';
 import { useCosmJS } from './useCosmJS';
 
 export type AdminRole = 'creator' | 'super_admin' | 'platform_admin' | null;
@@ -100,6 +100,10 @@ export const useAdminAuth = (): AdminAuthContextType => {
   };
 
   const loginAsAdmin = async (role: AdminRole): Promise<void> => {
+    console.log('loginAsAdmin - isConnected:', isConnected);
+    console.log('loginAsAdmin - address:', address);
+    console.log('loginAsAdmin - role:', role);
+    
     if (!isConnected || !address) {
       throw new Error('Wallet must be connected');
     }

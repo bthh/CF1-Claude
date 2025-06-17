@@ -4,6 +4,7 @@ import { ArrowUpDown, TrendingUp, TrendingDown, Info, Plus, Minus } from 'lucide
 import { useCosmJS } from '../hooks/useCosmJS';
 import { useNotifications } from '../hooks/useNotifications';
 import { formatAmount } from '../utils/format';
+import { PriceChart } from '../components/PriceChart';
 
 interface Order {
   id: string;
@@ -155,7 +156,7 @@ const Trading: React.FC = () => {
 
       {/* Market Overview */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4">
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
           <p className="text-sm text-gray-500 dark:text-gray-400">Last Price</p>
           <p className="text-2xl font-bold text-gray-900 dark:text-white">
             ${marketData.lastPrice.toFixed(2)}
@@ -166,21 +167,21 @@ const Trading: React.FC = () => {
           </p>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4">
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
           <p className="text-sm text-gray-500 dark:text-gray-400">24h Volume</p>
           <p className="text-xl font-semibold text-gray-900 dark:text-white">
             ${formatAmount(marketData.volume24h)}
           </p>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4">
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
           <p className="text-sm text-gray-500 dark:text-gray-400">24h High</p>
           <p className="text-xl font-semibold text-green-600">
             ${marketData.high24h.toFixed(2)}
           </p>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4">
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
           <p className="text-sm text-gray-500 dark:text-gray-400">24h Low</p>
           <p className="text-xl font-semibold text-red-600">
             ${marketData.low24h.toFixed(2)}
@@ -192,8 +193,26 @@ const Trading: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Order Book */}
         <div className="lg:col-span-2 space-y-4">
-          {/* Sell Orders */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-4">
+          {/* Price Chart */}
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+            <PriceChart
+              data={[
+                { date: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(), price: 10.10, volume: 95000 },
+                { date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), price: 10.25, volume: 110000 },
+                { date: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), price: 10.15, volume: 87000 },
+                { date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), price: 10.35, volume: 125000 },
+                { date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), price: 10.42, volume: 98000 },
+                { date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), price: 10.38, volume: 115000 },
+                { date: new Date().toISOString(), price: marketData.lastPrice, volume: marketData.volume24h }
+              ]}
+              currentPrice={`$${marketData.lastPrice.toFixed(2)}`}
+              priceChange24h={`${marketData.priceChange24h >= 0 ? '+' : ''}${marketData.priceChange24h.toFixed(2)}%`}
+              volume24h={`$${formatAmount(marketData.volume24h)}`}
+            />
+          </div>
+          
+          {/* Order Book */}
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               Order Book
             </h3>
@@ -255,7 +274,7 @@ const Trading: React.FC = () => {
           </div>
 
           {/* Recent Trades */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-4">
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               Recent Trades
             </h3>
@@ -287,7 +306,7 @@ const Trading: React.FC = () => {
         {/* Trading Panel */}
         <div className="space-y-4">
           {/* Order Form */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-4">
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               Place Order
             </h3>
@@ -388,7 +407,7 @@ const Trading: React.FC = () => {
 
           {/* User Orders */}
           {userOrders.length > 0 && (
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-4">
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                 My Orders
               </h3>
