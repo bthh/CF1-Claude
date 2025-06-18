@@ -32,7 +32,9 @@ import {
   Forward,
   Archive,
   Tag,
-  ExternalLink
+  ExternalLink,
+  Brain,
+  Vote
 } from 'lucide-react';
 import { useAdminAuthContext } from '../hooks/useAdminAuth';
 import { useCosmJS } from '../hooks/useCosmJS';
@@ -41,6 +43,7 @@ import { formatAmount, formatPercentage, formatTimeAgo } from '../utils/format';
 import { PublishUpdateModal } from '../components/Creator/PublishUpdateModal';
 import { CreateCampaignModal } from '../components/Creator/CreateCampaignModal';
 import { AssistantManagementModal } from '../components/Creator/AssistantManagementModal';
+import AIAssistantInterface from '../components/AIAssistant/AIAssistantInterface';
 import { apiClient } from '../lib/api/client';
 
 // Creator Toolkit API Types
@@ -135,7 +138,7 @@ const CreatorAdmin: React.FC = () => {
   const [assetUpdates, setAssetUpdates] = useState<AssetUpdate[]>([]);
   const [analytics, setAnalytics] = useState<CreatorAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedTab, setSelectedTab] = useState<'overview' | 'shareholders' | 'communications' | 'engagements' | 'updates'>('overview');
+  const [selectedTab, setSelectedTab] = useState<'overview' | 'shareholders' | 'communications' | 'engagements' | 'updates' | 'ai_assistant' | 'settings'>('overview');
   
   // Filters and search
   const [shareholderFilter, setShareholderFilter] = useState('');
@@ -745,7 +748,9 @@ const CreatorAdmin: React.FC = () => {
               { id: 'shareholders', label: 'Shareholders', icon: <Users className="w-4 h-4" /> },
               { id: 'communications', label: 'Communications', icon: <MessageCircle className="w-4 h-4" /> },
               { id: 'engagements', label: 'Engagements', icon: <UserPlus className="w-4 h-4" /> },
-              { id: 'updates', label: 'Asset Updates', icon: <FileText className="w-4 h-4" /> }
+              { id: 'updates', label: 'Asset Updates', icon: <FileText className="w-4 h-4" /> },
+              { id: 'ai_assistant', label: 'AI Assistant', icon: <Brain className="w-4 h-4" /> },
+              { id: 'settings', label: 'Asset Settings', icon: <Settings className="w-4 h-4" /> }
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -1571,6 +1576,119 @@ const CreatorAdmin: React.FC = () => {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* AI Assistant Tab */}
+          {selectedTab === 'ai_assistant' && (
+            <div className="space-y-6">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-lg h-[800px]">
+                <AIAssistantInterface 
+                  selectedAssetId={mockAssets[0]?.id}
+                  embedded={false}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Asset Settings Tab */}
+          {selectedTab === 'settings' && (
+            <div className="space-y-6">
+              {/* Governance Visibility Setting */}
+              <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-lg">
+                <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                    <Vote className="w-5 h-5 mr-2 text-blue-600" />
+                    Governance Visibility Policy
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    Control who can see governance proposals for your asset
+                  </p>
+                </div>
+                <div className="p-6">
+                  <div className="space-y-4">
+                    <div className="flex items-start space-x-3">
+                      <input
+                        type="radio"
+                        id="always_private"
+                        name="governance_visibility"
+                        value="always_private"
+                        className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                        defaultChecked
+                      />
+                      <div className="flex-1">
+                        <label htmlFor="always_private" className="text-sm font-medium text-gray-900 dark:text-white cursor-pointer">
+                          Always Private
+                        </label>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          All governance proposals will only be visible to token holders of this asset
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start space-x-3">
+                      <input
+                        type="radio"
+                        id="always_public"
+                        name="governance_visibility"
+                        value="always_public"
+                        className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                      />
+                      <div className="flex-1">
+                        <label htmlFor="always_public" className="text-sm font-medium text-gray-900 dark:text-white cursor-pointer">
+                          Always Public
+                        </label>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          All governance proposals will be visible to everyone on the platform
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start space-x-3">
+                      <input
+                        type="radio"
+                        id="creator_decides"
+                        name="governance_visibility"
+                        value="creator_decides"
+                        className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                      />
+                      <div className="flex-1">
+                        <label htmlFor="creator_decides" className="text-sm font-medium text-gray-900 dark:text-white cursor-pointer">
+                          Creator Decides
+                        </label>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          Proposal creators can choose whether each proposal is public or private
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-end">
+                    <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                      Save Settings
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Additional Asset Settings */}
+              <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-lg">
+                <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                    <Settings className="w-5 h-5 mr-2 text-gray-600" />
+                    Additional Settings
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    More asset configuration options coming soon
+                  </p>
+                </div>
+                <div className="p-6">
+                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                    <Settings className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                    <p>Additional asset settings will be available in future updates</p>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </>

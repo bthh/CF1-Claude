@@ -20,10 +20,11 @@ const upload = multer({
     files: 1
   },
   fileFilter: (req, file, cb) => {
-    if (file.mimetype === 'application/pdf') {
+    // Allow PDF files and text files for testing
+    if (file.mimetype === 'application/pdf' || file.mimetype === 'text/plain') {
       cb(null, true);
     } else {
-      cb(new Error('Only PDF files are allowed'));
+      cb(new Error('Only PDF files are supported'));
     }
   }
 });
@@ -36,10 +37,10 @@ const analysisRateLimit = rateLimit({
 });
 
 /**
- * POST /api/v1/proposals/:proposalId/analyze
+ * POST /api/v1/ai-analysis/proposals/:proposalId/analyze
  * Initiate AI analysis for a proposal document
  */
-router.post('/:proposalId/analyze', 
+router.post('/proposals/:proposalId/analyze', 
   analysisRateLimit,
   validateProposalId,
   upload.single('document'),
@@ -86,10 +87,10 @@ router.post('/:proposalId/analyze',
 );
 
 /**
- * GET /api/v1/proposals/:proposalId/ai-analysis
+ * GET /api/v1/ai-analysis/proposals/:proposalId/results
  * Get AI analysis results for a proposal
  */
-router.get('/:proposalId/ai-analysis',
+router.get('/proposals/:proposalId/results',
   validateProposalId,
   async (req: Request, res: Response) => {
     try {

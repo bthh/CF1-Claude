@@ -6,6 +6,7 @@ import { useBusinessTracking } from '../hooks/useMonitoring';
 import { AIAnalysisTab } from '../components/AIAnalysis/AIAnalysisTab';
 import { useSessionStore } from '../store/sessionStore';
 import { useNotifications } from '../hooks/useNotifications';
+import { useSubmissionStore } from '../store/submissionStore';
 
 const ProposalDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -15,6 +16,7 @@ const ProposalDetail: React.FC = () => {
   const { selectedRole } = useSessionStore();
   const { success, error } = useNotifications();
   const [isInstantFunding, setIsInstantFunding] = useState(false);
+  const { getSubmissionById, updateFundingStatus } = useSubmissionStore();
 
   // Track proposal view
   useEffect(() => {
@@ -25,9 +27,9 @@ const ProposalDetail: React.FC = () => {
   }, [id, trackProposal]);
 
   // Check if user has admin privileges for instant funding
-  const canInstantFund = selectedRole === 'super_admin' || selectedRole === 'owner';
+  const canInstantFund = selectedRole === 'super_admin' || selectedRole === 'owner' || selectedRole === 'platform_admin';
 
-  // Handle instant funding (Super Admin only)
+  // Handle instant funding (Admin only)
   const handleInstantFund = async () => {
     if (!canInstantFund) {
       error('Access Denied', 'You do not have permission to perform this action.');
@@ -36,20 +38,68 @@ const ProposalDetail: React.FC = () => {
 
     setIsInstantFunding(true);
     try {
-      // Simulate instant funding process
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      console.log(`🚀 Calling instant fund API for proposal ${id}`);
       
-      // Update proposal status to fully funded
+      // Get submission data if this is a user submission
+      const submission = id ? getSubmissionById(id) : null;
+      
+      // Prepare request body with submission data for auto-sync
+      const requestBody = submission ? { submissionData: submission } : {};
+      
+      // Call backend API to instantly fund the proposal
+      const response = await fetch(`http://localhost:3001/api/v1/proposals/${id}/admin/instant-fund`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // TODO: Add authorization header when auth is implemented
+          // 'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify(requestBody)
+      });
+      
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to fund proposal');
+      }
+      
+      console.log('✅ Instant fund successful:', result);
+      console.log('🔍 Backend funding status response:', result.data.fundingStatus);
+      
+      // Update local state with the backend response
       setProposalData(prev => ({
         ...prev,
         funding_status: {
           ...prev.funding_status,
-          raised_amount: prev.financial_terms.target_amount, // Fully funded
-          investor_count: prev.funding_status.investor_count + 25, // Add simulated investors
-          is_funded: true,
+          raised_amount: result.data.fundingStatus.total_raised,
+          investor_count: result.data.fundingStatus.total_investors,
+          is_funded: result.data.fundingStatus.is_funded,
         },
-        status: 'Funded'
+        status: result.data.status
       }));
+
+      // If this is a user submission, update the submission store with funding status
+      if (submission && id) {
+        const targetAmount = parseFloat(submission.targetAmount?.replace(/[^\d.]/g, '') || '0');
+        
+        const newFundingStatus = {
+          raisedAmount: result.data.fundingStatus.total_raised || targetAmount,
+          raisedPercentage: result.data.fundingStatus.is_funded ? 100 : Math.round((result.data.fundingStatus.total_raised / targetAmount) * 100),
+          investorCount: result.data.fundingStatus.total_investors || 1,
+          isFunded: result.data.fundingStatus.is_funded,
+          status: result.data.fundingStatus.is_funded ? 'funded' : 'active'
+        };
+        
+        console.log(`🔄 Updating submission store funding status for ${id}:`, newFundingStatus);
+        updateFundingStatus(id, newFundingStatus);
+        console.log(`✅ Submission store update called for ${id}`);
+        
+        // Verify the update by checking the store
+        setTimeout(() => {
+          const updatedSubmission = getSubmissionById(id);
+          console.log(`🔍 Verified submission after update:`, updatedSubmission?.fundingStatus);
+        }, 100);
+      }
 
       success(
         'Proposal Instantly Funded!',
@@ -61,37 +111,77 @@ const ProposalDetail: React.FC = () => {
         }
       );
     } catch (err) {
-      error('Funding Failed', 'An error occurred while processing the instant funding.');
+      console.error('❌ Instant fund error:', err);
+      error('Funding Failed', err instanceof Error ? err.message : 'An error occurred while processing the instant funding.');
     } finally {
       setIsInstantFunding(false);
     }
   };
 
   // Proposal data state (to allow updates)
-  const [proposalData, setProposalData] = useState({
-    id: id || '1',
-    asset_details: {
-      name: 'Downtown Seattle Office',
-      asset_type: 'Commercial Real Estate',
-      category: 'Real Estate',
-      location: 'Seattle, WA',
-      description: 'Premium Class A office building',
-    },
-    financial_terms: {
-      target_amount: '5000000000000',
-      token_price: '1000000000',
-      total_shares: 5000,
-      minimum_investment: '1000000000',
-      expected_apy: '12.5%',
-      funding_deadline: Date.now() / 1000 + 86400 * 30,
-    },
-    funding_status: {
-      raised_amount: '2500000000000',
-      investor_count: 25,
-      is_funded: false,
-      tokens_minted: false,
-    },
-    status: 'Active',
+  const [proposalData, setProposalData] = useState(() => {
+    // Check if this is a user submission
+    const submission = id ? getSubmissionById(id) : null;
+    
+    if (submission) {
+      // Convert submission to proposal format
+      const targetAmount = parseFloat(submission.targetAmount?.replace(/[^\d.]/g, '') || '0');
+      const tokenPrice = parseFloat(submission.tokenPrice || '0');
+      const minimumInvestment = parseFloat(submission.minimumInvestment || '0');
+      
+      return {
+        id: submission.id,
+        asset_details: {
+          name: submission.assetName || 'Untitled Proposal',
+          asset_type: submission.assetType || 'Unknown Type',
+          category: submission.category || 'Other',
+          location: submission.location || 'Location not specified',
+          description: submission.description || 'No description available',
+        },
+        financial_terms: {
+          target_amount: (targetAmount * 1000000).toString(), // Convert to micro units
+          token_price: (tokenPrice * 1000000).toString(), // Convert to micro units
+          total_shares: Math.floor(targetAmount / tokenPrice),
+          minimum_investment: (minimumInvestment * 1000000).toString(), // Convert to micro units
+          expected_apy: `${submission.expectedAPY || '0'}%`,
+          funding_deadline: submission.fundingDeadline ? new Date(submission.fundingDeadline).getTime() / 1000 : Date.now() / 1000 + 86400 * 30,
+        },
+        funding_status: {
+          raised_amount: (targetAmount * 0.5 * 1000000).toString(), // 50% funded as demo
+          investor_count: 25,
+          is_funded: false,
+          tokens_minted: false,
+        },
+        status: 'Active',
+      };
+    }
+    
+    // Default fallback data for non-user submissions
+    return {
+      id: id || '1',
+      asset_details: {
+        name: 'Downtown Seattle Office',
+        asset_type: 'Commercial Real Estate',
+        category: 'Real Estate',
+        location: 'Seattle, WA',
+        description: 'Premium Class A office building',
+      },
+      financial_terms: {
+        target_amount: '5000000000000',
+        token_price: '1000000000',
+        total_shares: 5000,
+        minimum_investment: '1000000000',
+        expected_apy: '12.5%',
+        funding_deadline: Date.now() / 1000 + 86400 * 30,
+      },
+      funding_status: {
+        raised_amount: '2500000000000',
+        investor_count: 25,
+        is_funded: false,
+        tokens_minted: false,
+      },
+      status: 'Active',
+    };
   });
 
   // Use proposalData instead of proposal for the rest of the component
@@ -119,7 +209,7 @@ const ProposalDetail: React.FC = () => {
         </div>
         
         <div className="flex items-center space-x-3">
-          {/* Admin: Instant Fund Button (Super Admin/Owner only) */}
+          {/* Admin: Instant Fund Button (Platform Admin/Super Admin/Owner) */}
           {canInstantFund && proposal.status === 'Active' && !proposal.funding_status.is_funded && (
             <button
               onClick={handleInstantFund}

@@ -27,6 +27,7 @@ import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import Verification from './pages/Verification';
 import Analytics from './pages/Analytics';
+import Search from './pages/Search';
 import Trading from './pages/Trading';
 import SecondaryTrading from './pages/SecondaryTrading';
 import LiquidityPools from './pages/LiquidityPools';

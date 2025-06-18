@@ -39,7 +39,7 @@ class AIAnalysisService {
       const formData = new FormData();
       formData.append('document', documentFile);
 
-      const response = await fetch(`${this.baseUrl}/api/v1/proposals/${proposalId}/analyze`, {
+      const response = await fetch(`${this.baseUrl}/api/v1/ai-analysis/proposals/${proposalId}/analyze`, {
         method: 'POST',
         body: formData,
       });
@@ -70,7 +70,7 @@ class AIAnalysisService {
    */
   async getAnalysis(proposalId: string): Promise<AIAnalysisResult | null> {
     try {
-      const response = await fetch(`${this.baseUrl}/api/v1/proposals/${proposalId}/ai-analysis`);
+      const response = await fetch(`${this.baseUrl}/api/v1/ai-analysis/proposals/${proposalId}/results`);
 
       if (response.status === 404) {
         return null; // Analysis not found

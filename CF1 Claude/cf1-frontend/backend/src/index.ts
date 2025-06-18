@@ -14,6 +14,7 @@ import analysisRoutes from './routes/analysis';
 import creatorToolkitRoutes from './routes/creatorToolkit';
 import assetsRoutes from './routes/assets';
 import proposalsRoutes from './routes/proposals';
+import governanceRoutes from './routes/governance';
 import { handleValidationError } from './middleware/validation';
 
 // Load environment variables
@@ -51,6 +52,7 @@ app.get('/health', (req, res) => {
 
 // API routes
 app.use('/api/v1/proposals', proposalsRoutes);
+app.use('/api/v1/governance', governanceRoutes);
 app.use('/api/v1/ai-analysis', analysisRoutes);
 app.use('/api/creator-toolkit', creatorToolkitRoutes);
 app.use('/api/v1/assets', assetsRoutes);

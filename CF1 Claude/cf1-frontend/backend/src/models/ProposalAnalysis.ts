@@ -16,48 +16,48 @@ export enum AnalysisStatus {
 @Index(['status'])
 export class ProposalAnalysis {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ type: 'varchar', length: 255, unique: true })
   @Index()
-  proposalId: string;
+  proposalId!: string;
 
   @Column({
     type: 'varchar',
     enum: AnalysisStatus,
     default: AnalysisStatus.PENDING
   })
-  status: AnalysisStatus;
+  status!: AnalysisStatus;
 
   @Column({ type: 'text', nullable: true })
-  summary: string | null;
+  summary!: string | null;
 
   @Column({ type: 'json', nullable: true })
-  potentialStrengths: string[] | null;
+  potentialStrengths!: string[] | null;
 
   @Column({ type: 'json', nullable: true })
-  areasForConsideration: string[] | null;
+  areasForConsideration!: string[] | null;
 
   @Column({ type: 'integer', nullable: true })
-  complexityScore: number | null;
+  complexityScore!: number | null;
 
   @Column({ type: 'float', nullable: true })
-  processingTimeSeconds: number | null;
+  processingTimeSeconds!: number | null;
 
   @Column({ type: 'text', nullable: true })
-  errorMessage: string | null;
+  errorMessage!: string | null;
 
   @Column({ type: 'text', nullable: true })
-  documentHash: string | null;
+  documentHash!: string | null;
 
   @Column({ type: 'json', nullable: true })
-  metadata: Record<string, any> | null;
+  metadata!: Record<string, any> | null;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 
   // Helper method to convert to API response format
   toResponse() {

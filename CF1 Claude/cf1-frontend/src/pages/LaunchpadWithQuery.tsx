@@ -184,7 +184,7 @@ const LaunchpadWithQuery: React.FC = () => {
           {proposals.map((proposal) => (
             <Link
               key={proposal.id}
-              to={`/launchpad/proposal/${proposal.id}`}
+              to={`/marketplace/assets/${proposal.id}`}
               onMouseEnter={() => handleMouseEnter(proposal.id)}
               className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 p-6 group"
             >

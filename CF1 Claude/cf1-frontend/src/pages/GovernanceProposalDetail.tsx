@@ -15,7 +15,7 @@ import {
   User,
   Zap
 } from 'lucide-react';
-import { useGovernanceStore } from '../store/governanceStore';
+import { useGovernanceStore, GovernanceProposal } from '../store/governanceStore';
 import { useNotifications } from '../hooks/useNotifications';
 import { useSessionStore } from '../store/sessionStore';
 
@@ -26,7 +26,7 @@ const GovernanceProposalDetail: React.FC = () => {
   const [pendingVote, setPendingVote] = useState<'for' | 'against' | null>(null);
   const [isSimulatingPass, setIsSimulatingPass] = useState(false);
   
-  const { getProposalById, voteOnProposal } = useGovernanceStore();
+  const { getProposalById, voteOnProposal, updateProposalFromSimulate } = useGovernanceStore();
   const { success, error: showError, info } = useNotifications();
   const { selectedRole } = useSessionStore();
   
@@ -137,9 +137,9 @@ const GovernanceProposalDetail: React.FC = () => {
   };
 
   // Check if user has admin privileges for simulate pass
-  const canSimulatePass = selectedRole === 'super_admin' || selectedRole === 'owner';
+  const canSimulatePass = selectedRole === 'super_admin' || selectedRole === 'owner' || selectedRole === 'platform_admin';
 
-  // Handle simulate pass (Super Admin only)
+  // Handle simulate pass (Admin only)
   const handleSimulatePass = async () => {
     if (!canSimulatePass) {
       showError('Access Denied', 'You do not have permission to perform this action.');
@@ -150,21 +150,33 @@ const GovernanceProposalDetail: React.FC = () => {
 
     setIsSimulatingPass(true);
     try {
-      // Simulate passing the proposal by adding enough votes
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      console.log(`🚀 Calling simulate pass API for governance proposal ${proposal.id}`);
+      console.log(`🔍 Full proposal object:`, proposal);
       
-      // Calculate votes needed to pass (quorum + majority)
-      const votesNeeded = Math.max(
-        proposal.quorumRequired - proposal.totalVotes, // Reach quorum
-        proposal.quorumRequired * 0.6 - proposal.votesFor // Ensure 60% majority
-      );
+      // Check if this is a user-created proposal (frontend-only)
+      const isUserCreatedProposal = proposal.id.startsWith('gov_proposal_');
       
-      const simulatedVotes = Math.max(votesNeeded + 100, 1000); // Add buffer
-      
-      // Simulate voting to pass the proposal
-      const passSuccess = voteOnProposal(proposal.id, 'for', simulatedVotes);
-      
-      if (passSuccess) {
+      if (isUserCreatedProposal) {
+        // Handle user-created proposals locally without backend API call
+        console.log('📝 User-created proposal detected, simulating locally');
+        
+        // Simulate adding votes to pass the proposal
+        const additionalVotes = 2000;
+        const additionalYesVotes = Math.ceil(additionalVotes * 0.70); // 70% yes votes
+        const newTotalVotes = proposal.totalVotes + additionalVotes;
+        const newYesVotes = proposal.votesFor + additionalYesVotes;
+        const newNoVotes = proposal.votesAgainst + (additionalVotes - additionalYesVotes);
+        
+        // Update the governance store with the new status
+        updateProposalFromSimulate(proposal.id, {
+          status: 'passed' as GovernanceProposal['status'],
+          totalVotes: newTotalVotes,
+          votesFor: newYesVotes,
+          votesAgainst: newNoVotes
+        });
+        
+        console.log(`🔄 Updated governance store for user proposal ${proposal.id} with status: passed`);
+        
         success(
           'Proposal Simulated to Pass!',
           `${proposal.title} now has enough votes to pass and is ready for execution.`,
@@ -183,11 +195,73 @@ const GovernanceProposalDetail: React.FC = () => {
             { duration: 8000 }
           );
         }, 2000);
+        
       } else {
-        showError('Simulation Failed', 'Unable to simulate proposal passing. The proposal may already be passed or ended.');
+        // Handle backend proposals with API call
+        const response = await fetch(`http://localhost:3001/api/v1/governance/proposals/${proposal.id}/admin/simulate-pass`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            // TODO: Add authorization header when auth is implemented
+            // 'Authorization': `Bearer ${authToken}`
+          }
+        });
+        
+        console.log(`📡 Response status: ${response.status} ${response.statusText}`);
+        
+        const result = await response.json();
+        console.log(`📋 Response data:`, result);
+        
+        if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error(`Proposal not found. Please refresh the page to sync with backend data.`);
+          }
+          throw new Error(result.error || 'Failed to simulate proposal pass');
+        }
+        
+        console.log('✅ Simulate pass successful:', result);
+        
+        // Update the governance store with the new status
+        updateProposalFromSimulate(proposal.id, {
+          status: result.data.status as GovernanceProposal['status'],
+          totalVotes: result.data.voting.totalVotes,
+          votesFor: result.data.voting.yesVotes,
+          votesAgainst: result.data.voting.noVotes
+        });
+        
+        console.log(`🔄 Updated governance store for proposal ${proposal.id} with status: ${result.data.status}`);
+        
+        if (result.data.status === 'passed') {
+          success(
+            'Proposal Simulated to Pass!',
+            `${proposal.title} now has enough votes to pass and is ready for execution.`,
+            { 
+              duration: 5000,
+              actionLabel: 'View All Proposals',
+              onAction: () => navigate('/governance')
+            }
+          );
+
+          // Show additional context about what happens next
+          setTimeout(() => {
+            info(
+              'Execution Ready',
+              'The proposal has reached the required quorum and majority. It can now be executed by the governance system.',
+              { duration: 8000 }
+            );
+          }, 2000);
+        } else {
+          info(
+            'Simulation Complete',
+            `The proposal simulation resulted in status: ${result.data.status}`,
+            { duration: 5000 }
+          );
+        }
       }
     } catch (err) {
-      showError('Simulation Failed', 'An error occurred while simulating the proposal pass.');
+      console.error('❌ Governance simulate pass error:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      showError('Simulation Failed', `Error: ${errorMessage}`);
     } finally {
       setIsSimulatingPass(false);
     }
@@ -216,7 +290,7 @@ const GovernanceProposalDetail: React.FC = () => {
         </div>
         <div className="text-right">
           <div className="flex items-center justify-end space-x-3 mb-1">
-            {/* Admin: Simulate Pass Button (Super Admin/Owner only) */}
+            {/* Admin: Simulate Pass Button (Platform Admin/Super Admin/Owner) */}
             {canSimulatePass && proposal.status === 'active' && !proposal.userVoted && (
               <button
                 onClick={handleSimulatePass}
@@ -413,9 +487,9 @@ const GovernanceProposalDetail: React.FC = () => {
                 <div className="flex justify-between text-sm mb-2">
                   <div className="flex items-center space-x-2">
                     <CheckCircle className="w-4 h-4 text-green-600" />
-                    <span>For ({proposal.votesFor.toLocaleString()})</span>
+                    <span className="text-gray-900 dark:text-white">For ({proposal.votesFor.toLocaleString()})</span>
                   </div>
-                  <span className="font-medium">{forPercentage.toFixed(1)}%</span>
+                  <span className="font-medium text-gray-900 dark:text-white">{forPercentage.toFixed(1)}%</span>
                 </div>
                 <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-3">
                   <div 
@@ -430,9 +504,9 @@ const GovernanceProposalDetail: React.FC = () => {
                 <div className="flex justify-between text-sm mb-2">
                   <div className="flex items-center space-x-2">
                     <XCircle className="w-4 h-4 text-red-600" />
-                    <span>Against ({proposal.votesAgainst.toLocaleString()})</span>
+                    <span className="text-gray-900 dark:text-white">Against ({proposal.votesAgainst.toLocaleString()})</span>
                   </div>
-                  <span className="font-medium">{againstPercentage.toFixed(1)}%</span>
+                  <span className="font-medium text-gray-900 dark:text-white">{againstPercentage.toFixed(1)}%</span>
                 </div>
                 <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-3">
                   <div 
@@ -446,7 +520,7 @@ const GovernanceProposalDetail: React.FC = () => {
               <div className="pt-3 border-t border-gray-200 dark:border-gray-600">
                 <div className="flex justify-between text-sm mb-2">
                   <span className="text-gray-600 dark:text-gray-400">Quorum Progress</span>
-                  <span className="font-medium">{Math.min(quorumPercentage, 100).toFixed(1)}%</span>
+                  <span className="font-medium text-gray-900 dark:text-white">{Math.min(quorumPercentage, 100).toFixed(1)}%</span>
                 </div>
                 <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
                   <div 

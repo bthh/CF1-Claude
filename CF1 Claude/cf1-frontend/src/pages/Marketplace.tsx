@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Search, Filter, Grid, List, Star, MapPin, TrendingUp, SlidersHorizontal } from 'lucide-react';
 import { useSimulatedLoading } from '../hooks/useLoading';
 import { SkeletonCard, SkeletonStats } from '../components/Loading/Skeleton';
+import { Card, StatusBadge, Button } from '../components/UI';
 
 interface AssetListingProps {
   id: string;
@@ -79,7 +80,7 @@ const AssetListing: React.FC<AssetListingProps> = ({
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
             <span className="text-gray-600 dark:text-gray-400">Available</span>
-            <span className="font-medium">{tokensAvailable.toLocaleString()} / {totalTokens.toLocaleString()}</span>
+            <span className="font-medium text-gray-900 dark:text-white">{tokensAvailable.toLocaleString()} / {totalTokens.toLocaleString()}</span>
           </div>
           <div className="w-full bg-secondary-200 rounded-full h-2">
             <div 

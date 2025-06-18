@@ -20,7 +20,11 @@ vi.mock('../../hooks/useNotifications', () => ({
 
 // Mock other services  
 vi.mock('../../services/cosmjs');
-vi.mock('../../lib/errorHandler');
+vi.mock('../../lib/errorHandler', () => ({
+  ErrorHandler: {
+    handle: vi.fn(),
+  }
+}));
 vi.mock('../../services/aiAnalysis', () => ({
   aiAnalysisService: {
     getAnalysis: vi.fn().mockResolvedValue(null),
@@ -37,6 +41,18 @@ vi.mock('../../utils/format', () => ({
 
 const mockUseCosmJS = useCosmJS as any;
 
+// Create mock functions that can be reused
+const mockCosmosFunctions = {
+  connect: vi.fn(),
+  disconnect: vi.fn(),
+  getBalance: vi.fn(),
+  createProposal: vi.fn(),
+  invest: vi.fn(),
+  getProposals: vi.fn(),
+  getProposalById: vi.fn(),
+  queryProposal: vi.fn(),
+};
+
 describe('Proposal Integration Tests', () => {
   let queryClient: QueryClient;
 
@@ -51,23 +67,28 @@ describe('Proposal Integration Tests', () => {
     // Reset mocks
     vi.clearAllMocks();
 
+    // Reset mock functions
+    Object.values(mockCosmosFunctions).forEach(fn => fn.mockClear());
+    
+    // Setup default resolved values
+    mockCosmosFunctions.getBalance.mockResolvedValue('1000000');
+    mockCosmosFunctions.createProposal.mockResolvedValue({
+      transactionHash: 'tx123',
+      proposalId: 'proposal_1',
+    });
+    mockCosmosFunctions.invest.mockResolvedValue({
+      transactionHash: 'tx456',
+    });
+    mockCosmosFunctions.getProposals.mockResolvedValue([mockProposal]);
+    mockCosmosFunctions.getProposalById.mockResolvedValue(mockProposal);
+    mockCosmosFunctions.queryProposal.mockResolvedValue(mockProposal);
+
     // Setup useCosmJS mock
     mockUseCosmJS.mockReturnValue({
       isConnected: true,
       address: 'cosmos1test123',
       balance: '1000000',
-      connect: vi.fn(),
-      disconnect: vi.fn(),
-      getBalance: vi.fn().mockResolvedValue('1000000'),
-      createProposal: vi.fn().mockResolvedValue({
-        transactionHash: 'tx123',
-        proposalId: 'proposal_1',
-      }),
-      invest: vi.fn().mockResolvedValue({
-        transactionHash: 'tx456',
-      }),
-      getProposals: vi.fn().mockResolvedValue([mockProposal]),
-      getProposalById: vi.fn().mockResolvedValue(mockProposal),
+      ...mockCosmosFunctions,
     });
   });
 
@@ -99,8 +120,10 @@ describe('Proposal Integration Tests', () => {
       const user = userEvent.setup();
       
       mockUseCosmJS.mockReturnValue({
-        ...mockUseCosmJS(),
         isConnected: false,
+        address: null,
+        balance: '0',
+        ...mockCosmosFunctions,
         createProposal: vi.fn().mockRejectedValue(
           new Error('Wallet not connected')
         ),
@@ -132,39 +155,10 @@ describe('Proposal Integration Tests', () => {
   });
 
   describe('Proposal Detail Integration', () => {
-    const mockProposal = {
-      id: 'proposal_1',
-      creator: 'cosmos1creator...',
-      asset_details: {
-        name: 'Test Property',
-        description: 'Test description',
-        asset_type: 'Real Estate',
-        category: 'Commercial',
-        location: 'New York, NY',
-      },
-      financial_terms: {
-        target_amount: '100000000000',
-        token_price: '10000000',
-        total_shares: 10000,
-        minimum_investment: '1000000',
-        expected_apy: '8%',
-        funding_deadline: Date.now() / 1000 + 86400 * 30,
-      },
-      funding_status: {
-        raised_amount: '50000000000',
-        investor_count: 25,
-        is_funded: false,
-        tokens_minted: false,
-      },
-      status: 'Active',
-    };
-
     beforeEach(() => {
-      mockUseCosmJS.mockReturnValue({
-        ...mockUseCosmJS(),
-        getProposalById: vi.fn().mockResolvedValue(mockProposal),
-        queryProposal: vi.fn().mockResolvedValue(mockProposal),
-      });
+      // Reset to default + specific overrides for proposal detail tests
+      mockCosmosFunctions.getProposalById.mockResolvedValue(mockProposal);
+      mockCosmosFunctions.queryProposal.mockResolvedValue(mockProposal);
     });
 
     it('should display proposal details correctly', async () => {
@@ -181,7 +175,7 @@ describe('Proposal Integration Tests', () => {
     it('should handle investment flow', async () => {
       const user = userEvent.setup();
       
-      mockUseCosmJS().invest.mockResolvedValue({
+      mockCosmosFunctions.invest.mockResolvedValue({
         transactionHash: 'tx456',
       });
 
@@ -206,7 +200,7 @@ describe('Proposal Integration Tests', () => {
 
       // Verify API call
       await waitFor(() => {
-        expect(mockUseCosmJS().invest).toHaveBeenCalledWith(
+        expect(mockCosmosFunctions.invest).toHaveBeenCalledWith(
           'proposal_1',
           '1000000000' // Converted to untrn
         );
@@ -214,7 +208,7 @@ describe('Proposal Integration Tests', () => {
     });
 
     it('should handle network errors gracefully', async () => {
-      mockUseCosmJS().queryProposal.mockRejectedValue(
+      mockCosmosFunctions.queryProposal.mockRejectedValue(
         new Error('Network error')
       );
 
@@ -256,14 +250,14 @@ describe('Proposal Integration Tests', () => {
       });
 
       // Verify no API call was made
-      expect(mockUseCosmJS().invest).not.toHaveBeenCalled();
+      expect(mockCosmosFunctions.invest).not.toHaveBeenCalled();
     });
 
     it('should prevent investment exceeding available shares', async () => {
       const user = userEvent.setup();
       
       // Set proposal with limited availability
-      mockUseCosmJS().queryProposal.mockResolvedValue({
+      mockCosmosFunctions.queryProposal.mockResolvedValue({
         ...mockProposal,
         funding_status: {
           ...mockProposal.funding_status,

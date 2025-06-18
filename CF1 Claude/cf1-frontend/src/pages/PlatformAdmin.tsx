@@ -11,6 +11,7 @@ import {
   Ban,
   CheckCircle,
   AlertCircle,
+  AlertTriangle,
   Clock,
   Mail,
   Phone,
@@ -24,7 +25,9 @@ import {
   Settings,
   X,
   Target,
-  Vote
+  Vote,
+  RotateCcw,
+  TrendingUp
 } from 'lucide-react';
 import { useAdminAuthContext } from '../hooks/useAdminAuth';
 import { useNotifications } from '../hooks/useNotifications';
@@ -34,6 +37,7 @@ import FeatureToggleManager from '../components/AdminEnhancements/FeatureToggleM
 import RolePermissionsManager from '../components/AdminEnhancements/RolePermissionsManager';
 import LaunchpadAdmin from '../components/Admin/LaunchpadAdmin';
 import GovernanceAdmin from '../components/Admin/GovernanceAdmin';
+import { usePlatformConfigStore } from '../store/platformConfigStore';
 
 interface PlatformUser {
   id: string;
@@ -81,6 +85,243 @@ interface SupportTicket {
   responses: number;
 }
 
+// Platform Configuration Section Component
+const PlatformConfigSection: React.FC = () => {
+  const { config, updateMaxAPY, getMaxAPY, validateAPY, resetToDefaults } = usePlatformConfigStore();
+  const { success, error } = useNotifications();
+  const [newMaxAPY, setNewMaxAPY] = useState<string>(() => {
+    // Safely initialize with fallback
+    return config?.maxAllowedAPY?.toString() || '50';
+  });
+  const [isEditing, setIsEditing] = useState(false);
+
+  // Sync state with store when config changes
+  useEffect(() => {
+    if (config?.maxAllowedAPY !== undefined) {
+      setNewMaxAPY(config.maxAllowedAPY.toString());
+    }
+  }, [config?.maxAllowedAPY]);
+
+  const handleSaveAPY = () => {
+    const apyValue = parseFloat(newMaxAPY);
+    
+    if (isNaN(apyValue) || apyValue < 0) {
+      error('Please enter a valid APY percentage (0 or higher)');
+      return;
+    }
+    
+    if (apyValue > 200) {
+      error('APY cannot exceed 200% for platform safety');
+      return;
+    }
+    
+    updateMaxAPY(apyValue);
+    setIsEditing(false);
+    success(`Maximum allowed APY updated to ${apyValue}%`);
+  };
+
+  const handleReset = () => {
+    if (confirm('Are you sure you want to reset all platform settings to defaults? This cannot be undone.')) {
+      resetToDefaults();
+      // Use fallback value since config might be reset
+      setNewMaxAPY('50');
+      setIsEditing(false);
+      success('Platform settings reset to defaults');
+    }
+  };
+
+  const handleCancel = () => {
+    setNewMaxAPY(config?.maxAllowedAPY?.toString() || '50');
+    setIsEditing(false);
+  };
+
+  // Safety check - don't render if config is not available
+  if (!config) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <span className="ml-2 text-gray-600 dark:text-gray-400">Loading platform configuration...</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6" role="tabpanel" id="platform-config-panel">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-2xl p-6 border border-gray-200 dark:border-gray-600">
+        <div className="flex items-center space-x-3 mb-4">
+          <div className="w-10 h-10 bg-gray-100 dark:bg-gray-600 rounded-full flex items-center justify-center">
+            <Settings className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Platform Configuration</h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Manage platform-wide settings and guardrails</p>
+          </div>
+        </div>
+        
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+          <div className="flex items-start space-x-3">
+            <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
+            <div>
+              <h4 className="font-medium text-yellow-800 dark:text-yellow-200">Super Admin Access Required</h4>
+              <p className="text-yellow-700 dark:text-yellow-300 text-sm mt-1">
+                These settings affect all users and assets on the platform. Changes should be made carefully and with proper consideration.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* APY Guardrail Configuration */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
+              <TrendingUp className="w-4 h-4 text-red-600" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">APY Guardrail</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Set maximum allowed Expected APY for asset proposals</p>
+            </div>
+          </div>
+          
+          {!isEditing && (
+            <button
+              onClick={() => setIsEditing(true)}
+              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            >
+              <Edit className="w-4 h-4" />
+              <span>Edit</span>
+            </button>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Maximum Allowed APY (%)
+            </label>
+            {isEditing ? (
+              <div className="space-y-3">
+                <input
+                  type="number"
+                  value={newMaxAPY}
+                  onChange={(e) => setNewMaxAPY(e.target.value)}
+                  min="0"
+                  max="200"
+                  step="0.1"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter maximum APY percentage"
+                />
+                <div className="flex space-x-2">
+                  <button
+                    onClick={handleSaveAPY}
+                    className="flex items-center space-x-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+                  >
+                    <CheckCircle className="w-4 h-4" />
+                    <span>Save</span>
+                  </button>
+                  <button
+                    onClick={handleCancel}
+                    className="flex items-center space-x-2 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                    <span>Cancel</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-3">
+                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {config.maxAllowedAPY}%
+                </div>
+                <div className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 rounded-full text-sm font-medium">
+                  Active
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">How This Works</h4>
+            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+              <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-2">
+                <li className="flex items-start space-x-2">
+                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2"></div>
+                  <span>Asset proposals with Expected APY above this limit will be flagged</span>
+                </li>
+                <li className="flex items-start space-x-2">
+                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2"></div>
+                  <span>Creators must provide documentation to justify high APY projections</span>
+                </li>
+                <li className="flex items-start space-x-2">
+                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2"></div>
+                  <span>Helps protect investors from unrealistic return expectations</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* APY Validation Test */}
+        <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-600">
+          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Test APY Validation</h4>
+          <div className="flex items-center space-x-4">
+            <input
+              type="number"
+              placeholder="Enter APY to test"
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white w-40"
+              onBlur={(e) => {
+                const testAPY = parseFloat(e.target.value);
+                if (!isNaN(testAPY)) {
+                  const result = validateAPY(testAPY);
+                  if (result.isValid) {
+                    success(`APY of ${testAPY}% is within acceptable limits`);
+                  } else {
+                    error(result.error || 'APY validation failed');
+                  }
+                }
+              }}
+            />
+            <span className="text-sm text-gray-500 dark:text-gray-400">
+              Enter a value to test against current limits
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Danger Zone */}
+      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-6">
+        <div className="flex items-center space-x-3 mb-4">
+          <div className="w-8 h-8 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
+            <AlertTriangle className="w-4 h-4 text-red-600" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-red-900 dark:text-red-200">Danger Zone</h3>
+            <p className="text-sm text-red-700 dark:text-red-300">Irreversible actions that affect the entire platform</p>
+          </div>
+        </div>
+        
+        <div className="flex items-center justify-between">
+          <div>
+            <h4 className="font-medium text-red-900 dark:text-red-200">Reset Platform Settings</h4>
+            <p className="text-sm text-red-700 dark:text-red-300 mt-1">
+              Reset all platform configuration to default values. This action cannot be undone.
+            </p>
+          </div>
+          <button
+            onClick={handleReset}
+            className="flex items-center space-x-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+          >
+            <RotateCcw className="w-4 h-4" />
+            <span>Reset to Defaults</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const PlatformAdmin: React.FC = () => {
   const { 
     currentAdmin, 
@@ -89,13 +330,16 @@ const PlatformAdmin: React.FC = () => {
     hasAccessToFeatureToggles, 
     hasAccessToSuperAdminManagement 
   } = useAdminAuthContext();
+  
+  // Get admin role for permissions check
+  const adminRole = currentAdmin?.role;
   const { success, error } = useNotifications();
   
   const [users, setUsers] = useState<PlatformUser[]>([]);
   const [complianceCases, setComplianceCases] = useState<ComplianceCase[]>([]);
   const [supportTickets, setSupportTickets] = useState<SupportTicket[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedTab, setSelectedTab] = useState<'users' | 'roles' | 'features' | 'launchpad' | 'governance' | 'compliance' | 'support' | 'analytics'>('users');
+  const [selectedTab, setSelectedTab] = useState<'users' | 'roles' | 'features' | 'launchpad' | 'governance' | 'compliance' | 'support' | 'platform-config' | 'analytics'>('users');
   const [selectedSubTab, setSelectedSubTab] = useState<string>('proposals');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -412,11 +656,15 @@ const PlatformAdmin: React.FC = () => {
               { id: 'governance', label: 'Governance', icon: <Vote className="w-4 h-4" />, color: 'teal', permission: 'manage_governance_proposals' },
               { id: 'compliance', label: 'Compliance', icon: <AlertCircle className="w-4 h-4" />, count: complianceCases.filter(c => c.status !== 'resolved').length, color: 'red', permission: 'manage_compliance' },
               { id: 'support', label: 'Support Tickets', icon: <MessageSquare className="w-4 h-4" />, count: supportTickets.filter(t => t.status === 'open' || t.status === 'in_progress').length, color: 'green', permission: 'manage_support_tickets' },
+              { id: 'platform-config', label: 'Platform Settings', icon: <Settings className="w-4 h-4" />, color: 'gray', requiresSuperAdmin: true },
               { id: 'analytics', label: 'Analytics', icon: <FileText className="w-4 h-4" />, color: 'yellow', permission: 'view_analytics' }
             ].filter((tab) => {
               // Role-based tab filtering
               if (tab.requiresFeatureToggleAccess) {
                 return hasAccessToFeatureToggles();
+              }
+              if (tab.requiresSuperAdmin) {
+                return adminRole === 'super_admin' || adminRole === 'owner';
               }
               if (tab.permission) {
                 return checkPermission(tab.permission);
@@ -489,6 +737,11 @@ const PlatformAdmin: React.FC = () => {
               selectedSubTab={selectedSubTab} 
               setSelectedSubTab={setSelectedSubTab} 
             />
+          )}
+          
+          {/* Platform Configuration Tab */}
+          {selectedTab === 'platform-config' && (
+            <PlatformConfigSection />
           )}
           
           {/* Remove the hidden duplicate user management section */}

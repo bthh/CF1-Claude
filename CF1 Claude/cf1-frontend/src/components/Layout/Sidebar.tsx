@@ -6,7 +6,6 @@ import {
   Briefcase, 
   Vote, 
   Rocket, 
-  BarChart3,
   Users,
   FileText,
   HelpCircle,
@@ -82,11 +81,6 @@ const Sidebar: React.FC = () => {
             label="Governance"
             to="/governance"
             badge="2"
-          />
-          <NavItem
-            icon={<BarChart3 className="w-5 h-5" />}
-            label="Analytics"
-            to="/analytics"
           />
         </nav>
       </div>

@@ -86,7 +86,7 @@ const SpotlightCard: React.FC<SpotlightAsset> = ({
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
             <span className="text-gray-600 dark:text-gray-400">Available</span>
-            <span className="font-medium">{tokensAvailable.toLocaleString()} / {totalTokens.toLocaleString()}</span>
+            <span className="font-medium text-gray-900 dark:text-white">{tokensAvailable.toLocaleString()} / {totalTokens.toLocaleString()}</span>
           </div>
           <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
             <div 

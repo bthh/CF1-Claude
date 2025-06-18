@@ -364,15 +364,15 @@ const AssetDetail: React.FC = () => {
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-gray-600 dark:text-gray-400">Asset Type</span>
-                <span className="font-medium">{asset.type}</span>
+                <span className="font-medium text-gray-900 dark:text-white">{asset.type}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600 dark:text-gray-400">Location</span>
-                <span className="font-medium">{asset.location}</span>
+                <span className="font-medium text-gray-900 dark:text-white">{asset.location}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600 dark:text-gray-400">Total Tokens</span>
-                <span className="font-medium">{asset.totalTokens.toLocaleString()}</span>
+                <span className="font-medium text-gray-900 dark:text-white">{asset.totalTokens.toLocaleString()}</span>
               </div>
             </div>
           </div>

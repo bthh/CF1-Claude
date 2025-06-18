@@ -26,6 +26,10 @@ export interface GovernanceProposal {
   additionalDetails?: string;
   votingDuration: number; // in days
   
+  // Privacy controls for Card 22
+  isPrivate: boolean; // Whether this specific proposal is private
+  visibilityPolicy?: 'always_private' | 'always_public' | 'creator_decides'; // Asset-level policy
+  
   // Additional details for proposal detail page
   detailedBreakdown?: {
     totalRevenue?: string;
@@ -71,11 +75,13 @@ interface GovernanceState {
   voteOnProposal: (proposalId: string, vote: 'for' | 'against', votingPower: number) => boolean;
   updateProposalStatus: (proposalId: string, status: GovernanceProposal['status'], comments?: string) => void;
   getProposalsForAdmin: () => GovernanceProposal[];
-  getProposalsForVoting: () => GovernanceProposal[];
+  getProposalsForVoting: (userTokenHoldings?: string[]) => GovernanceProposal[];
   approveProposal: (proposalId: string, comments?: string) => void;
   rejectProposal: (proposalId: string, comments?: string) => void;
   requestChanges: (proposalId: string, comments?: string) => void;
   saveReviewComments: (proposalId: string, comments: string) => void;
+  updateProposalFromSimulate: (proposalId: string, updatedData: { status: GovernanceProposal['status']; votesFor?: number; votesAgainst?: number; totalVotes?: number }) => void;
+  syncWithBackend: () => Promise<void>;
 }
 
 // Data validation helper
@@ -107,7 +113,10 @@ const validateProposalData = (proposal: Partial<GovernanceProposal>): Governance
     endDate: proposal.endDate || '',
     submissionDate: proposal.submissionDate || '',
     impact: proposal.impact || '',
-    rationale: proposal.rationale || ''
+    rationale: proposal.rationale || '',
+    // Privacy fields
+    isPrivate: typeof proposal.isPrivate === 'boolean' ? proposal.isPrivate : false,
+    visibilityPolicy: proposal.visibilityPolicy || 'creator_decides'
   } as GovernanceProposal;
 };
 
@@ -128,7 +137,7 @@ const calculateProposalTiming = (votingDuration: number) => {
 // Mock initial governance proposals for demonstration
 const mockGovernanceProposals: GovernanceProposal[] = [
   {
-    id: 'gov_proposal_1',
+    id: '1',
     title: 'Q4 Dividend Distribution',
     description: 'Proposal to distribute quarterly dividends of $2.50 per token based on rental income from Manhattan Office Complex.',
     assetName: 'Manhattan Office Complex',
@@ -170,10 +179,13 @@ const mockGovernanceProposals: GovernanceProposal[] = [
       { date: 'Dec 15, 2024', event: 'Distribution (if approved)', status: 'pending' }
     ],
     userVotingPower: 450,
-    userEstimatedDistribution: 1125
+    userEstimatedDistribution: 1125,
+    // Privacy settings
+    isPrivate: false, // Public proposal - everyone can see
+    visibilityPolicy: 'creator_decides'
   },
   {
-    id: 'gov_proposal_2',
+    id: '2',
     title: 'Lobby Renovation Project',
     description: 'Modernize the main lobby with new marble flooring, LED lighting, and digital directory system to increase property value.',
     assetName: 'Miami Beach Resort',
@@ -203,10 +215,13 @@ const mockGovernanceProposals: GovernanceProposal[] = [
     userVoted: 'for',
     userVotingPower: 180,
     userTokens: 180,
-    userEstimatedDistribution: 0
+    userEstimatedDistribution: 0,
+    // Privacy settings
+    isPrivate: true, // Private proposal - only art collection token holders can see
+    visibilityPolicy: 'creator_decides'
   },
   {
-    id: 'gov_proposal_3',
+    id: '3',
     title: 'Change Property Management Company',
     description: 'Switch to a new property management firm with better track record and lower fees to improve net returns.',
     assetName: 'Gold Bullion Vault',
@@ -230,10 +245,13 @@ const mockGovernanceProposals: GovernanceProposal[] = [
     userVoted: 'for',
     userVotingPower: 580,
     userTokens: 580,
-    userEstimatedDistribution: 0
+    userEstimatedDistribution: 0,
+    // Privacy settings
+    isPrivate: false, // Public proposal
+    visibilityPolicy: 'always_public'
   },
   {
-    id: 'gov_proposal_4',
+    id: '4',
     title: 'Expand Wine Storage Facility',
     description: 'Add temperature-controlled storage units to accommodate additional wine inventory and increase revenue potential.',
     assetName: 'Rare Wine Collection',
@@ -257,10 +275,13 @@ const mockGovernanceProposals: GovernanceProposal[] = [
     votingDuration: 11,
     userVotingPower: 92,
     userTokens: 92,
-    userEstimatedDistribution: 0
+    userEstimatedDistribution: 0,
+    // Privacy settings
+    isPrivate: true, // Private proposal - only wine collection token holders can see
+    visibilityPolicy: 'always_private'
   },
   {
-    id: 'gov_proposal_5',
+    id: '5',
     title: 'Partial Asset Sale - Classic Cars',
     description: 'Sell 3 vehicles from the classic car collection to realize gains and redistribute proceeds to token holders.',
     assetName: 'Classic Car Collection',
@@ -284,7 +305,10 @@ const mockGovernanceProposals: GovernanceProposal[] = [
     userVoted: 'against',
     userVotingPower: 85,
     userTokens: 85,
-    userEstimatedDistribution: 0
+    userEstimatedDistribution: 0,
+    // Privacy settings
+    isPrivate: false, // Public proposal
+    visibilityPolicy: 'creator_decides'
   }
 ];
 
@@ -526,14 +550,23 @@ export const useGovernanceStore = create<GovernanceState>()(
         );
       },
 
-      getProposalsForVoting: () => {
+      getProposalsForVoting: (userTokenHoldings = []) => {
         // Return only proposals that are approved and visible to users for voting/viewing
-        return get().proposals.filter(proposal => 
-          proposal.status === 'active' || 
-          proposal.status === 'approved' ||
-          proposal.status === 'passed' ||
-          proposal.status === 'rejected'
-        );
+        return get().proposals.filter(proposal => {
+          // First check if proposal is in a votable status
+          const isVotableStatus = proposal.status === 'active' || 
+                                proposal.status === 'approved' ||
+                                proposal.status === 'passed' ||
+                                proposal.status === 'rejected';
+          
+          if (!isVotableStatus) return false;
+          
+          // If proposal is public, show it to everyone
+          if (!proposal.isPrivate) return true;
+          
+          // If proposal is private, only show to token holders of that asset
+          return userTokenHoldings.includes(proposal.assetId);
+        });
       },
 
       approveProposal: (proposalId, comments) => {
@@ -598,10 +631,94 @@ export const useGovernanceStore = create<GovernanceState>()(
               : proposal
           )
         }));
+      },
+
+      updateProposalFromSimulate: (proposalId, updatedData) => {
+        set((state) => ({
+          proposals: state.proposals.map((proposal) =>
+            proposal.id === proposalId
+              ? { 
+                  ...proposal,
+                  status: updatedData.status,
+                  votesFor: updatedData.votesFor || proposal.votesFor,
+                  votesAgainst: updatedData.votesAgainst || proposal.votesAgainst, 
+                  totalVotes: updatedData.totalVotes || proposal.totalVotes,
+                  updatedAt: new Date().toISOString(),
+                  timeLeft: updatedData.status === 'passed' || updatedData.status === 'rejected' ? 'Ended' : proposal.timeLeft
+                }
+              : proposal
+          )
+        }));
+      },
+
+      syncWithBackend: async () => {
+        try {
+          const response = await fetch('http://localhost:3001/api/v1/governance/proposals');
+          const result = await response.json();
+          
+          if (response.ok && result.success) {
+            // Convert backend data to frontend format
+            const backendProposals = result.data.map((backendProposal: any) => ({
+              id: backendProposal.id,
+              title: backendProposal.title,
+              description: backendProposal.description,
+              assetName: 'Backend Asset', // Default since backend doesn't have this field
+              assetType: 'Real Estate', // Default since backend doesn't have this field  
+              assetId: backendProposal.assetId,
+              proposalType: backendProposal.type === 'fee_change' ? 'management' : 'dividend',
+              status: backendProposal.status,
+              votesFor: backendProposal.voting.yesVotes,
+              votesAgainst: backendProposal.voting.noVotes,
+              totalVotes: backendProposal.voting.totalVotes,
+              quorumRequired: backendProposal.voting.quorumRequired * 1000, // Convert to token count
+              timeLeft: backendProposal.status === 'passed' || backendProposal.status === 'rejected' ? 'Ended' : '5 days left',
+              proposedBy: backendProposal.proposer || 'Backend User',
+              proposedByAddress: '0x123...456',
+              createdDate: new Date(backendProposal.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+              endDate: new Date(backendProposal.votingPeriod.endDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+              submissionDate: backendProposal.createdAt,
+              impact: '+2.5%', // Default
+              rationale: backendProposal.description,
+              votingDuration: backendProposal.votingPeriod.duration,
+              isPrivate: false,
+              visibilityPolicy: 'creator_decides' as const
+            }));
+            
+            // Merge backend proposals with existing user-created proposals
+            set((state) => {
+              const userProposals = state.proposals.filter(p => 
+                // Keep proposals that start with 'gov_proposal_' (user-created) or don't exist in backend
+                p.id.startsWith('gov_proposal_') || !backendProposals.find(bp => bp.id === p.id)
+              );
+              
+              // Update existing backend proposals or add new ones
+              const mergedProposals = [...userProposals];
+              backendProposals.forEach(backendProposal => {
+                const existingIndex = mergedProposals.findIndex(p => p.id === backendProposal.id);
+                if (existingIndex >= 0) {
+                  // Update existing backend proposal
+                  mergedProposals[existingIndex] = backendProposal;
+                } else {
+                  // Add new backend proposal
+                  mergedProposals.push(backendProposal);
+                }
+              });
+              
+              return {
+                ...state,
+                proposals: mergedProposals
+              };
+            });
+            
+            console.log('✅ Governance store synced with backend data');
+          }
+        } catch (error) {
+          console.error('❌ Failed to sync governance store with backend:', error);
+        }
       }
     }),
     {
-      name: 'cf1-governance',
+      name: 'cf1-governance-v3',
       // Only persist essential data
       partialize: (state) => ({
         proposals: state.proposals

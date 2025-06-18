@@ -13,6 +13,7 @@ interface ProposalFormData {
   expectedImpact: string;
   votingDuration: string;
   additionalDetails: string;
+  isPrivate: boolean; // For Card 22: Public/Private visibility
 }
 
 const CreateGovernanceProposal: React.FC = () => {
@@ -31,7 +32,8 @@ const CreateGovernanceProposal: React.FC = () => {
     requiredAmount: '',
     expectedImpact: '',
     votingDuration: '7',
-    additionalDetails: ''
+    additionalDetails: '',
+    isPrivate: false // Default to public
   });
 
   const proposalTypes = [
@@ -172,7 +174,9 @@ const CreateGovernanceProposal: React.FC = () => {
       additionalDetails: formData.additionalDetails,
       votingDuration: parseInt(formData.votingDuration),
       userTokens: selectedAsset.tokens,
-      userVotingPower: selectedAsset.tokens
+      userVotingPower: selectedAsset.tokens,
+      isPrivate: formData.isPrivate, // Add privacy setting
+      visibilityPolicy: 'creator_decides' // For now, assume creator decides policy
     };
 
     const result = addProposal(proposalData);
@@ -351,7 +355,7 @@ const CreateGovernanceProposal: React.FC = () => {
 
         {currentStep === 2 && (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Proposal Title *
@@ -379,6 +383,37 @@ const CreateGovernanceProposal: React.FC = () => {
                   <option value="14">14 days</option>
                   <option value="30">30 days</option>
                 </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Visibility
+                </label>
+                <div className="flex items-center space-x-4 pt-2">
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="visibility"
+                      checked={!formData.isPrivate}
+                      onChange={() => handleInputChange('isPrivate', false)}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                    />
+                    <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">Public</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="visibility"
+                      checked={formData.isPrivate}
+                      onChange={() => handleInputChange('isPrivate', true)}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                    />
+                    <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">Private</span>
+                  </label>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  {formData.isPrivate ? 'Only token holders can see this proposal' : 'Everyone can see this proposal'}
+                </p>
               </div>
             </div>
 

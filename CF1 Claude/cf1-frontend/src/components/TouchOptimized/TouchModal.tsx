@@ -140,12 +140,12 @@ export const TouchModal: React.FC<TouchModalProps> = ({
   const getPositionClasses = () => {
     switch (position) {
       case 'top':
-        return 'items-start pt-4 sm:pt-8';
+        return 'items-start justify-center pt-4 sm:pt-8 px-4';
       case 'bottom':
-        return 'items-end pb-4 sm:pb-0';
+        return 'items-end justify-center pb-4 sm:pb-0 px-4';
       case 'center':
       default:
-        return 'items-center';
+        return 'items-center justify-center p-4';
     }
   };
 
@@ -180,7 +180,8 @@ export const TouchModal: React.FC<TouchModalProps> = ({
         ${isMobile ? 'rounded-t-xl' : 'sm:rounded-xl sm:mb-4'}
       `;
     } else {
-      baseClasses += ` mx-4 my-4 max-h-[90vh]`;
+      // For center and top positions, use max dimensions without margins for perfect centering
+      baseClasses += ` max-h-[90vh] max-w-[calc(100vw-2rem)]`;
     }
 
     return baseClasses;

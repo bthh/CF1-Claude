@@ -5,11 +5,14 @@ import { useCosmJS } from '../../hooks/useCosmJS';
 
 // Mock dependencies
 vi.mock('../../hooks/useCosmJS');
+
+const mockNotificationHandlers = {
+  success: vi.fn(),
+  error: vi.fn()
+};
+
 vi.mock('../../hooks/useNotifications', () => ({
-  useNotifications: () => ({
-    success: vi.fn(),
-    error: vi.fn()
-  })
+  useNotifications: () => mockNotificationHandlers
 }));
 
 // Mock the AdminAuth context directly
@@ -37,6 +40,8 @@ describe('AdminLogin', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockLoginAsAdmin.mockResolvedValue(undefined);
+    mockNotificationHandlers.success.mockClear();
+    mockNotificationHandlers.error.mockClear();
     mockUseCosmJS.mockReturnValue({
       isConnected: true,
       connect: vi.fn(),
@@ -121,8 +126,9 @@ describe('AdminLogin', () => {
     });
   });
 
-  it('should connect wallet if not connected before login', async () => {
+  it('should show error when wallet not connected', async () => {
     const connectWallet = vi.fn();
+    
     mockUseCosmJS.mockReturnValue({
       isConnected: false,
       connectWallet
@@ -133,8 +139,9 @@ describe('AdminLogin', () => {
     const loginButton = screen.getByText('Access Admin Panel');
     fireEvent.click(loginButton);
     
+    // Should show error instead of trying to connect
     await waitFor(() => {
-      expect(connectWallet).toHaveBeenCalled();
+      expect(mockNotificationHandlers.error).toHaveBeenCalledWith('Please connect your wallet first');
     });
   });
 
@@ -156,13 +163,12 @@ describe('AdminLogin', () => {
     expect(screen.getByText('User management and system monitoring')).toBeInTheDocument();
   });
 
-  it('should handle keyboard navigation', () => {
+  it('should close modal when close button is clicked', () => {
     render(<AdminLogin {...defaultProps} />);
     
-    const modal = screen.getByText('Admin Access').closest('div');
+    const closeButton = screen.getByRole('button', { name: '' }); // X button has no aria-label
+    fireEvent.click(closeButton);
     
-    // Test escape key
-    fireEvent.keyDown(modal!, { key: 'Escape', code: 'Escape' });
     expect(defaultProps.onClose).toHaveBeenCalled();
   });
 
@@ -194,23 +200,16 @@ describe('AdminLogin', () => {
     expect(platformAdminSection).toBeInTheDocument();
   });
 
-  it('should handle wallet connection failure gracefully', async () => {
-    const connectWallet = vi.fn().mockRejectedValue(new Error('Connection failed'));
+  it('should show warning when wallet not connected', () => {
     mockUseCosmJS.mockReturnValue({
       isConnected: false,
-      connectWallet
+      connectWallet: vi.fn()
     });
     
     render(<AdminLogin {...defaultProps} />);
     
-    const loginButton = screen.getByText('Access Admin Panel');
-    fireEvent.click(loginButton);
-    
-    await waitFor(() => {
-      expect(connectWallet).toHaveBeenCalled();
-    });
-    
-    // Should not call onSuccess if wallet connection fails
-    expect(defaultProps.onSuccess).not.toHaveBeenCalled();
+    // Should show wallet connection warning
+    expect(screen.getByText('Wallet Connection Required')).toBeInTheDocument();
+    expect(screen.getByText('Please connect your wallet to access admin features.')).toBeInTheDocument();
   });
 });

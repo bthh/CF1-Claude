@@ -14,11 +14,14 @@ import {
   Target,
   Clock,
   Save,
-  AlertTriangle
+  AlertTriangle,
+  Brain
 } from 'lucide-react';
 import { useSubmissionStore } from '../store/submissionStore';
+import { usePlatformConfigStore } from '../store/platformConfigStore';
 import { useNotifications } from '../hooks/useNotifications';
 import { TouchInput, TouchSelect, TouchTextarea } from '../components/TouchOptimized';
+import AIProposalAssistant from '../components/AIProposalAssistant/AIProposalAssistant';
 import { aiAnalysisService } from '../services/aiAnalysis';
 import { 
   getPlatformConfig, 
@@ -60,12 +63,18 @@ const CreateProposal: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { addSubmission, saveDraft, updateDraft, getSubmissionById } = useSubmissionStore();
+  const { validateAPY } = usePlatformConfigStore();
   const { success, error: showError, info } = useNotifications();
   const [currentStep, setCurrentStep] = useState(1);
   const [isEditingDraft, setIsEditingDraft] = useState(false);
   const [draftId, setDraftId] = useState<string | null>(null);
   const [platformConfig] = useState(() => getPlatformConfig());
   const [tokenPriceError, setTokenPriceError] = useState<string | null>(null);
+  const [apyError, setAPYError] = useState<string | null>(null);
+  const [showAIAssistant, setShowAIAssistant] = useState(false);
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
+  const [lastAutoSave, setLastAutoSave] = useState<string | null>(null);
+  const [isAutoSaving, setIsAutoSaving] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     assetName: '',
     assetType: '',
@@ -254,6 +263,17 @@ const CreateProposal: React.FC = () => {
         setTokenPriceError(null);
       }
     }
+
+    // Validate APY in real-time using platform configuration
+    if (field === 'expectedAPY' && typeof value === 'string') {
+      const numericAPY = parseFloat(value.replace('%', ''));
+      if (!isNaN(numericAPY) && numericAPY > 0) {
+        const apyValidation = validateAPY(numericAPY);
+        setAPYError(apyValidation.isValid ? null : apyValidation.error || null);
+      } else {
+        setAPYError(null);
+      }
+    }
   };
 
   const handleFileUpload = (field: keyof FormData, event: React.ChangeEvent<HTMLInputElement>) => {
@@ -269,7 +289,8 @@ const CreateProposal: React.FC = () => {
       case 2:
         const hasRequiredFields = !!(formData.targetAmount && formData.tokenPrice && formData.expectedAPY && formData.fundingDays);
         const hasValidTokenPrice = !tokenPriceError && parseNumericValue(formData.tokenPrice) >= platformConfig.minTokenPrice;
-        return hasRequiredFields && hasValidTokenPrice;
+        const hasValidAPY = !apyError;
+        return hasRequiredFields && hasValidTokenPrice && hasValidAPY;
       case 3:
         return !!(formData.businessPlan && formData.financialProjections && formData.legalDocuments);
       case 4:
@@ -466,6 +487,101 @@ const CreateProposal: React.FC = () => {
     }
   };
 
+  // Auto-save functionality
+  const performAutoSave = async () => {
+    if (!autoSaveEnabled || isAutoSaving) return;
+    
+    // Only auto-save if there's meaningful content
+    const hasContent = formData.assetName || formData.description || formData.assetType;
+    if (!hasContent) return;
+
+    setIsAutoSaving(true);
+    
+    try {
+      // Calculate deadline date from funding days
+      const fundingDeadline = formData.fundingDays 
+        ? new Date(Date.now() + formData.fundingDays * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+        : '';
+      
+      const submissionData = {
+        assetName: formData.assetName,
+        assetType: formData.assetType,
+        category: formData.category,
+        customCategory: formData.customCategory,
+        location: formData.location,
+        description: formData.description,
+        targetAmount: formData.targetAmount,
+        tokenPrice: formData.tokenPrice,
+        minimumInvestment: calculatedValues.minimumInvestment.toString(),
+        expectedAPY: formData.expectedAPY,
+        fundingDeadline: fundingDeadline,
+        businessPlan: formData.businessPlan?.name,
+        financialProjections: formData.financialProjections?.name,
+        legalDocuments: formData.legalDocuments?.name,
+        assetValuation: formData.assetValuation?.name,
+        riskFactors: formData.riskFactors,
+        useOfFunds: formData.useOfFunds
+      };
+
+      if (isEditingDraft && draftId) {
+        updateDraft(draftId, submissionData);
+      } else {
+        const newDraftId = saveDraft(submissionData);
+        setDraftId(newDraftId);
+        setIsEditingDraft(true);
+      }
+      
+      setLastAutoSave(new Date().toLocaleTimeString());
+    } catch (error) {
+      console.error('Auto-save failed:', error);
+    } finally {
+      setIsAutoSaving(false);
+    }
+  };
+
+  // Auto-save effect
+  useEffect(() => {
+    if (!autoSaveEnabled) return;
+    
+    const autoSaveTimer = setTimeout(() => {
+      performAutoSave();
+    }, 30000); // Auto-save every 30 seconds
+
+    return () => clearTimeout(autoSaveTimer);
+  }, [formData, autoSaveEnabled, isEditingDraft, draftId]);
+
+  // Auto-save on form changes (debounced)
+  useEffect(() => {
+    if (!autoSaveEnabled) return;
+    
+    const debounceTimer = setTimeout(() => {
+      performAutoSave();
+    }, 5000); // Auto-save 5 seconds after user stops typing
+
+    return () => clearTimeout(debounceTimer);
+  }, [
+    formData.assetName,
+    formData.description,
+    formData.assetType,
+    formData.category,
+    formData.location,
+    formData.targetAmount,
+    formData.tokenPrice,
+    formData.expectedAPY,
+    formData.riskFactors,
+    formData.useOfFunds
+  ]);
+
+  // AI Assistant handlers
+  const handleAISuggestionApply = (field: string, value: string) => {
+    handleInputChange(field as keyof FormData, value);
+  };
+
+  const handleAIFieldGenerate = (field: string) => {
+    // This is handled by the AI Assistant component
+    // The generated content will be applied via handleAISuggestionApply
+  };
+
   // Keep the old mock submission as fallback
   const handleMockSubmit = () => {
     if (validateStep(currentStep)) {
@@ -548,8 +664,8 @@ const CreateProposal: React.FC = () => {
                 step.number < currentStep 
                   ? 'bg-blue-600 border-blue-600 text-white shadow-lg'
                   : step.number === currentStep
-                  ? 'border-blue-600 text-blue-600 bg-white shadow-lg ring-4 ring-blue-100'
-                  : 'border-gray-300 text-gray-400 bg-white'
+                  ? 'border-blue-600 text-blue-600 bg-white dark:bg-gray-800 shadow-lg ring-4 ring-blue-100 dark:ring-blue-900/50'
+                  : 'border-gray-300 dark:border-gray-600 text-gray-400 dark:text-gray-500 bg-white dark:bg-gray-800'
               }`}>
                 {step.number < currentStep ? (
                   <CheckCircle className="w-6 h-6" />
@@ -740,6 +856,7 @@ const CreateProposal: React.FC = () => {
             clearable
             onClear={() => handleInputChange('expectedAPY', '')}
             helper="Projected annual percentage yield"
+            error={apyError}
             required
           />
         </div>
@@ -999,6 +1116,32 @@ const CreateProposal: React.FC = () => {
           <p className="text-gray-600 dark:text-gray-400 mt-1">
             {isEditingDraft ? 'Edit and submit your saved draft' : 'Create a new tokenized asset proposal'}
           </p>
+          
+          {/* Auto-save status */}
+          {autoSaveEnabled && (
+            <div className="flex items-center justify-center space-x-2 mt-2">
+              {isAutoSaving ? (
+                <>
+                  <div className="animate-spin rounded-full h-3 w-3 border-b border-blue-600"></div>
+                  <span className="text-xs text-blue-600 dark:text-blue-400">Auto-saving...</span>
+                </>
+              ) : lastAutoSave ? (
+                <>
+                  <CheckCircle className="w-3 h-3 text-green-600" />
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    Draft saved at {lastAutoSave}
+                  </span>
+                </>
+              ) : null}
+              <button
+                onClick={() => setAutoSaveEnabled(!autoSaveEnabled)}
+                className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 ml-2"
+                title={autoSaveEnabled ? 'Disable auto-save' : 'Enable auto-save'}
+              >
+                {autoSaveEnabled ? 'Auto-save ON' : 'Auto-save OFF'}
+              </button>
+            </div>
+          )}
         </div>
         
         <div className="w-32"></div> {/* Spacer for centering */}
@@ -1074,6 +1217,15 @@ const CreateProposal: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* AI Proposal Assistant */}
+      <AIProposalAssistant
+        formData={formData}
+        onSuggestionApply={handleAISuggestionApply}
+        onFieldGenerate={handleAIFieldGenerate}
+        isVisible={showAIAssistant}
+        onToggle={() => setShowAIAssistant(!showAIAssistant)}
+      />
     </div>
   );
 };

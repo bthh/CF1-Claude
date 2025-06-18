@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { notificationService } from '../services/notificationService';
 
 export interface SubmittedProposal {
   id: string;
@@ -34,6 +35,15 @@ export interface SubmittedProposal {
   reviewComments?: string;
   reviewDate?: string;
   estimatedReviewDate?: string;
+  
+  // Funding status (for approved proposals)
+  fundingStatus?: {
+    raisedAmount: number;
+    raisedPercentage: number;
+    investorCount: number;
+    isFunded: boolean;
+    status: 'active' | 'funded' | 'upcoming';
+  };
 }
 
 // Data validation helper for submissions
@@ -71,6 +81,7 @@ interface SubmissionState {
   deleteDraft: (draftId: string) => void;
   getDrafts: () => SubmittedProposal[];
   updateSubmissionStatus: (id: string, status: SubmittedProposal['status'], comments?: string) => void;
+  updateFundingStatus: (id: string, fundingStatus: SubmittedProposal['fundingStatus']) => void;
   saveReviewComments: (id: string, comments: string) => void;
   getSubmissionById: (id: string) => SubmittedProposal | undefined;
   getSubmissionsByStatus: (status: SubmittedProposal['status']) => SubmittedProposal[];
@@ -271,6 +282,8 @@ export const useSubmissionStore = create<SubmissionState>()(
       },
 
       updateSubmissionStatus: (id, status, comments) => {
+        const proposal = get().getSubmissionById(id);
+        
         set((state) => ({
           submissions: state.submissions.map((submission) =>
             submission.id === id
@@ -283,6 +296,40 @@ export const useSubmissionStore = create<SubmissionState>()(
               : submission
           )
         }));
+
+        // Trigger notifications based on status change
+        if (proposal) {
+          switch (status) {
+            case 'approved':
+              notificationService.onProposalApproved(id, proposal.assetName);
+              break;
+            case 'rejected':
+              notificationService.onProposalRejected(id, proposal.assetName, comments);
+              break;
+            case 'changes_requested':
+              notificationService.onChangesRequested(id, proposal.assetName, comments || 'Please review and make necessary changes.');
+              break;
+          }
+        }
+      },
+
+      updateFundingStatus: (id, fundingStatus) => {
+        console.log(`🔄 Updating funding status for submission ${id}:`, fundingStatus);
+        
+        set((state) => ({
+          submissions: state.submissions.map((submission) =>
+            submission.id === id
+              ? {
+                  ...submission,
+                  fundingStatus,
+                  // Update the main status field if it's funded
+                  status: fundingStatus?.isFunded ? 'approved' : submission.status
+                }
+              : submission
+          )
+        }));
+        
+        console.log(`✅ Funding status updated for submission ${id}`);
       },
 
       getSubmissionById: (id) => {

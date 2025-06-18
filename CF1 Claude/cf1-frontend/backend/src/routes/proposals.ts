@@ -48,11 +48,74 @@ interface Investment {
   investorAddress: string;
   amount: number;
   timestamp: string;
+  tokens?: number;
+  status?: string;
 }
 
 // Mock database for proposals and investments
 const proposals: Map<string, any> = new Map();
 const investments: Map<string, Investment[]> = new Map();
+
+// Initialize with mock proposals for testing
+const mockProposals = [
+  {
+    id: '1',
+    asset_details: {
+      name: 'Downtown Seattle Office Building',
+      type: 'Commercial Real Estate',
+      location: 'Seattle, WA',
+      description: 'Prime commercial real estate in the heart of Seattle\'s business district. Fully leased with AAA tenants and long-term contracts.'
+    },
+    financial_terms: {
+      target_amount: '$3,200,000',
+      token_price: '$100',
+      total_supply: '32,000',
+      minimum_investment: '$500',
+      expected_apy: '9.2%',
+      funding_deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    },
+    funding_status: {
+      total_raised: 2100000,
+      total_investors: 127,
+      is_funded: false,
+      percentage_funded: 65.6
+    },
+    status: 'Active',
+    created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: '2',
+    asset_details: {
+      name: 'Rare Wine Collection Portfolio',
+      type: 'Collectibles',
+      location: 'Napa Valley, CA',
+      description: 'Curated collection of vintage wines from premier vineyards. Professional storage and authentication included.'
+    },
+    financial_terms: {
+      target_amount: '$850,000',
+      token_price: '$85',
+      total_supply: '10,000',
+      minimum_investment: '$1,000',
+      expected_apy: '11.5%',
+      funding_deadline: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000).toISOString()
+    },
+    funding_status: {
+      total_raised: 680000,
+      total_investors: 89,
+      is_funded: false,
+      percentage_funded: 80
+    },
+    status: 'Active',
+    created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    updated_at: new Date().toISOString()
+  }
+];
+
+// Initialize proposals map
+mockProposals.forEach(proposal => {
+  proposals.set(proposal.id, proposal);
+});
 
 /**
  * Calculate minimum investment based on funding goal and max investors
@@ -467,6 +530,286 @@ router.get('/config', (req: Request, res: Response) => {
     success: true,
     data: PLATFORM_CONFIG
   });
+});
+
+/**
+ * POST /api/v1/proposals/sync-submission
+ * Sync an approved user submission to the backend proposals database
+ */
+router.post('/sync-submission', (req: Request, res: Response) => {
+  try {
+    const submissionData = req.body;
+    
+    console.log('🔄 Syncing user submission to backend:', submissionData.id);
+    
+    // Validate required fields
+    if (!submissionData.id || !submissionData.assetName || !submissionData.targetAmount) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required submission data',
+        code: 'INVALID_SUBMISSION_DATA'
+      });
+    }
+    
+    // Parse financial values
+    const targetAmount = parseFloat(submissionData.targetAmount.replace(/[^\d.]/g, '')) || 0;
+    const tokenPrice = parseFloat(submissionData.tokenPrice || '0') || 1;
+    const minimumInvestment = parseFloat(submissionData.minimumInvestment || '0') || 100;
+    const expectedAPY = parseFloat(submissionData.expectedAPY || '0') || 0;
+    
+    // Calculate total shares
+    const totalShares = Math.floor(targetAmount / tokenPrice);
+    
+    // Create backend proposal from submission data
+    const proposal = {
+      id: submissionData.id,
+      asset_details: {
+        name: submissionData.assetName,
+        asset_type: submissionData.assetType || 'Unknown',
+        category: submissionData.category || 'Other',
+        location: submissionData.location || 'Location not specified',
+        description: submissionData.description || 'No description available'
+      },
+      financial_terms: {
+        target_amount: targetAmount,
+        token_price: tokenPrice,
+        total_shares: totalShares,
+        minimum_investment: minimumInvestment,
+        expected_apy: expectedAPY,
+        funding_deadline: submissionData.fundingDeadline || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+      },
+      funding_status: {
+        total_raised: 0,
+        total_investors: 0,
+        is_funded: false,
+        percentage_funded: 0
+      },
+      documents: {
+        business_plan: submissionData.businessPlan || '',
+        financial_projections: submissionData.financialProjections || '',
+        legal_documents: submissionData.legalDocuments || '',
+        asset_valuation: submissionData.assetValuation || '',
+        risk_factors: submissionData.riskFactors || '',
+        use_of_funds: submissionData.useOfFunds || ''
+      },
+      status: 'Active',
+      creator: 'user_submission',
+      submission_date: submissionData.submissionDate,
+      review_date: submissionData.reviewDate,
+      review_comments: submissionData.reviewComments,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    // Store in backend proposals database
+    proposals.set(submissionData.id, proposal);
+    
+    // Initialize investments array
+    investments.set(submissionData.id, []);
+    
+    console.log(`✅ User submission ${submissionData.id} synced to backend proposals database`);
+    
+    res.json({
+      success: true,
+      message: 'Submission synced successfully',
+      data: proposal
+    });
+    
+  } catch (error) {
+    console.error('Error syncing submission:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to sync submission',
+      code: 'SYNC_ERROR'
+    });
+  }
+});
+
+/**
+ * POST /api/v1/proposals/:id/admin/instant-fund
+ * Admin shortcut to instantly fund a proposal for testing
+ */
+router.post('/:id/admin/instant-fund', (req: Request, res: Response) => {
+  const proposalId = req.params.id;
+  
+  // TODO: Add proper admin authentication middleware
+  // For now, accepting the admin call directly
+  
+  console.log(`🚀 Admin Instant Fund triggered for proposal ${proposalId}`);
+  
+  // First, check if it's a submission-based proposal that needs to be created
+  if (!proposals.has(proposalId)) {
+    console.log(`⚠️ Proposal ${proposalId} not found in backend database. Checking if it can be auto-synced from frontend...`);
+    
+    // For instant fund operations, we'll accept the proposal data from the frontend request body
+    // This allows the frontend to sync the submission data when calling instant fund
+    const submissionData = req.body.submissionData;
+    
+    if (submissionData) {
+      console.log('🔄 Auto-syncing user submission for instant fund operation...');
+      
+      try {
+        // Parse financial values
+        const targetAmount = parseFloat(submissionData.targetAmount?.replace(/[^\d.]/g, '')) || 0;
+        const tokenPrice = parseFloat(submissionData.tokenPrice || '0') || 1;
+        const minimumInvestment = parseFloat(submissionData.minimumInvestment || '0') || 100;
+        const expectedAPY = parseFloat(submissionData.expectedAPY || '0') || 0;
+        
+        // Calculate total shares
+        const totalShares = Math.floor(targetAmount / tokenPrice);
+        
+        // Create backend proposal from submission data
+        const proposal = {
+          id: proposalId,
+          asset_details: {
+            name: submissionData.assetName || 'User Submission',
+            asset_type: submissionData.assetType || 'Unknown',
+            category: submissionData.category || 'Other',
+            location: submissionData.location || 'Location not specified',
+            description: submissionData.description || 'No description available'
+          },
+          financial_terms: {
+            target_amount: targetAmount,
+            token_price: tokenPrice,
+            total_shares: totalShares,
+            minimum_investment: minimumInvestment,
+            expected_apy: expectedAPY,
+            funding_deadline: submissionData.fundingDeadline || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+          },
+          funding_status: {
+            total_raised: 0,
+            total_investors: 0,
+            is_funded: false,
+            percentage_funded: 0
+          },
+          documents: {
+            business_plan: submissionData.businessPlan || '',
+            financial_projections: submissionData.financialProjections || '',
+            legal_documents: submissionData.legalDocuments || '',
+            asset_valuation: submissionData.assetValuation || '',
+            risk_factors: submissionData.riskFactors || '',
+            use_of_funds: submissionData.useOfFunds || ''
+          },
+          status: 'Active',
+          creator: 'user_submission',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+        
+        // Store in backend proposals database
+        proposals.set(proposalId, proposal);
+        investments.set(proposalId, []);
+        
+        console.log(`✅ User submission ${proposalId} auto-synced for instant fund operation`);
+      } catch (syncError) {
+        console.error('Error auto-syncing submission:', syncError);
+        return res.status(500).json({
+          success: false,
+          error: 'Failed to auto-sync submission data for instant funding',
+          code: 'SYNC_ERROR'
+        });
+      }
+    } else {
+      return res.status(404).json({
+        success: false,
+        error: 'Proposal not found and no submission data provided for auto-sync',
+        code: 'PROPOSAL_NOT_FOUND',
+        details: {
+          proposalId,
+          suggestion: 'Include submissionData in the request body to auto-sync user submissions'
+        }
+      });
+    }
+  }
+  
+  const proposal = proposals.get(proposalId)!;
+  
+  // Check if proposal is in active state
+  if (proposal.status !== 'Active') {
+    return res.status(400).json({
+      success: false,
+      error: `Cannot fund proposal in ${proposal.status} state. Only Active proposals can be funded.`
+    });
+  }
+  
+  try {
+    // Calculate remaining amount needed to fully fund
+    // Handle both string and number formats
+    let targetAmount;
+    if (typeof proposal.financial_terms.target_amount === 'string') {
+      targetAmount = parseFloat(proposal.financial_terms.target_amount.replace(/[$,]/g, ''));
+    } else {
+      targetAmount = proposal.financial_terms.target_amount;
+    }
+    
+    const currentRaised = proposal.funding_status.total_raised || 0;
+    const remainingAmount = Math.max(0, targetAmount - currentRaised);
+    
+    console.log(`Target: $${targetAmount}, Current: $${currentRaised}, Remaining: $${remainingAmount}`);
+    
+    // Create mock investment to complete funding
+    if (remainingAmount > 0) {
+      const mockInvestment: Investment = {
+        proposalId,
+        investorAddress: 'admin_mock_investor',
+        amount: remainingAmount,
+        timestamp: new Date().toISOString(),
+        tokens: Math.floor(remainingAmount / (typeof proposal.financial_terms.token_price === 'string' ? parseFloat(proposal.financial_terms.token_price.replace(/[$,]/g, '')) : proposal.financial_terms.token_price)),
+        status: 'completed'
+      };
+      
+      // Add to investments
+      if (!investments.has(proposalId)) {
+        investments.set(proposalId, []);
+      }
+      investments.get(proposalId)!.push(mockInvestment);
+      
+      // Update proposal funding status
+      proposal.funding_status.total_raised = targetAmount;
+      proposal.funding_status.total_investors += 1;
+      proposal.funding_status.is_funded = true;
+      proposal.funding_status.percentage_funded = 100;
+    }
+    
+    // *** CRITICAL: Trigger state transition to Funded ***
+    proposal.status = 'Funded';
+    
+    // Update the proposals map
+    proposals.set(proposalId, proposal);
+    
+    console.log(`✅ Proposal ${proposalId} status changed to: ${proposal.status}`);
+    console.log(`✅ Funding status: $${proposal.funding_status.total_raised} / $${targetAmount} (${proposal.funding_status.percentage_funded}%)`);
+    
+    // TODO: In production, trigger additional workflows:
+    // - Mint tokens
+    // - Send notifications to investors
+    // - Initialize governance
+    // - Set up dividend distribution
+    
+    res.json({
+      success: true,
+      message: 'Proposal instantly funded by admin',
+      data: {
+        proposalId,
+        status: proposal.status,
+        fundingStatus: {
+          total_raised: proposal.funding_status.total_raised,
+          total_investors: proposal.funding_status.total_investors,
+          is_funded: proposal.funding_status.is_funded,
+          percentage_funded: proposal.funding_status.percentage_funded
+        },
+        mockInvestmentAmount: remainingAmount
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error in instant fund:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fund proposal',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
 });
 
 export default router;

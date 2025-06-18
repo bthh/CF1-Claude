@@ -3,6 +3,127 @@ import { PieChart, TrendingUp, TrendingDown, DollarSign, ArrowRight, Target, Cal
 import { useNavigate } from 'react-router-dom';
 import { formatCurrency, formatPercentage } from '../../utils/format';
 
+// Pie Chart Component
+interface PieChartComponentProps {
+  data: Array<{
+    name: string;
+    value: number;
+    allocation: number;
+    color: string;
+  }>;
+  size?: number;
+  showLabels?: boolean;
+}
+
+const PieChartComponent: React.FC<PieChartComponentProps> = ({ 
+  data, 
+  size = 200,
+  showLabels = true 
+}) => {
+  const radius = size * 0.4;
+  const strokeWidth = size * 0.08;
+  const center = size / 2;
+  
+  // Calculate angles for each segment
+  let cumulativePercentage = 0;
+  const segments = data.map((item) => {
+    const startAngle = cumulativePercentage * 3.6; // Convert percentage to degrees
+    const endAngle = (cumulativePercentage + item.allocation) * 3.6;
+    cumulativePercentage += item.allocation;
+    
+    // Calculate arc path
+    const startAngleRad = (startAngle - 90) * (Math.PI / 180);
+    const endAngleRad = (endAngle - 90) * (Math.PI / 180);
+    
+    const largeArcFlag = item.allocation > 50 ? 1 : 0;
+    
+    const x1 = center + radius * Math.cos(startAngleRad);
+    const y1 = center + radius * Math.sin(startAngleRad);
+    const x2 = center + radius * Math.cos(endAngleRad);
+    const y2 = center + radius * Math.sin(endAngleRad);
+    
+    const pathData = [
+      'M', center, center,
+      'L', x1, y1,
+      'A', radius, radius, 0, largeArcFlag, 1, x2, y2,
+      'Z'
+    ].join(' ');
+    
+    return {
+      ...item,
+      pathData,
+      startAngle,
+      endAngle
+    };
+  });
+  
+  return (
+    <div className="flex flex-col items-center">
+      <svg width={size} height={size} className="overflow-visible">
+        {segments.map((segment, index) => (
+          <g key={index}>
+            <path
+              d={segment.pathData}
+              fill={segment.color}
+              stroke="white"
+              strokeWidth="2"
+              className="hover:opacity-80 transition-opacity cursor-pointer"
+            />
+          </g>
+        ))}
+        
+        {/* Center circle for donut effect */}
+        <circle
+          cx={center}
+          cy={center}
+          r={radius * 0.6}
+          fill="white"
+          className="dark:fill-gray-800"
+        />
+        
+        {/* Center text */}
+        <text
+          x={center}
+          y={center - 8}
+          textAnchor="middle"
+          className="text-xs font-semibold fill-gray-900 dark:fill-white"
+        >
+          Portfolio
+        </text>
+        <text
+          x={center}
+          y={center + 8}
+          textAnchor="middle"
+          className="text-xs fill-gray-500 dark:fill-gray-400"
+        >
+          Allocation
+        </text>
+      </svg>
+      
+      {showLabels && (
+        <div className="grid grid-cols-2 gap-2 mt-4 w-full max-w-xs">
+          {data.map((item, index) => (
+            <div key={index} className="flex items-center space-x-2">
+              <div 
+                className="w-3 h-3 rounded-full flex-shrink-0"
+                style={{ backgroundColor: item.color }}
+              />
+              <div className="min-w-0 flex-1">
+                <span className="text-xs font-medium text-gray-900 dark:text-white truncate block">
+                  {item.name}
+                </span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  {formatPercentage(item.allocation)}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 interface PortfolioWidgetProps {
   size: 'small' | 'medium' | 'large' | 'full';
   isEditMode?: boolean;
@@ -24,7 +145,8 @@ const PortfolioWidget: React.FC<PortfolioWidgetProps> = ({ size, isEditMode = fa
         allocation: 33.8,
         gain: 2340,
         gainPercent: 17.9,
-        trend: 'up'
+        trend: 'up',
+        color: '#10B981' // green-500
       },
       {
         name: 'Tech Innovation',
@@ -32,7 +154,8 @@ const PortfolioWidget: React.FC<PortfolioWidgetProps> = ({ size, isEditMode = fa
         allocation: 27.7,
         gain: 1890,
         gainPercent: 17.6,
-        trend: 'up'
+        trend: 'up',
+        color: '#3B82F6' // blue-500
       },
       {
         name: 'Real Estate Portfolio',
@@ -40,7 +163,8 @@ const PortfolioWidget: React.FC<PortfolioWidgetProps> = ({ size, isEditMode = fa
         allocation: 21.6,
         gain: 1240,
         gainPercent: 14.4,
-        trend: 'up'
+        trend: 'up',
+        color: '#8B5CF6' // violet-500
       },
       {
         name: 'Healthcare Research',
@@ -48,7 +172,8 @@ const PortfolioWidget: React.FC<PortfolioWidgetProps> = ({ size, isEditMode = fa
         allocation: 11.4,
         gain: 890,
         gainPercent: 20.6,
-        trend: 'up'
+        trend: 'up',
+        color: '#F59E0B' // amber-500
       },
       {
         name: 'Sustainable Agriculture',
@@ -56,10 +181,19 @@ const PortfolioWidget: React.FC<PortfolioWidgetProps> = ({ size, isEditMode = fa
         allocation: 5.5,
         gain: 420,
         gainPercent: 20.2,
-        trend: 'up'
+        trend: 'up',
+        color: '#EF4444' // red-500
       }
     ]
   };
+
+  // Prepare data for pie chart
+  const pieChartData = portfolioStats.assets.map(asset => ({
+    name: asset.name,
+    value: asset.value,
+    allocation: asset.allocation,
+    color: asset.color
+  }));
 
   const handleNavigate = () => {
     navigate('/portfolio');
@@ -138,31 +272,12 @@ const PortfolioWidget: React.FC<PortfolioWidgetProps> = ({ size, isEditMode = fa
         </div>
 
         <div className="flex-1 min-h-0 overflow-hidden">
-          <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Top Holdings</p>
-          <div className="space-y-1">
-            {portfolioStats.assets.slice(0, 2).map((asset, index) => (
-              <div key={index} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                <div className="flex-1 min-w-0 pr-2">
-                  <span className="text-sm font-medium text-gray-900 dark:text-white truncate block">
-                    {asset.name}
-                  </span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    {formatPercentage(asset.allocation)}
-                  </span>
-                </div>
-                <div className="text-right flex-shrink-0">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white whitespace-nowrap">
-                    {formatCurrency(asset.value)}
-                  </p>
-                  <div className="flex items-center space-x-1 justify-end">
-                    {getTrendIcon(asset.trend)}
-                    <span className="text-xs text-green-600 whitespace-nowrap">
-                      +{formatPercentage(asset.gainPercent)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
+          <div className="flex items-center justify-center">
+            <PieChartComponent 
+              data={pieChartData} 
+              size={120} 
+              showLabels={false}
+            />
           </div>
         </div>
       </div>
@@ -232,43 +347,66 @@ const PortfolioWidget: React.FC<PortfolioWidgetProps> = ({ size, isEditMode = fa
 
       <div className="flex-1">
         <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Asset Allocation</h4>
-        <div className="space-y-3">
-          {portfolioStats.assets.map((asset, index) => (
-            <div 
-              key={index} 
-              className="p-3 bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors cursor-pointer"
-              onClick={() => navigate(`/marketplace/assets/${index + 1}`)}
-            >
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex-1 min-w-0 pr-3">
-                  <h5 className="font-medium text-gray-900 dark:text-white truncate">{asset.name}</h5>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {formatPercentage(asset.allocation)} of portfolio
-                  </p>
-                </div>
-                <div className="text-right flex-shrink-0">
-                  <p className="font-bold text-gray-900 dark:text-white whitespace-nowrap">
-                    {formatCurrency(asset.value)}
-                  </p>
-                  <div className="flex items-center space-x-1 justify-end">
-                    {getTrendIcon(asset.trend)}
-                    <span className={`text-sm font-medium whitespace-nowrap ${
-                      asset.trend === 'up' ? 'text-green-600' : 'text-red-600'
-                    }`}>
-                      +{formatCurrency(asset.gain)}
-                    </span>
+        <div className={`${size === 'full' ? 'grid grid-cols-2 gap-6' : 'flex flex-col'} h-full`}>
+          
+          {/* Pie Chart */}
+          <div className={`${size === 'full' ? 'flex justify-center items-center' : 'mb-4'}`}>
+            <PieChartComponent 
+              data={pieChartData} 
+              size={size === 'full' ? 200 : 160} 
+              showLabels={size !== 'full'}
+            />
+          </div>
+          
+          {/* Asset List */}
+          <div className={`${size === 'full' ? 'flex-1' : ''} space-y-3 ${size === 'full' ? 'overflow-y-auto' : ''}`}>
+            {portfolioStats.assets.map((asset, index) => (
+              <div 
+                key={index} 
+                className="p-3 bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors cursor-pointer"
+                onClick={() => navigate(`/marketplace/assets/${index + 1}`)}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center flex-1 min-w-0 pr-3">
+                    <div 
+                      className="w-3 h-3 rounded-full mr-3 flex-shrink-0"
+                      style={{ backgroundColor: asset.color }}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <h5 className="font-medium text-gray-900 dark:text-white truncate">{asset.name}</h5>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {formatPercentage(asset.allocation)} of portfolio
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="font-bold text-gray-900 dark:text-white whitespace-nowrap">
+                      {formatCurrency(asset.value)}
+                    </p>
+                    <div className="flex items-center space-x-1 justify-end">
+                      {getTrendIcon(asset.trend)}
+                      <span className={`text-sm font-medium whitespace-nowrap ${
+                        asset.trend === 'up' ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        +{formatCurrency(asset.gain)}
+                      </span>
+                    </div>
                   </div>
                 </div>
+                
+                <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                  <div 
+                    className="h-2 rounded-full transition-all duration-300" 
+                    style={{ 
+                      width: `${asset.allocation}%`,
+                      backgroundColor: asset.color
+                    }}
+                  ></div>
+                </div>
               </div>
-              
-              <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
-                <div 
-                  className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
-                  style={{ width: `${asset.allocation}%` }}
-                ></div>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
+          
         </div>
       </div>
     </div>

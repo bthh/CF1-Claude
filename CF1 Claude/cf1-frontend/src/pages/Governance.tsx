@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Vote, Clock, Users, CheckCircle, XCircle, AlertCircle, TrendingUp, Eye, Calendar, Search } from 'lucide-react';
 import { useGovernanceStore, type GovernanceProposal } from '../store/governanceStore';
+import { useTokenHoldingStore } from '../store/tokenHoldingStore';
 import { useSimulatedLoading } from '../hooks/useLoading';
 import { SkeletonProposalCard, SkeletonStats } from '../components/Loading/Skeleton';
 
@@ -127,16 +128,16 @@ const GovernanceProposalCard: React.FC<GovernanceProposal> = ({
         <div className="space-y-3">
           <div className="flex justify-between items-center text-sm">
             <span className="text-gray-600 dark:text-gray-400">Voting Progress</span>
-            <span className="font-medium">{totalVotes} / {quorumRequired} votes</span>
+            <span className="font-medium text-gray-900 dark:text-white">{totalVotes} / {quorumRequired} votes</span>
           </div>
           
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <div className="flex items-center space-x-2">
                 <CheckCircle className="w-5 h-5 text-green-600" />
-                <span>For ({votesFor})</span>
+                <span className="text-gray-900 dark:text-white">For ({votesFor})</span>
               </div>
-              <span className="font-medium">{forPercentage.toFixed(1)}%</span>
+              <span className="font-medium text-gray-900 dark:text-white">{forPercentage.toFixed(1)}%</span>
             </div>
             <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
               <div 
@@ -150,9 +151,9 @@ const GovernanceProposalCard: React.FC<GovernanceProposal> = ({
             <div className="flex justify-between text-sm">
               <div className="flex items-center space-x-2">
                 <XCircle className="w-5 h-5 text-red-600" />
-                <span>Against ({votesAgainst})</span>
+                <span className="text-gray-900 dark:text-white">Against ({votesAgainst})</span>
               </div>
-              <span className="font-medium">{againstPercentage.toFixed(1)}%</span>
+              <span className="font-medium text-gray-900 dark:text-white">{againstPercentage.toFixed(1)}%</span>
             </div>
             <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
               <div 
@@ -165,7 +166,7 @@ const GovernanceProposalCard: React.FC<GovernanceProposal> = ({
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-gray-600 dark:text-gray-400">Quorum Progress</span>
-              <span className="font-medium">{Math.min(quorumPercentage, 100).toFixed(1)}%</span>
+              <span className="font-medium text-gray-900 dark:text-white">{Math.min(quorumPercentage, 100).toFixed(1)}%</span>
             </div>
             <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
               <div 
@@ -213,12 +214,29 @@ const Governance: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   
   const { getProposalsForVoting } = useGovernanceStore();
-  const mockProposals = getProposalsForVoting();
+  const { holdings } = useTokenHoldingStore();
+  
+  // Get user's asset IDs for filtering private proposals
+  const userAssetIds = useMemo(() => 
+    holdings.filter(h => h.balance > 0).map(h => h.assetId), 
+    [holdings]
+  );
+  
+  // Get all proposals and re-compute when proposals change (reactive)
+  const allProposals = useGovernanceStore((state) => state.proposals);
+  const mockProposals = useMemo(() => {
+    try {
+      return getProposalsForVoting(userAssetIds);
+    } catch (error) {
+      console.error('Error getting proposals for voting:', error);
+      return [];
+    }
+  }, [getProposalsForVoting, userAssetIds, allProposals]); // Include allProposals to make it reactive
   
   // Simulate loading state for proposals
   const { isLoading, data: proposals } = useSimulatedLoading(mockProposals, 1200);
 
-  // Set tab based on current route
+  // Set tab based on current route and sync with backend
   useEffect(() => {
     const path = location.pathname;
     if (path === '/governance/active') {
@@ -233,6 +251,7 @@ const Governance: React.FC = () => {
     } else {
       setSelectedTab('active'); // default
     }
+    
   }, [location.pathname]);
 
   // Calculate proposal type counts dynamically

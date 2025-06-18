@@ -2,6 +2,7 @@ import React from 'react';
 import { Rocket, Clock, Target, Users, ArrowRight, Calendar, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { formatCurrency, formatTimeAgo } from '../../utils/format';
+import { Card, StatusBadge } from '../UI';
 
 interface LaunchpadWidgetProps {
   size: 'small' | 'medium' | 'large' | 'full';
@@ -122,7 +123,7 @@ const LaunchpadWidget: React.FC<LaunchpadWidgetProps> = ({ size, isEditMode = fa
               <div 
                 key={index} 
                 className="p-2 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors cursor-pointer"
-                onClick={() => navigate(`/launchpad/proposal/${index + 1}`)}
+                onClick={() => navigate(`/marketplace/assets/${index + 1}`)}
               >
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-sm font-medium text-gray-900 dark:text-white truncate flex-1 pr-2">
@@ -214,7 +215,7 @@ const LaunchpadWidget: React.FC<LaunchpadWidgetProps> = ({ size, isEditMode = fa
             <div 
               key={index} 
               className="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors cursor-pointer"
-              onClick={() => navigate(`/launchpad/proposal/${index + 1}`)}
+              onClick={() => navigate(`/marketplace/assets/${index + 1}`)}
             >
               <div className="flex items-center justify-between mb-2">
                 <h5 className="font-medium text-gray-900 dark:text-white">{proposal.name}</h5>

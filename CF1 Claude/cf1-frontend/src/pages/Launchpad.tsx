@@ -20,7 +20,7 @@ interface ProposalCardProps {
   status: 'active' | 'funded' | 'upcoming';
 }
 
-const ProposalCard: React.FC<ProposalCardProps> = ({
+const ProposalCard: React.FC<ProposalCardProps & { isUserSubmission?: boolean }> = ({
   id,
   title,
   description,
@@ -33,7 +33,8 @@ const ProposalCard: React.FC<ProposalCardProps> = ({
   daysLeft,
   expectedAPY,
   minimumInvestment,
-  status
+  status,
+  isUserSubmission = false
 }) => {
   const navigate = useNavigate();
   const getStatusBadge = () => {
@@ -47,10 +48,33 @@ const ProposalCard: React.FC<ProposalCardProps> = ({
     }
   };
 
+  // Route to appropriate detail page based on proposal type
+  const handleCardClick = () => {
+    if (isUserSubmission) {
+      navigate(`/launchpad/proposal/${id}`);
+    } else {
+      navigate(`/marketplace/assets/${id}`);
+    }
+  };
+
+  const handleViewDetailsClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    handleCardClick();
+  };
+
+  const handleInvestClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isUserSubmission) {
+      navigate(`/launchpad/proposal/${id}?invest=true`);
+    } else {
+      navigate(`/marketplace/assets/${id}?invest=true`);
+    }
+  };
+
   return (
     <div 
       className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm hover:shadow-md transition-shadow p-6 cursor-pointer"
-      onClick={() => navigate(`/launchpad/proposal/${id}`)}
+      onClick={handleCardClick}
     >
       <div className="aspect-video bg-gray-100 dark:bg-gray-700 rounded-lg mb-4 overflow-hidden">
         <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/20 dark:to-blue-800/20 flex items-center justify-center relative">
@@ -106,7 +130,7 @@ const ProposalCard: React.FC<ProposalCardProps> = ({
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
             <span className="text-gray-600 dark:text-gray-400">Raised: {raisedAmount}</span>
-            <span className="font-medium">{raisedPercentage}%</span>
+            <span className="font-medium text-gray-900 dark:text-white">{raisedPercentage}%</span>
           </div>
           <div className="w-full bg-secondary-200 rounded-full h-2">
             <div 
@@ -137,20 +161,14 @@ const ProposalCard: React.FC<ProposalCardProps> = ({
           <div className="flex space-x-2">
             <button 
               className="flex-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg py-2 text-sm font-medium transition-colors" 
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate(`/launchpad/proposal/${id}`);
-              }}
+              onClick={handleViewDetailsClick}
             >
               View Details
             </button>
             <button 
               className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg py-2 text-sm font-medium transition-colors" 
               disabled={status !== 'active'}
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate(`/launchpad/proposal/${id}?invest=true`);
-              }}
+              onClick={handleInvestClick}
             >
               {status === 'active' ? 'Invest' : status === 'funded' ? 'Funded' : 'Coming Soon'}
             </button>
@@ -162,7 +180,7 @@ const ProposalCard: React.FC<ProposalCardProps> = ({
 };
 
 // Convert approved submissions to proposal format - moved outside component
-const convertSubmissionToProposal = (submission: any): ProposalCardProps => {
+const convertSubmissionToProposal = (submission: any): ProposalCardProps & { isUserSubmission: boolean } => {
     try {
       // Calculate days left based on funding deadline
       let daysLeft = 30; // default
@@ -187,12 +205,25 @@ const convertSubmissionToProposal = (submission: any): ProposalCardProps => {
         }
       }
       
-      // Generate consistent funding progress based on proposal ID
+      // Use real funding status if available, otherwise generate demo data
       const targetAmountNum = parseFloat(submission.targetAmount?.replace(/[^\d.]/g, '') || '0') || 0;
-      const seed = submission.id?.split('').reduce((a, b) => a + b.charCodeAt(0), 0) || 1000;
-      const raisedPercentage = (seed % 70) + 15; // 15-85% funded, consistent per proposal
-      const raisedAmount = Math.floor((targetAmountNum * raisedPercentage) / 100);
-      const backers = Math.floor(raisedPercentage * 2.2) + ((seed % 40) + 20); // Realistic backer count
+      
+      let raisedPercentage, raisedAmount, backers, proposalStatus;
+      
+      if (submission.fundingStatus) {
+        // Use real funding data
+        raisedPercentage = submission.fundingStatus.raisedPercentage;
+        raisedAmount = submission.fundingStatus.raisedAmount;
+        backers = submission.fundingStatus.investorCount;
+        proposalStatus = submission.fundingStatus.status;
+      } else {
+        // Generate consistent demo funding progress based on proposal ID (for new submissions)
+        const seed = submission.id?.split('').reduce((a, b) => a + b.charCodeAt(0), 0) || 1000;
+        raisedPercentage = (seed % 70) + 15; // 15-85% funded, consistent per proposal
+        raisedAmount = Math.floor((targetAmountNum * raisedPercentage) / 100);
+        backers = Math.floor(raisedPercentage * 2.2) + ((seed % 40) + 20); // Realistic backer count
+        proposalStatus = 'active';
+      }
       
       return {
         id: submission.id || 'unknown',
@@ -207,7 +238,8 @@ const convertSubmissionToProposal = (submission: any): ProposalCardProps => {
         daysLeft,
         expectedAPY: `${submission.expectedAPY || '0'}%`,
         minimumInvestment: `$${parseFloat(submission.minimumInvestment || '0').toLocaleString()}`,
-        status: 'active' as const
+        status: proposalStatus as 'active' | 'funded' | 'upcoming',
+        isUserSubmission: true
       };
     } catch (error) {
       console.error('Error converting submission to proposal:', error, submission);
@@ -225,7 +257,8 @@ const convertSubmissionToProposal = (submission: any): ProposalCardProps => {
         daysLeft: 0,
         expectedAPY: '0%',
         minimumInvestment: '$0',
-        status: 'active' as const
+        status: 'active' as 'active' | 'funded' | 'upcoming',
+        isUserSubmission: true
       };
     }
 };
@@ -237,15 +270,34 @@ const Launchpad: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   
   // Get approved submissions from the store
-  const { getSubmissionsByStatus } = useSubmissionStore();
-  const approvedSubmissions = getSubmissionsByStatus('approved');
+  const submissions = useSubmissionStore((state) => state.submissions || []);
+  const approvedSubmissions = submissions.filter(s => s.status === 'approved');
+  
+  // Early return if store is not ready
+  if (!submissions) {
+    console.log('⏳ Waiting for submission store to initialize...');
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Loading proposals...</p>
+        </div>
+      </div>
+    );
+  }
   
   // Debug logging
   console.log('🔍 Debug - All approved submissions:', approvedSubmissions);
   console.log('🔍 Debug - Number of approved submissions:', approvedSubmissions.length);
+  console.log('🔍 Debug - Submissions with funding status:', approvedSubmissions.map(s => ({ 
+    id: s.id, 
+    name: s.assetName, 
+    hasFundingStatus: !!s.fundingStatus,
+    fundingStatus: s.fundingStatus 
+  })));
 
   // Hardcoded proposals for demo purposes
-  const hardcodedProposals: ProposalCardProps[] = [
+  const hardcodedProposals: (ProposalCardProps & { isUserSubmission: boolean })[] = [
     {
       id: '1',
       title: 'Downtown Seattle Office Building',
@@ -260,7 +312,8 @@ const Launchpad: React.FC = () => {
       expectedAPY: '9.2%',
       minimumInvestment: '$500',
       imageUrl: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&h=400&fit=crop',
-      status: 'active'
+      status: 'active',
+      isUserSubmission: false
     },
     {
       id: '2',
@@ -276,7 +329,8 @@ const Launchpad: React.FC = () => {
       expectedAPY: '11.5%',
       minimumInvestment: '$1,000',
       imageUrl: 'https://images.unsplash.com/photo-1547595628-c61a29f496f0?w=600&h=400&fit=crop',
-      status: 'active'
+      status: 'active',
+      isUserSubmission: false
     },
     {
       id: '3',
@@ -292,7 +346,8 @@ const Launchpad: React.FC = () => {
       expectedAPY: '8.8%',
       minimumInvestment: '$2,500',
       imageUrl: 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=600&h=400&fit=crop',
-      status: 'active'
+      status: 'active',
+      isUserSubmission: false
     },
     {
       id: '4',
@@ -308,7 +363,8 @@ const Launchpad: React.FC = () => {
       expectedAPY: '10.3%',
       minimumInvestment: '$1,500',
       imageUrl: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=600&h=400&fit=crop',
-      status: 'funded'
+      status: 'funded',
+      isUserSubmission: false
     },
     {
       id: '5',
@@ -324,7 +380,8 @@ const Launchpad: React.FC = () => {
       expectedAPY: '7.5%',
       minimumInvestment: '$2,000',
       imageUrl: 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=600&h=400&fit=crop',
-      status: 'upcoming'
+      status: 'upcoming',
+      isUserSubmission: false
     },
     {
       id: '6',
@@ -340,28 +397,36 @@ const Launchpad: React.FC = () => {
       expectedAPY: '13.1%',
       minimumInvestment: '$5,000',
       imageUrl: 'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=600&h=400&fit=crop',
-      status: 'active'
+      status: 'active',
+      isUserSubmission: false
     }
   ];
 
   // Combine hardcoded proposals with approved submissions
-  let userProposals: ProposalCardProps[] = [];
+  let userProposals: (ProposalCardProps & { isUserSubmission: boolean })[] = [];
   try {
-    userProposals = approvedSubmissions.map(convertSubmissionToProposal);
-    console.log('🔍 Debug - Converted user proposals:', userProposals);
-    console.log('🔍 Debug - Number of converted proposals:', userProposals.length);
+    if (Array.isArray(approvedSubmissions)) {
+      userProposals = approvedSubmissions.map(convertSubmissionToProposal);
+      console.log('🔍 Debug - Converted user proposals:', userProposals);
+      console.log('🔍 Debug - Number of converted proposals:', userProposals.length);
+      console.log('🔍 Debug - User proposal statuses:', userProposals.map(p => ({ id: p.id, status: p.status, funded: p.raisedPercentage })));
+    } else {
+      console.warn('⚠️ approvedSubmissions is not an array:', approvedSubmissions);
+    }
   } catch (error) {
     console.error('❌ Error converting user proposals:', error);
+    // Set to empty array to prevent crashes
+    userProposals = [];
   }
   
-  const proposals: ProposalCardProps[] = [...userProposals, ...hardcodedProposals];
-  console.log('🔍 Debug - Total proposals (user + hardcoded):', proposals.length);
-  console.log('🔍 Debug - User proposals count:', userProposals.length);
-  console.log('🔍 Debug - Hardcoded proposals count:', hardcodedProposals.length);
+  const proposals: (ProposalCardProps & { isUserSubmission: boolean })[] = [...userProposals, ...hardcodedProposals];
+  console.log('🔍 Debug - Total proposals (user + hardcoded):', proposals?.length || 0);
+  console.log('🔍 Debug - User proposals count:', userProposals?.length || 0);
+  console.log('🔍 Debug - Hardcoded proposals count:', hardcodedProposals?.length || 0);
 
   // Static categories for now to avoid dependency issues
   const categories = [
-    { id: 'all', name: 'All Categories', count: proposals.length },
+    { id: 'all', name: 'All Categories', count: proposals?.length || 0 },
     { id: 'real-estate', name: 'Real Estate', count: 8 },
     { id: 'precious-metals', name: 'Precious Metals', count: 3 },
     { id: 'art', name: 'Art & Collectibles', count: 4 },
@@ -369,7 +434,7 @@ const Launchpad: React.FC = () => {
     { id: 'commodities', name: 'Commodities', count: 1 }
   ];
 
-  const filteredProposals = proposals.filter(proposal => {
+  const filteredProposals = (proposals || []).filter(proposal => {
     const matchesTab = proposal.status === selectedTab;
     const matchesCategory = selectedCategory === 'all' || 
       proposal.category.toLowerCase().includes(selectedCategory.replace('-', ' '));
@@ -383,9 +448,9 @@ const Launchpad: React.FC = () => {
   });
 
   const tabCounts = {
-    active: proposals.filter(p => p.status === 'active').length,
-    funded: proposals.filter(p => p.status === 'funded').length,
-    upcoming: proposals.filter(p => p.status === 'upcoming').length
+    active: (proposals || []).filter(p => p.status === 'active').length,
+    funded: (proposals || []).filter(p => p.status === 'funded').length,
+    upcoming: (proposals || []).filter(p => p.status === 'upcoming').length
   };
 
   try {
