@@ -27,7 +27,6 @@ export const DemoModeIndicator: React.FC = () => {
   // Check if user can control demo mode
   const canControl = isSystemAdmin && (
     adminRole === 'super_admin' || 
-    adminRole === 'platform_admin' || 
     adminRole === 'creator' ||
     adminRole === 'owner'
   );

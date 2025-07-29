@@ -9,7 +9,7 @@ import {
   User,
   RefreshCw
 } from 'lucide-react';
-import { useFeatureToggleStore } from '../../store/featureToggleStore';
+import { useFeatureToggleStore, FeatureToggle } from '../../store/featureToggleStore';
 import { useAdminAuthContext } from '../../hooks/useAdminAuth';
 import { useNotifications } from '../../hooks/useNotifications';
 import { formatTimeAgo } from '../../utils/format';

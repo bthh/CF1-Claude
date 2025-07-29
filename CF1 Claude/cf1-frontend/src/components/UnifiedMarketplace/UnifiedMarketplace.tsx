@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { usePlatformConfigStore } from '../../store/platformConfigStore';
-import { useAdminAuth } from '../../hooks/useAdminAuth';
+import { useAdminAuthContext } from '../../hooks/useAdminAuth';
 import { SecondaryMarketplace } from '../SecondaryMarket/SecondaryMarketplace';
 import { Settings, ArrowLeftRight, TrendingUp, ToggleLeft } from 'lucide-react';
 
@@ -33,11 +33,11 @@ const PrimaryMarketplace: React.FC = () => {
 
 export const UnifiedMarketplace: React.FC<UnifiedMarketplaceProps> = ({ className = '' }) => {
   const { config, updateTradingMode } = usePlatformConfigStore();
-  const { currentAdmin } = useAdminAuth();
+  const { currentAdmin } = useAdminAuthContext();
   const [showModeToggle, setShowModeToggle] = useState(false);
   
-  // Only show admin controls to super admins or platform admins
-  const canManageMode = currentAdmin && (currentAdmin.role === 'super_admin' || currentAdmin.role === 'platform_admin');
+  // Only show admin controls to super admins and owners
+  const canManageMode = currentAdmin && (currentAdmin.role === 'super_admin' || currentAdmin.role === 'owner');
 
   const handleModeChange = (mode: 'primary' | 'secondary') => {
     updateTradingMode(mode);

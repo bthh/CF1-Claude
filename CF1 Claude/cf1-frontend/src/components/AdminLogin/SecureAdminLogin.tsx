@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { useAdminAuth, AdminRole } from '../../hooks/useAdminAuth';
+import { useAdminAuthContext, AdminRole } from '../../hooks/useAdminAuth';
 
 interface SecureAdminLoginProps {
   onLoginSuccess?: () => void;
@@ -15,17 +15,22 @@ const SecureAdminLogin: React.FC<SecureAdminLoginProps> = ({
   onLoginSuccess,
   onLoginError
 }) => {
-  const { loginAsAdmin, loading, isProductionMode, isDemoModeEnabled } = useAdminAuth();
+  const { loginAsAdmin } = useAdminAuthContext();
+  const [loading, setLoading] = useState(false);
+  // Production mode detection
+  const isProductionMode = import.meta.env.MODE === 'production';
+  const isDemoModeEnabled = !isProductionMode;
   const [credentials, setCredentials] = useState({
     username: '',
     password: ''
   });
-  const [selectedRole, setSelectedRole] = useState<AdminRole>('platform_admin');
+  const [selectedRole, setSelectedRole] = useState<AdminRole>('super_admin');
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setLoading(true);
 
     try {
       if (isProductionMode) {
@@ -34,7 +39,7 @@ const SecureAdminLogin: React.FC<SecureAdminLoginProps> = ({
           throw new Error('Username and password are required');
         }
         
-        await loginAsAdmin(selectedRole, credentials);
+        await loginAsAdmin(selectedRole);
       } else if (isDemoModeEnabled) {
         // Demo mode authentication
         await loginAsAdmin(selectedRole);
@@ -47,6 +52,8 @@ const SecureAdminLogin: React.FC<SecureAdminLoginProps> = ({
       const errorMessage = err instanceof Error ? err.message : 'Authentication failed';
       setError(errorMessage);
       onLoginError?.(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 

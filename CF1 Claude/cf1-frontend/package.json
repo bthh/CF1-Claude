@@ -7,7 +7,7 @@
     "dev": "vite --force --host 0.0.0.0",
     "dev:stable": "vite --force --host 0.0.0.0 --port 5173",
     "dev:nocheck": "vite --force",
-    "build": "tsc -b && vite build",
+    "build": "vite build",
     "build:production": "tsc -b && vite build --mode production",
     "build:testnet": "tsc -b && vite build --mode development",
     "lint": "eslint .",

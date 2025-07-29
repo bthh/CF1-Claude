@@ -48,7 +48,6 @@ export const DemoModeAdminPanel: React.FC<DemoModeAdminPanelProps> = ({ classNam
   // Check if user has demo mode access (any admin level)
   const canAccessDemoMode = isSystemAdmin && (
     adminRole === 'super_admin' || 
-    adminRole === 'platform_admin' || 
     adminRole === 'creator' ||
     adminRole === 'owner'
   );

@@ -137,9 +137,8 @@ export const InvestmentModal: React.FC<InvestmentModalProps> = ({
           type: 'investment',
           assetId: proposal.id,
           assetName: proposal.asset_details?.name || 'Unknown Asset',
-          amount: parseFloat(totalAmount),
+          amount: totalAmount,
           shares: calculatedShares,
-          price: parseFloat(proposal.financial_terms?.token_price || '0') / 1000000, // Convert from micro units
           timestamp: new Date().toISOString(),
           status: 'completed'
         });
