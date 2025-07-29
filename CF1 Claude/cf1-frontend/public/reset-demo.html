@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CF1 Demo Mode Reset Tool</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+        .enabled { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
+        .disabled { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
+        button {
+            background: #dc2626;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 10px 10px 0;
+        }
+        button:hover { background: #b91c1c; }
+        .info { background: #eff6ff; border: 1px solid #bfdbfe; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        pre { background: #f3f4f6; padding: 10px; border-radius: 4px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 CF1 Demo Mode Reset Tool</h1>
+        <p>This tool helps you debug and reset the demo mode state.</p>
+        
+        <h2>Current Demo Mode Status:</h2>
+        <div id="status" class="status">Checking...</div>
+        
+        <h2>Stored Data:</h2>
+        <pre id="stored-data">Loading...</pre>
+        
+        <div class="info">
+            <strong>Expected Behavior:</strong>
+            <ul>
+                <li><strong>Demo Mode OFF:</strong> Marketplace, Launchpad, and Governance should show empty states</li>
+                <li><strong>Demo Mode ON:</strong> All pages should show demo data with scenario badges</li>
+            </ul>
+        </div>
+        
+        <h2>Actions:</h2>
+        <button onclick="forceResetDemo()">🔧 Force Reset Demo Mode OFF</button>
+        <button onclick="checkStatus()">🔍 Refresh Status</button>
+        <button onclick="clearAllStorage()">🗑️ Clear All LocalStorage</button>
+        
+        <div id="console-output"></div>
+        
+        <h2>Instructions:</h2>
+        <ol>
+            <li>Check the current status above</li>
+            <li>If demo mode shows as ENABLED, click "Force Reset Demo Mode OFF"</li>
+            <li>Go back to the main CF1 app and refresh the page</li>
+            <li>Check Marketplace, Launchpad, and Governance pages</li>
+        </ol>
+    </div>
+
+    <script>
+        function log(message) {
+            const output = document.getElementById('console-output');
+            output.innerHTML += '<div style="background: #f3f4f6; padding: 5px; margin: 5px 0; border-radius: 4px; font-family: monospace;">' + message + '</div>';
+        }
+        
+        function checkStatus() {
+            // Check localStorage for demo mode data
+            const demoModeData = localStorage.getItem('cf1-demo-mode');
+            const statusDiv = document.getElementById('status');
+            const dataDiv = document.getElementById('stored-data');
+            
+            log('🔍 Checking demo mode status...');
+            
+            if (demoModeData) {
+                try {
+                    const parsed = JSON.parse(demoModeData);
+                    const isEnabled = parsed.state?.isEnabled || false;
+                    const scenario = parsed.state?.scenario || 'none';
+                    
+                    statusDiv.className = 'status ' + (isEnabled ? 'enabled' : 'disabled');
+                    statusDiv.innerHTML = isEnabled 
+                        ? `❌ DEMO MODE ENABLED (${scenario})` 
+                        : '✅ DEMO MODE DISABLED';
+                    
+                    dataDiv.textContent = JSON.stringify(parsed, null, 2);
+                    
+                    log(`Demo mode isEnabled: ${isEnabled}`);
+                    log(`Demo mode scenario: ${scenario}`);
+                } catch (e) {
+                    statusDiv.className = 'status enabled';
+                    statusDiv.innerHTML = '⚠️ CORRUPTED DEMO MODE DATA';
+                    dataDiv.textContent = 'Error parsing: ' + demoModeData;
+                    log('❌ Error parsing demo mode data: ' + e.message);
+                }
+            } else {
+                statusDiv.className = 'status disabled';
+                statusDiv.innerHTML = '✅ NO DEMO MODE DATA (should be OFF)';
+                dataDiv.textContent = 'No cf1-demo-mode data found in localStorage';
+                log('✅ No demo mode data found - should be OFF by default');
+            }
+        }
+        
+        function forceResetDemo() {
+            log('🔧 Force resetting demo mode...');
+            
+            // Remove the demo mode data
+            localStorage.removeItem('cf1-demo-mode');
+            log('✅ Removed cf1-demo-mode from localStorage');
+            
+            // Set a clean disabled state
+            const cleanState = {
+                state: {
+                    isEnabled: false,
+                    scenario: 'investor_presentation',
+                    sessionId: '',
+                    showRealisticNumbers: true,
+                    showPositivePerformance: true,
+                    hideNegativeData: false,
+                    accelerateTimeframes: false,
+                    showDemoIndicator: true,
+                    enableDemoTutorials: false,
+                    highlightFeatures: false,
+                    allowedAdminUsers: [],
+                    sessionTimeout: 120,
+                    autoProgressSlides: false,
+                    presentationMode: false,
+                    fullScreenMode: false
+                },
+                version: 1
+            };
+            
+            localStorage.setItem('cf1-demo-mode', JSON.stringify(cleanState));
+            log('✅ Set clean demo mode OFF state');
+            
+            checkStatus();
+            log('🎯 Demo mode forcefully reset to OFF. Please refresh the main CF1 app.');
+        }
+        
+        function clearAllStorage() {
+            log('🗑️ Clearing all localStorage...');
+            localStorage.clear();
+            log('✅ All localStorage cleared');
+            checkStatus();
+        }
+        
+        // Check status on page load
+        checkStatus();
+    </script>
+</body>
+</html>

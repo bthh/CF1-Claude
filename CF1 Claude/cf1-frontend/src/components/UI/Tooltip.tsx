@@ -18,7 +18,7 @@ const Tooltip: React.FC<TooltipProps> = ({
   className = ''
 }) => {
   const [isVisible, setIsVisible] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const showTooltip = () => {
     if (disabled) return;

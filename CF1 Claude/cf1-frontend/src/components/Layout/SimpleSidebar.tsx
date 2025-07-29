@@ -94,16 +94,6 @@ const SimpleSidebar: React.FC<SidebarProps> = ({ type }) => {
         </h3>
         <nav className="space-y-1">
           <Link 
-            to="/trading/RWA-1" 
-            className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-              location.pathname.startsWith('/trading') 
-                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' 
-                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
-            }`}
-          >
-            Trading
-          </Link>
-          <Link 
             to="/secondary-trading" 
             className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
               isActive('/secondary-trading') 
@@ -113,42 +103,6 @@ const SimpleSidebar: React.FC<SidebarProps> = ({ type }) => {
           >
             Secondary Market
           </Link>
-          {isFeatureEnabled('liquidity_pools') && (
-            <Link 
-              to="/liquidity" 
-              className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                isActive('/liquidity') 
-                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' 
-                  : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
-              }`}
-            >
-              Liquidity Pools
-            </Link>
-          )}
-          {isFeatureEnabled('staking') && (
-            <Link 
-              to="/staking" 
-              className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                isActive('/staking') 
-                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' 
-                  : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
-              }`}
-            >
-              Staking
-            </Link>
-          )}
-          {isFeatureEnabled('lending') && (
-            <Link 
-              to="/lending" 
-              className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                isActive('/lending') 
-                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' 
-                  : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
-              }`}
-            >
-              Lending
-            </Link>
-          )}
         </nav>
       </div>
     </div>
@@ -250,7 +204,7 @@ const SimpleSidebar: React.FC<SidebarProps> = ({ type }) => {
     <div className="space-y-6">
       {/* Main Navigation */}
       <div>
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Governance</h2>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Voting</h2>
         <nav className="space-y-1">
           <Link 
             to="/governance" 

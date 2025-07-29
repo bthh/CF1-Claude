@@ -7,6 +7,8 @@ import { AIAnalysisTab } from '../components/AIAnalysis/AIAnalysisTab';
 import { useSessionStore } from '../store/sessionStore';
 import { useNotifications } from '../hooks/useNotifications';
 import { useSubmissionStore } from '../store/submissionStore';
+import { usePortfolioStore } from '../store/portfolioStore';
+import { useWalletStore } from '../store/walletStore';
 
 const ProposalDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -17,6 +19,9 @@ const ProposalDetail: React.FC = () => {
   const { success, error } = useNotifications();
   const [isInstantFunding, setIsInstantFunding] = useState(false);
   const { getSubmissionById, updateFundingStatus } = useSubmissionStore();
+  const { addTransaction } = usePortfolioStore();
+  const { connection } = useWalletStore();
+  const address = connection?.address;
 
   // Track proposal view
   useEffect(() => {
@@ -26,8 +31,44 @@ const ProposalDetail: React.FC = () => {
     }
   }, [id, trackProposal]);
 
+  // Fetch proposal data from backend (if it exists) on component mount
+  useEffect(() => {
+    const fetchProposalFromBackend = async () => {
+      if (!id) return;
+      
+      try {
+        const response = await fetch(`http://localhost:3001/api/v1/proposals/${id}`);
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success && result.data) {
+            // Backend has this proposal, use backend data
+            console.log('📊 Loading proposal from backend:', result.data);
+            setProposalData({
+              id: result.data.id,
+              asset_details: result.data.asset_details,
+              financial_terms: result.data.financial_terms,
+              funding_status: {
+                raised_amount: result.data.funding_status.total_raised?.toString() || '0',
+                investor_count: result.data.funding_status.total_investors || 0,
+                is_funded: result.data.funding_status.is_funded || false,
+                tokens_minted: false,
+              },
+              status: result.data.status,
+            });
+          }
+        } else {
+          console.log('📝 Proposal not found in backend, using local submission data');
+        }
+      } catch (error) {
+        console.log('📝 Backend not available, using local submission data');
+      }
+    };
+
+    fetchProposalFromBackend();
+  }, [id]);
+
   // Check if user has admin privileges for instant funding
-  const canInstantFund = selectedRole === 'super_admin' || selectedRole === 'owner' || selectedRole === 'platform_admin';
+  const canInstantFund = selectedRole === 'super_admin' || selectedRole === 'owner';
 
   // Handle instant funding (Admin only)
   const handleInstantFund = async () => {
@@ -51,8 +92,7 @@ const ProposalDetail: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // TODO: Add authorization header when auth is implemented
-          // 'Authorization': `Bearer ${authToken}`
+          'x-api-key': import.meta.env.VITE_ADMIN_API_KEY || 'cf1-dev-admin-api-key-secure-64-chars'
         },
         body: JSON.stringify(requestBody)
       });
@@ -60,6 +100,11 @@ const ProposalDetail: React.FC = () => {
       const result = await response.json();
       
       if (!response.ok) {
+        // Handle specific error cases
+        if (result.error && result.error.includes('Funded state')) {
+          error('Already Funded', 'This proposal has already been funded and cannot be funded again.');
+          return;
+        }
         throw new Error(result.error || 'Failed to fund proposal');
       }
       
@@ -101,13 +146,67 @@ const ProposalDetail: React.FC = () => {
         }, 100);
       }
 
+      // Add the funded asset to the current user's portfolio
+      console.log('🔍 Debug - Wallet connection:', connection);
+      console.log('🔍 Debug - Wallet address:', address);
+      console.log('🔍 Debug - Proposal ID:', id);
+      console.log('🔍 Debug - Address exists:', !!address);
+      console.log('🔍 Debug - Connection exists:', !!connection);
+      
+      // Use actual address if connected, otherwise use a default admin address for instant funding
+      const effectiveAddress = address || 'neutron1admin_instant_fund_address';
+      
+      if (effectiveAddress && id) {
+        // Convert backend amounts to proper numbers (handle micro units)
+        const targetAmount = parseFloat(proposalData.financial_terms?.target_amount?.toString() || '0');
+        const backendAmount = result.data?.fundingStatus?.total_raised || targetAmount;
+        
+        // Convert micro units to standard dollars if needed
+        const investmentAmount = backendAmount > 1000000 ? backendAmount / 1000000 : backendAmount;
+        
+        const transactionData = {
+          type: 'investment' as const,
+          assetId: id,
+          assetName: proposalData.asset_details.name,
+          amount: investmentAmount,
+          shares: Math.floor(investmentAmount / 1000), // $1000 per share
+          timestamp: new Date().toISOString(),
+          status: 'completed' as const
+        };
+        
+        console.log('🔍 Debug - Transaction data to add:', transactionData);
+        console.log('🔍 Debug - Investment amount (converted):', investmentAmount);
+        
+        addTransaction(transactionData);
+        
+        console.log(`📈 Added funded asset to portfolio for user ${effectiveAddress}`);
+        console.log('📊 Portfolio transaction data added:', transactionData);
+        
+        // Verify the transaction was added and processed correctly
+        setTimeout(() => {
+          const portfolioState = usePortfolioStore.getState();
+          console.log('🔍 Debug - Portfolio state after adding:', portfolioState.transactions);
+          
+          // Check if transaction is visible in development assets
+          if (useDataModeStore.getState().currentMode === 'development') {
+            console.log('🔍 Debug - Checking development assets...');
+            // Trigger a re-read of development assets to verify integration
+            const portfolioData = require('../services/portfolioDataService');
+            const devAssets = portfolioData.getDevelopmentAssets?.();
+            console.log('🔍 Debug - Development assets after instant fund:', devAssets);
+          }
+        }, 500);
+      } else {
+        console.warn('⚠️ Debug - Cannot add to portfolio. Address:', effectiveAddress, 'ID:', id);
+      }
+
       success(
         'Proposal Instantly Funded!',
         `${proposalData.asset_details.name} has been fully funded and is ready for finalization.`,
         { 
           duration: 5000,
-          actionLabel: 'View Details',
-          onAction: () => window.location.reload()
+          actionLabel: 'View Portfolio',
+          onAction: () => navigate('/portfolio')
         }
       );
     } catch (err) {

@@ -35,7 +35,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { simulateChange } = useRealTimeUpdates();
   
   // Initialize accessibility features
-  const { announce } = useAccessibility();
+  const accessibility = useAccessibility();
   
   // Setup keyboard shortcuts
   const commonShortcuts = useCommonShortcuts();
@@ -57,7 +57,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   
   // Development keyboard shortcut for testing real-time updates
   useEffect(() => {
-    if (process.env.NODE_ENV === 'development' && simulateChange) {
+    if (import.meta.env.MODE === 'development' && simulateChange) {
       const handleKeyPress = (event: KeyboardEvent) => {
         // Ctrl + Shift + T to trigger a test notification
         if (event.ctrlKey && event.shiftKey && event.key === 'T') {
@@ -83,8 +83,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       return 'governance';
     } else if (location.pathname.startsWith('/profile')) {
       return 'profile';
-    } else if (location.pathname.startsWith('/trading') || location.pathname.startsWith('/liquidity') || location.pathname.startsWith('/staking') || location.pathname.startsWith('/lending')) {
-      return 'marketplace'; // Use marketplace sidebar for DeFi features since it includes trading
+    } else if (location.pathname.startsWith('/secondary-trading')) {
+      return 'marketplace'; // Use marketplace sidebar for secondary trading
     } else {
       return 'dashboard';
     }
@@ -92,6 +92,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   return (
     <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
+      {/* Skip Link for Accessibility */}
+      <a 
+        href="#main-content" 
+        className="skip-link"
+        onFocus={(e) => e.target.scrollIntoView()}
+      >
+        Skip to main content
+      </a>
       <Header />
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar - Hidden on mobile, shown on desktop */}

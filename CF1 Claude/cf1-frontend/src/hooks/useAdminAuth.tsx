@@ -1,8 +1,61 @@
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { useCosmJS } from './useCosmJS';
 import { useSessionStore } from '../store/sessionStore';
+import { SecureSessionStorage, SecurityUtils } from '../utils/secureStorage';
 
-export type AdminRole = 'creator' | 'super_admin' | 'platform_admin' | 'owner' | null;
+// Production security configuration
+const IS_PRODUCTION = import.meta.env.MODE === 'production';
+const BACKEND_URL = process.env.VITE_BACKEND_URL || 'http://localhost:3001';
+const DEMO_MODE_ENABLED = process.env.VITE_DEMO_MODE === 'true' && !IS_PRODUCTION;
+
+// Secure session storage functions
+const storeSecureSession = async (adminUser: AdminUser, token: string): Promise<void> => {
+  try {
+    SecureSessionStorage.setAdminSession(adminUser, token);
+  } catch (error) {
+    console.error('Failed to store secure session:', error);
+    throw new Error('Session storage failed');
+  }
+};
+
+// Get stored token
+const getStoredToken = async (): Promise<string | null> => {
+  try {
+    return SecureSessionStorage.getAdminToken();
+  } catch (error) {
+    console.error('Failed to retrieve stored token:', error);
+    return null;
+  }
+};
+
+// Get stored session
+const getStoredSession = async (): Promise<any | null> => {
+  try {
+    return SecureSessionStorage.getAdminSession();
+  } catch (error) {
+    console.error('Failed to retrieve stored session:', error);
+    return null;
+  }
+};
+
+// Clear secure session
+const clearSecureSession = (): void => {
+  try {
+    SecureSessionStorage.clearAdminSession();
+  } catch (error) {
+    console.error('Failed to clear secure session:', error);
+  }
+};
+
+// Validate session security
+const isSessionValid = (sessionData: any): boolean => {
+  if (!sessionData || !SecurityUtils.validateDataIntegrity(sessionData)) {
+    return false;
+  }
+  return true;
+};
+
+export type AdminRole = 'creator' | 'super_admin' | 'owner' | null;
 
 export interface AdminUser {
   address: string;
@@ -53,41 +106,36 @@ export const useAdminAuth = (): AdminAuthContextType => {
       'manage_distribution',
       'access_creator_admin'
     ],
-    platform_admin: [
-      'manage_users',
-      'view_system_logs',
-      'manage_compliance',
-      'view_analytics',
-      'moderate_content',
-      'manage_support_tickets',
-      'view_audit_logs',
-      'access_platform_admin',
-      'access_creator_admin',  // Bug fix: Platform Admin can access Creator Admin
-      'manage_user_roles',
-      'view_financial_reports',
-      'manage_launchpad_proposals',
-      'manage_governance_proposals'
-    ],
     super_admin: [
+      // Creator permissions
       'view_proposals',
       'edit_proposals',
       'delete_proposals',
       'manage_tokens',
       'view_analytics',
       'manage_distribution',
-      'manage_platform_config',
+      'access_creator_admin',
+      
+      // Platform admin permissions (formerly platform_admin)
       'manage_users',
       'view_system_logs',
       'manage_compliance',
+      'moderate_content',
+      'manage_support_tickets',
+      'view_audit_logs',
+      'access_platform_admin',
+      'manage_user_roles',
+      'view_financial_reports',
+      'manage_launchpad_proposals',
+      'manage_governance_proposals',
+      
+      // Super admin exclusive permissions
+      'manage_platform_config',
       'emergency_controls',
       'financial_reports',
-      'access_creator_admin',
-      'access_platform_admin',
       'manage_feature_toggles',
       'manage_admin_users',
-      'system_maintenance',
-      'manage_launchpad_proposals',
-      'manage_governance_proposals'
+      'system_maintenance'
     ],
     owner: [
       'view_proposals',
@@ -145,10 +193,11 @@ export const useAdminAuth = (): AdminAuthContextType => {
     return currentAdmin.permissions.includes(permission);
   };
 
-  const loginAsAdmin = async (role: AdminRole): Promise<void> => {
+  const loginAsAdmin = async (role: AdminRole, credentials?: { username: string; password: string }): Promise<void> => {
     console.log('loginAsAdmin - isConnected:', isConnected);
     console.log('loginAsAdmin - address:', address);
     console.log('loginAsAdmin - role:', role);
+    console.log('loginAsAdmin - production mode:', IS_PRODUCTION);
     
     if (!isConnected || !address) {
       throw new Error('Wallet must be connected');
@@ -156,35 +205,102 @@ export const useAdminAuth = (): AdminAuthContextType => {
 
     setLoading(true);
     try {
-      // Simulate API call to verify admin privileges
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (IS_PRODUCTION) {
+        // Production authentication - require proper JWT authentication
+        if (!credentials) {
+          throw new Error('Admin credentials required in production');
+        }
+        
+        const response = await fetch(`${BACKEND_URL}/api/admin/login`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            username: credentials.username,
+            password: credentials.password,
+            walletAddress: address,
+            requestedRole: role
+          })
+        });
+        
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Authentication failed');
+        }
+        
+        const authData = await response.json();
+        const adminUser: AdminUser = {
+          address,
+          role,
+          permissions: authData.user.permissions,
+          name: authData.user.name || `${role} Admin`,
+          email: authData.user.email,
+          createdAt: authData.user.createdAt || new Date().toISOString(),
+          lastActive: new Date().toISOString(),
+          isActive: true
+        };
+        
+        setCurrentAdmin(adminUser);
+        
+        // Store encrypted session data
+        await storeSecureSession(adminUser, authData.token);
+        
+      } else if (DEMO_MODE_ENABLED) {
+        // Demo mode - only in development
+        console.warn('⚠️  Demo mode authentication - DEVELOPMENT ONLY');
+        
+        // Simulate API call
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        const permissions = rolePermissions[role!] || [];
+        
+        const adminUser: AdminUser = {
+          address,
+          role,
+          permissions,
+          name: role === 'creator' ? 'Demo Creator' : role === 'super_admin' ? 'Demo Super Admin' : 'Demo Platform Admin',
+          email: `${role}@demo.com`,
+          createdAt: new Date().toISOString(),
+          lastActive: new Date().toISOString(),
+          isActive: true
+        };
 
-      // In demo mode, allow any connected wallet to assume admin role
-      const permissions = rolePermissions[role!] || [];
-      
-      const adminUser: AdminUser = {
-        address,
-        role,
-        permissions,
-        name: role === 'creator' ? 'Demo Creator' : role === 'super_admin' ? 'Demo Super Admin' : 'Demo Platform Admin',
-        email: `${role}@demo.com`,
-        createdAt: new Date().toISOString(),
-        lastActive: new Date().toISOString(),
-        isActive: true
-      };
-
-      setCurrentAdmin(adminUser);
-      
-      // Store in localStorage for persistence
-      localStorage.setItem('cf1_admin_session', JSON.stringify(adminUser));
+        setCurrentAdmin(adminUser);
+        
+        // Store in secure storage (development only)
+        await storeSecureSession(adminUser, SecurityUtils.generateSecureId());
+        
+      } else {
+        // Neither production nor demo mode enabled
+        throw new Error('Authentication not available. Please configure proper authentication.');
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const logoutAdmin = (): void => {
-    setCurrentAdmin(null);
-    localStorage.removeItem('cf1_admin_session');
+  const logoutAdmin = async (): Promise<void> => {
+    try {
+      if (IS_PRODUCTION && currentAdmin) {
+        // Notify backend of logout
+        const token = await getStoredToken();
+        if (token) {
+          await fetch(`${BACKEND_URL}/api/admin/logout`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      setCurrentAdmin(null);
+      clearSecureSession();
+    }
   };
 
   const refreshAdminData = async (): Promise<void> => {
@@ -201,7 +317,7 @@ export const useAdminAuth = (): AdminAuthContextType => {
       };
       
       setCurrentAdmin(updatedAdmin);
-      localStorage.setItem('cf1_admin_session', JSON.stringify(updatedAdmin));
+      await storeSecureSession(updatedAdmin, await getStoredToken() || SecurityUtils.generateSecureId());
     } finally {
       setLoading(false);
     }
@@ -209,57 +325,107 @@ export const useAdminAuth = (): AdminAuthContextType => {
 
   // Auto-set admin based on session role
   useEffect(() => {
-    if (isConnected && address && selectedRole && isRoleSelected) {
-      // Map session roles to admin roles
-      const adminRoleMapping: Record<string, AdminRole> = {
-        'creator': 'creator',
-        'platform_admin': 'platform_admin', 
-        'super_admin': 'super_admin',
-        'owner': 'owner' // Owner gets full ownership privileges
-      };
-      
-      const mappedRole = adminRoleMapping[selectedRole];
-      if (mappedRole) {
-        const adminUser: AdminUser = {
-          address,
-          role: mappedRole,
-          permissions: rolePermissions[mappedRole] || [],
-          name: `Test ${selectedRole.replace('_', ' ')}`,
-          email: `${selectedRole}@test.com`,
-          createdAt: new Date().toISOString(),
-          lastActive: new Date().toISOString(),
-          isActive: true
+    const handleRoleChange = async () => {
+      if (isConnected && address && selectedRole && isRoleSelected) {
+        // Map session roles to admin roles
+        const adminRoleMapping: Record<string, AdminRole> = {
+          'creator': 'creator',
+          'super_admin': 'super_admin',
+          'owner': 'owner' // Owner gets full ownership privileges
         };
-        setCurrentAdmin(adminUser);
-        localStorage.setItem('cf1_admin_session', JSON.stringify(adminUser));
-      } else if (selectedRole === 'investor') {
-        // Investor role should clear admin status
+        
+        const mappedRole = adminRoleMapping[selectedRole];
+        if (mappedRole) {
+          const adminUser: AdminUser = {
+            address,
+            role: mappedRole,
+            permissions: rolePermissions[mappedRole] || [],
+            name: `Test ${selectedRole.replace('_', ' ')}`,
+            email: `${selectedRole}@test.com`,
+            createdAt: new Date().toISOString(),
+            lastActive: new Date().toISOString(),
+            isActive: true
+          };
+          setCurrentAdmin(adminUser);
+          await storeSecureSession(adminUser, SecurityUtils.generateSecureId());
+        } else if (selectedRole === 'investor') {
+          // Investor role should clear admin status
+          setCurrentAdmin(null);
+          clearSecureSession();
+        }
+      } else if (!isRoleSelected || !selectedRole) {
+        // No role selected, clear admin status
         setCurrentAdmin(null);
-        localStorage.removeItem('cf1_admin_session');
+        clearSecureSession();
       }
-    } else if (!isRoleSelected || !selectedRole) {
-      // No role selected, clear admin status
-      setCurrentAdmin(null);
-      localStorage.removeItem('cf1_admin_session');
-    }
+    };
+    
+    handleRoleChange();
   }, [address, isConnected, selectedRole, isRoleSelected]);
 
-  // Load admin session on mount (legacy support)
+  // Load admin session on mount with secure production handling
   useEffect(() => {
-    const savedSession = localStorage.getItem('cf1_admin_session');
-    if (savedSession && isConnected && !isRoleSelected) {
-      try {
-        const adminData = JSON.parse(savedSession);
-        if (adminData.address === address) {
-          setCurrentAdmin(adminData);
-        } else {
-          // Address mismatch, clear session
-          localStorage.removeItem('cf1_admin_session');
+    const loadSession = async () => {
+      if (!isConnected || isRoleSelected) return;
+      
+      if (IS_PRODUCTION) {
+        // Production - verify JWT token
+        const token = await getStoredToken();
+        if (token) {
+          try {
+            const response = await fetch(`${BACKEND_URL}/api/admin/verify`, {
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            });
+            
+            if (response.ok) {
+              const authData = await response.json();
+              if (authData.user.address === address) {
+                const adminUser: AdminUser = {
+                  address: authData.user.address,
+                  role: authData.user.role,
+                  permissions: authData.user.permissions,
+                  name: authData.user.name,
+                  email: authData.user.email,
+                  createdAt: authData.user.createdAt,
+                  lastActive: new Date().toISOString(),
+                  isActive: true
+                };
+                setCurrentAdmin(adminUser);
+              } else {
+                // Address mismatch, clear session
+                clearSecureSession();
+              }
+            } else {
+              // Token invalid, clear session
+              clearSecureSession();
+            }
+          } catch (error) {
+            console.error('Failed to verify admin session:', error);
+            clearSecureSession();
+          }
         }
-      } catch {
-        localStorage.removeItem('cf1_admin_session');
+      } else if (DEMO_MODE_ENABLED) {
+        // Development with demo mode - load from secure storage
+        const savedSession = await getStoredSession();
+        if (savedSession && savedSession.user) {
+          try {
+            const adminData = savedSession.user;
+            if (adminData.address === address) {
+              setCurrentAdmin(adminData);
+            } else {
+              // Address mismatch, clear session
+              clearSecureSession();
+            }
+          } catch {
+            clearSecureSession();
+          }
+        }
       }
-    }
+    };
+    
+    loadSession();
   }, [address, isConnected, isRoleSelected]);
 
   // Clear admin session if wallet disconnected
@@ -289,7 +455,7 @@ export const useAdminAuth = (): AdminAuthContextType => {
   const isAdmin = currentAdmin !== null;
   const isCreatorAdmin = currentAdmin?.role === 'creator';
   const isSuperAdmin = currentAdmin?.role === 'super_admin';
-  const isPlatformAdmin = currentAdmin?.role === 'platform_admin';
+  const isPlatformAdmin = currentAdmin?.role === 'super_admin'; // super_admin is now the Platform Admin
   const isOwner = currentAdmin?.role === 'owner';
   const adminRole = currentAdmin?.role || null;
 

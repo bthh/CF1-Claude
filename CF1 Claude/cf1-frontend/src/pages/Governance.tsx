@@ -5,6 +5,8 @@ import { useGovernanceStore, type GovernanceProposal } from '../store/governance
 import { useTokenHoldingStore } from '../store/tokenHoldingStore';
 import { useSimulatedLoading } from '../hooks/useLoading';
 import { SkeletonProposalCard, SkeletonStats } from '../components/Loading/Skeleton';
+import { useGovernanceData } from '../services/governanceDataService';
+import { useDataMode } from '../store/dataModeStore';
 
 const GovernanceProposalCard: React.FC<GovernanceProposal> = ({
   id,
@@ -213,8 +215,11 @@ const Governance: React.FC = () => {
   const [selectedType, setSelectedType] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   
-  const { getProposalsForVoting } = useGovernanceStore();
   const { holdings } = useTokenHoldingStore();
+  
+  // Data mode integration
+  const { proposals, stats, currentMode, isEmpty } = useGovernanceData();
+  const { isDemo } = useDataMode();
   
   // Get user's asset IDs for filtering private proposals
   const userAssetIds = useMemo(() => 
@@ -222,19 +227,8 @@ const Governance: React.FC = () => {
     [holdings]
   );
   
-  // Get all proposals and re-compute when proposals change (reactive)
-  const allProposals = useGovernanceStore((state) => state.proposals);
-  const mockProposals = useMemo(() => {
-    try {
-      return getProposalsForVoting(userAssetIds);
-    } catch (error) {
-      console.error('Error getting proposals for voting:', error);
-      return [];
-    }
-  }, [getProposalsForVoting, userAssetIds, allProposals]); // Include allProposals to make it reactive
-  
   // Simulate loading state for proposals
-  const { isLoading, data: proposals } = useSimulatedLoading(mockProposals, 1200);
+  const { isLoading, data: loadedProposals } = useSimulatedLoading(proposals, 1200);
 
   // Set tab based on current route and sync with backend
   useEffect(() => {
@@ -256,15 +250,15 @@ const Governance: React.FC = () => {
 
   // Calculate proposal type counts dynamically
   const proposalTypes = [
-    { id: 'all', name: 'All Types', count: (proposals || []).length },
-    { id: 'dividend', name: 'Dividend Distribution', count: (proposals || []).filter(p => p.proposalType === 'dividend').length },
-    { id: 'renovation', name: 'Property Improvements', count: (proposals || []).filter(p => p.proposalType === 'renovation').length },
-    { id: 'management', name: 'Management Changes', count: (proposals || []).filter(p => p.proposalType === 'management').length },
-    { id: 'expansion', name: 'Business Expansion', count: (proposals || []).filter(p => p.proposalType === 'expansion').length },
-    { id: 'sale', name: 'Asset Sale', count: (proposals || []).filter(p => p.proposalType === 'sale').length }
+    { id: 'all', name: 'All Types', count: (loadedProposals || []).length },
+    { id: 'dividend', name: 'Dividend Distribution', count: (loadedProposals || []).filter(p => p.proposalType === 'dividend').length },
+    { id: 'renovation', name: 'Property Improvements', count: (loadedProposals || []).filter(p => p.proposalType === 'renovation').length },
+    { id: 'management', name: 'Management Changes', count: (loadedProposals || []).filter(p => p.proposalType === 'management').length },
+    { id: 'expansion', name: 'Business Expansion', count: (loadedProposals || []).filter(p => p.proposalType === 'expansion').length },
+    { id: 'sale', name: 'Asset Sale', count: (loadedProposals || []).filter(p => p.proposalType === 'sale').length }
   ];
 
-  const filteredProposals = (proposals || []).filter(proposal => {
+  const filteredProposals = (loadedProposals || []).filter(proposal => {
     const matchesTab = selectedTab === 'all' || proposal.status === selectedTab;
     const matchesType = selectedType === 'all' || proposal.proposalType === selectedType;
     const matchesSearch = searchTerm === '' || 
@@ -278,18 +272,29 @@ const Governance: React.FC = () => {
   });
 
   const tabCounts = {
-    active: (proposals || []).filter(p => p.status === 'active').length,
-    passed: (proposals || []).filter(p => p.status === 'passed').length,
-    rejected: (proposals || []).filter(p => p.status === 'rejected').length,
-    all: (proposals || []).length
+    active: (loadedProposals || []).filter(p => p.status === 'active').length,
+    passed: (loadedProposals || []).filter(p => p.status === 'passed').length,
+    rejected: (loadedProposals || []).filter(p => p.status === 'rejected').length,
+    all: (loadedProposals || []).length
   };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Governance</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">Participate in asset governance decisions and voting</p>
+          <div className="flex items-center space-x-3">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Voting</h1>
+            {isDemo && (
+              <div className="flex items-center space-x-2 bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300 px-3 py-1 rounded-full text-sm">
+                <Eye className="w-4 h-4" />
+                <span className="font-medium">DEMO MODE</span>
+              </div>
+            )}
+            <div className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
+              {currentMode.toUpperCase()}
+            </div>
+          </div>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">Participate in asset voting decisions and proposals</p>
         </div>
         <div className="text-right">
           <p className="text-2xl font-bold text-blue-600">1,247</p>
@@ -309,7 +314,7 @@ const Governance: React.FC = () => {
               <div className="flex items-center justify-center w-14 h-14 bg-blue-100 dark:bg-blue-900/20 rounded-lg mx-auto mb-3">
                 <Vote className="w-8 h-8 text-blue-600" />
               </div>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{(proposals || []).filter(p => p.status === 'active').length}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.active}</p>
               <p className="text-sm text-gray-600 dark:text-gray-400">Active Proposals</p>
             </div>
             <div className="text-center">
@@ -323,7 +328,7 @@ const Governance: React.FC = () => {
               <div className="flex items-center justify-center w-14 h-14 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg mx-auto mb-3">
                 <Clock className="w-8 h-8 text-yellow-600 dark:text-yellow-400" />
               </div>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{(proposals || []).filter(p => p.status === 'active' && !p.userVoted).length}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.pendingVotes}</p>
               <p className="text-sm text-gray-600 dark:text-gray-400">Pending Your Vote</p>
             </div>
             <div className="text-center">
@@ -451,8 +456,41 @@ const Governance: React.FC = () => {
                       <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center mx-auto mb-4">
                         <Vote className="w-8 h-8 text-gray-400 dark:text-gray-500" />
                       </div>
-                      <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No proposals found</h3>
-                      <p className="text-gray-600 dark:text-gray-400">Try adjusting your filters or check back later for new proposals.</p>
+                      <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                        {searchTerm ? 'No proposals found' : 'No governance proposals yet'}
+                      </h3>
+                      <p className="text-gray-600 dark:text-gray-400 mb-4">
+                        {searchTerm 
+                          ? `No proposals match your search for "${searchTerm}"`
+                          : currentMode === 'production' 
+                            ? "No live governance proposals available yet. Switch to Demo mode to explore sample proposals."
+                            : currentMode === 'development'
+                              ? "No development governance proposals created yet. Create proposals or switch to Demo mode."
+                              : "No demo governance proposals available."
+                        }
+                      </p>
+                      {searchTerm && (
+                        <button
+                          onClick={() => setSearchTerm('')}
+                          className="text-blue-600 hover:text-blue-700 font-medium mr-4"
+                        >
+                          Clear search
+                        </button>
+                      )}
+                      {!searchTerm && currentMode !== 'demo' && (
+                        <div className="space-y-3">
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            Want to explore governance features? Try our demo mode with sample proposals.
+                          </p>
+                          <button
+                            onClick={() => window.location.href = '/super-admin'}
+                            className="inline-flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium"
+                          >
+                            <Eye className="w-4 h-4" />
+                            <span>Switch to Demo Mode</span>
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </>

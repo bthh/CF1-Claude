@@ -188,13 +188,17 @@ describe('AIAssistantInterface', () => {
   });
 
   it('handles disabled state when no asset selected', () => {
+    // Mock store state for this specific test
+    mockUseAIAssistantStore.mockReturnValue({
+      ...mockStoreState,
+      isProcessing: false
+    });
+
     render(
-      <React.Fragment>
-        <AIAssistantInterface />
-      </React.Fragment>
+      <AIAssistantInterface selectedAssetId={undefined} />
     );
 
-    const analyzeButton = screen.getByText('Analyze');
+    const analyzeButton = screen.getByRole('button', { name: /analyze/i });
     expect(analyzeButton).toBeDisabled();
   });
 
@@ -214,17 +218,16 @@ describe('AIAssistantInterface', () => {
   });
 
   it('renders in embedded mode', () => {
-    render(
-      <React.Fragment>
-        <AIAssistantInterface 
-          selectedAssetId="test-asset-1" 
-          embedded={true}
-        />
-      </React.Fragment>
+    const { container } = render(
+      <AIAssistantInterface 
+        selectedAssetId="test-asset-1" 
+        embedded={true}
+      />
     );
 
-    const container = screen.getByText('AI Creator Assistant').closest('div');
-    expect(container).toHaveClass('h-96');
+    // Find the main container div (first child of the component)
+    const mainContainer = container.firstChild as HTMLElement;
+    expect(mainContainer).toHaveClass('h-96');
   });
 
   it('handles subscription upgrade', async () => {

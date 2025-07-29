@@ -3,22 +3,29 @@
  * Express server for AI analysis integration
  */
 
+// Load environment variables FIRST before any other imports
+import { config } from 'dotenv';
+config();
+
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import compression from 'compression';
-import { config } from 'dotenv';
+import cookieParser from 'cookie-parser';
 import { initializeDatabase, closeDatabase } from './config/database';
 import analysisRoutes from './routes/analysis';
 import creatorToolkitRoutes from './routes/creatorToolkit';
 import assetsRoutes from './routes/assets';
 import proposalsRoutes from './routes/proposals';
 import governanceRoutes from './routes/governance';
+import adminAuthRoutes from './routes/adminAuth';
 import { handleValidationError } from './middleware/validation';
+import { generateCSRFToken, csrfErrorHandler } from './middleware/csrfProtection';
+import { secureErrorHandler, requestIdMiddleware } from './middleware/secureErrorHandler';
+import { AuditLogger, auditMiddleware, AuditEventType } from './middleware/auditLogger';
 
-// Load environment variables
-config();
+// Environment variables already loaded at the top
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -31,6 +38,15 @@ app.use(cors({
   credentials: true
 }));
 
+// Cookie parser for CSRF tokens
+app.use(cookieParser());
+
+// Request ID middleware for error tracking
+app.use(requestIdMiddleware);
+
+// Audit logging for all requests
+app.use(auditMiddleware(AuditEventType.API_REQUEST));
+
 // Logging
 if (process.env.NODE_ENV !== 'test') {
   app.use(morgan('combined'));
@@ -39,6 +55,9 @@ if (process.env.NODE_ENV !== 'test') {
 // Body parsing
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+
+// CSRF protection for all routes
+app.use(generateCSRFToken);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -56,38 +75,39 @@ app.use('/api/v1/governance', governanceRoutes);
 app.use('/api/v1/ai-analysis', analysisRoutes);
 app.use('/api/creator-toolkit', creatorToolkitRoutes);
 app.use('/api/v1/assets', assetsRoutes);
+app.use('/api/admin', adminAuthRoutes);
 
-// Error handling
+// Error handling middleware (order matters!)
 app.use(handleValidationError);
+app.use(csrfErrorHandler);
 
 // 404 handler
 app.use('*', (req, res) => {
   res.status(404).json({
+    success: false,
     error: 'Endpoint not found',
     code: 'ENDPOINT_NOT_FOUND',
-    path: req.originalUrl
+    path: req.originalUrl,
+    timestamp: Date.now(),
+    requestId: req.headers['x-request-id'] as string
   });
 });
 
-// Global error handler
-app.use((error: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error('Unhandled error:', error);
-  
-  res.status(500).json({
-    error: 'Internal server error',
-    code: 'INTERNAL_SERVER_ERROR',
-    ...(process.env.NODE_ENV === 'development' && {
-      message: error.message,
-      stack: error.stack
-    })
-  });
-});
+// Global secure error handler (must be last)
+app.use(secureErrorHandler);
 
 // Start server
 async function startServer() {
   try {
     // Initialize database
     await initializeDatabase();
+    
+    // Log system startup
+    AuditLogger.logEvent(AuditEventType.SYSTEM_STARTUP, 'CF1 Backend server starting', undefined, {
+      port: PORT,
+      environment: process.env.NODE_ENV || 'development',
+      version: '1.0.0'
+    });
     
     // Start HTTP server
     const server = app.listen(PORT, () => {
@@ -100,6 +120,12 @@ async function startServer() {
     const gracefulShutdown = async (signal: string) => {
       console.log(`\n${signal} received. Starting graceful shutdown...`);
       
+      // Log system shutdown
+      AuditLogger.logEvent(AuditEventType.SYSTEM_SHUTDOWN, 'CF1 Backend server shutting down', undefined, {
+        signal,
+        timestamp: Date.now()
+      });
+      
       server.close(async () => {
         console.log('HTTP server closed');
         
@@ -109,6 +135,9 @@ async function startServer() {
           process.exit(0);
         } catch (error) {
           console.error('Error during shutdown:', error);
+          AuditLogger.logEvent(AuditEventType.SYSTEM_ERROR, 'Error during shutdown', undefined, {
+            error: error instanceof Error ? error.message : 'Unknown error'
+          });
           process.exit(1);
         }
       });

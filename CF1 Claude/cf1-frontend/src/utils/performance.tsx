@@ -360,7 +360,7 @@ export const useComponentPerformance = (componentName: string) => {
 
 // Bundle analyzer utility
 export const analyzeBundleSize = async (): Promise<void> => {
-  if (process.env.NODE_ENV !== 'development') {
+  if (import.meta.env.MODE !== 'development') {
     return;
   }
 

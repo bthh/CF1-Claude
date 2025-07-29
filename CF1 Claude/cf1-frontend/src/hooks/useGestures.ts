@@ -85,7 +85,7 @@ export const useGestures = (options: UseGesturesOptions = {}) => {
     return calculateDistance(touch1.clientX, touch1.clientY, touch2.clientX, touch2.clientY);
   }, [calculateDistance]);
 
-  const handleTouchStart = useCallback((e: TouchEvent) => {
+  const handleTouchStart = useCallback((e: React.TouchEvent | TouchEvent) => {
     if (preventDefault) {
       e.preventDefault();
     }
@@ -135,7 +135,7 @@ export const useGestures = (options: UseGesturesOptions = {}) => {
     }
   }, [preventDefault, onLongPress, onDoubleTap, longPressDelay, getPinchDistance]);
 
-  const handleTouchMove = useCallback((e: TouchEvent) => {
+  const handleTouchMove = useCallback((e: React.TouchEvent | TouchEvent) => {
     if (preventDefault) {
       e.preventDefault();
     }
@@ -179,7 +179,7 @@ export const useGestures = (options: UseGesturesOptions = {}) => {
     }
   }, [preventDefault, calculateDistance, calculateDirection, onPinch, getPinchDistance]);
 
-  const handleTouchEnd = useCallback((e: TouchEvent) => {
+  const handleTouchEnd = useCallback((e: React.TouchEvent | TouchEvent) => {
     if (preventDefault) {
       e.preventDefault();
     }
@@ -242,9 +242,9 @@ export const useGestures = (options: UseGesturesOptions = {}) => {
 
   const bindGestures = useCallback(() => {
     return {
-      onTouchStart: handleTouchStart,
-      onTouchMove: handleTouchMove,
-      onTouchEnd: handleTouchEnd,
+      onTouchStart: (e: React.TouchEvent) => handleTouchStart(e),
+      onTouchMove: (e: React.TouchEvent) => handleTouchMove(e),
+      onTouchEnd: (e: React.TouchEvent) => handleTouchEnd(e),
       style: { touchAction: 'none' }
     };
   }, [handleTouchStart, handleTouchMove, handleTouchEnd]);
@@ -308,10 +308,15 @@ export const useSwipeToDismiss = (
 ) => {
   const { direction = 'down', threshold = 150, enabled = true } = options;
 
-  const { gestureState, bindGestures } = useGestures({
+  const gestureOptions: UseGesturesOptions = {
     threshold,
-    [`onSwipe${direction.charAt(0).toUpperCase() + direction.slice(1)}`]: enabled ? onDismiss : undefined
-  });
+    onSwipeUp: enabled && direction === 'up' ? onDismiss : undefined,
+    onSwipeDown: enabled && direction === 'down' ? onDismiss : undefined,
+    onSwipeLeft: enabled && direction === 'left' ? onDismiss : undefined,
+    onSwipeRight: enabled && direction === 'right' ? onDismiss : undefined
+  };
+
+  const { gestureState, bindGestures } = useGestures(gestureOptions);
 
   const dismissProgress = enabled ? Math.min(
     Math.abs(direction === 'up' || direction === 'down' ? gestureState.deltaY : gestureState.deltaX) / threshold,

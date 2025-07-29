@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { devtools } from 'zustand/middleware';
+import { devtools, persist } from 'zustand/middleware';
 
 export interface PortfolioAsset {
   id: string;
@@ -131,7 +131,8 @@ const generatePerformanceData = (days: number): PerformanceData[] => {
 
 export const usePortfolioStore = create<PortfolioState>()(
   devtools(
-    (set, get) => ({
+    persist(
+      (set, get) => ({
       // Initial state
       assets: [],
       summary: null,
@@ -274,14 +275,37 @@ export const usePortfolioStore = create<PortfolioState>()(
       },
 
       addTransaction: (transactionData) => {
+        console.log('🔍 Portfolio Store - Adding transaction:', transactionData);
+        
+        // Validate required fields
+        if (!transactionData.assetId || !transactionData.assetName || !transactionData.amount) {
+          console.error('❌ Portfolio Store - Invalid transaction data:', transactionData);
+          return;
+        }
+
         const transaction: PortfolioTransaction = {
           ...transactionData,
           id: `tx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
         };
 
-        set(state => ({
-          transactions: [transaction, ...state.transactions]
-        }));
+        console.log('✅ Portfolio Store - Transaction created:', transaction);
+
+        set(state => {
+          const newTransactions = [transaction, ...state.transactions];
+          console.log('📈 Portfolio Store - Updated transactions count:', newTransactions.length);
+          return { transactions: newTransactions };
+        });
+
+        // Verify the transaction was added
+        setTimeout(() => {
+          const currentState = get();
+          const foundTransaction = currentState.transactions.find(t => t.id === transaction.id);
+          if (foundTransaction) {
+            console.log('✅ Portfolio Store - Transaction successfully persisted:', foundTransaction);
+          } else {
+            console.error('❌ Portfolio Store - Transaction not found after adding');
+          }
+        }, 100);
       },
 
       setSelectedTimeframe: (timeframe: PortfolioState['selectedTimeframe']) => {
@@ -303,7 +327,13 @@ export const usePortfolioStore = create<PortfolioState>()(
       },
 
       clearError: () => set({ error: null })
-    }),
+      }),
+      {
+        name: 'cf1-portfolio-store',
+        // Only persist transactions and user-specific data
+        partialize: (state) => ({ transactions: state.transactions })
+      }
+    ),
     {
       name: 'portfolio-store'
     }

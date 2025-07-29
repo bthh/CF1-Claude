@@ -1,24 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, Grid, List, Star, MapPin, TrendingUp, SlidersHorizontal } from 'lucide-react';
+import { Search, Filter, Grid, List, Star, MapPin, TrendingUp, SlidersHorizontal, Eye } from 'lucide-react';
 import { useSimulatedLoading } from '../hooks/useLoading';
 import { SkeletonCard, SkeletonStats } from '../components/Loading/Skeleton';
 import { Card, StatusBadge, Button } from '../components/UI';
+import { useMarketplaceData, AssetListing } from '../services/marketplaceDataService';
+import { useDataMode } from '../store/dataModeStore';
 
-interface AssetListingProps {
-  id: string;
-  name: string;
-  type: string;
-  location: string;
-  totalValue: string;
-  tokenPrice: string;
-  tokensAvailable: number;
-  totalTokens: number;
-  apy: string;
-  rating: number;
-  imageUrl?: string;
-  tags: string[];
-}
+// Import AssetListing type from demo service
+type AssetListingProps = AssetListing;
 
 const AssetListing: React.FC<AssetListingProps> = ({
   id,
@@ -119,109 +109,43 @@ const AssetListing: React.FC<AssetListingProps> = ({
 };
 
 const Marketplace: React.FC = () => {
+  const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [sortBy, setSortBy] = useState('name');
-
-  const categories = [
-    { id: 'all', name: 'All Assets', count: 24 },
-    { id: 'real-estate', name: 'Real Estate', count: 12 },
-    { id: 'precious-metals', name: 'Precious Metals', count: 5 },
-    { id: 'art', name: 'Art & Collectibles', count: 4 },
-    { id: 'vehicles', name: 'Luxury Vehicles', count: 3 }
-  ];
-
-  // Mock assets data
-  const mockAssets: AssetListingProps[] = [
-    {
-      id: '1',
-      name: 'Manhattan Office Complex',
-      type: 'Commercial Real Estate',
-      location: 'New York, NY',
-      totalValue: '$2.5M',
-      tokenPrice: '$100',
-      tokensAvailable: 15000,
-      totalTokens: 25000,
-      apy: '8.5%',
-      rating: 4.8,
-      imageUrl: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400&h=300&fit=crop',
-      tags: ['Prime Location', 'High Yield']
-    },
-    {
-      id: '2',
-      name: 'Gold Bullion Vault',
-      type: 'Precious Metals',
-      location: 'Swiss Bank',
-      totalValue: '$1.2M',
-      tokenPrice: '$50',
-      tokensAvailable: 8000,
-      totalTokens: 24000,
-      apy: '6.2%',
-      rating: 4.9,
-      imageUrl: 'https://images.unsplash.com/photo-1610375461246-83df859d849d?w=400&h=300&fit=crop',
-      tags: ['Stable', 'Inflation Hedge']
-    },
-    {
-      id: '3',
-      name: 'Modern Art Collection',
-      type: 'Fine Art',
-      location: 'Private Gallery',
-      totalValue: '$800K',
-      tokenPrice: '$200',
-      tokensAvailable: 2000,
-      totalTokens: 4000,
-      apy: '12.3%',
-      rating: 4.6,
-      imageUrl: 'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=400&h=300&fit=crop',
-      tags: ['Appreciation', 'Exclusive']
-    },
-    {
-      id: '4',
-      name: 'Luxury Car Fleet',
-      type: 'Collectible Vehicles',
-      location: 'Monaco',
-      totalValue: '$1.8M',
-      tokenPrice: '$150',
-      tokensAvailable: 5000,
-      totalTokens: 12000,
-      apy: '9.1%',
-      rating: 4.7,
-      imageUrl: 'https://images.unsplash.com/photo-1563720223185-11003d516935?w=400&h=300&fit=crop',
-      tags: ['Collectible', 'Rental Income']
-    },
-    {
-      id: '5',
-      name: 'Miami Beach Resort',
-      type: 'Hospitality Real Estate',
-      location: 'Miami, FL',
-      totalValue: '$5.2M',
-      tokenPrice: '$250',
-      tokensAvailable: 12000,
-      totalTokens: 20800,
-      apy: '11.2%',
-      rating: 4.9,
-      imageUrl: 'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=400&h=300&fit=crop',
-      tags: ['Tourism', 'Seasonal Income']
-    },
-    {
-      id: '6',
-      name: 'Silver Mining Rights',
-      type: 'Natural Resources',
-      location: 'Colorado, US',
-      totalValue: '$950K',
-      tokenPrice: '$75',
-      tokensAvailable: 7500,
-      totalTokens: 12667,
-      apy: '7.8%',
-      rating: 4.4,
-      imageUrl: 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=400&h=300&fit=crop',
-      tags: ['Mining', 'Commodity']
-    }
-  ];
   
-  // Simulate loading state with mock data
-  const { isLoading, data: assets } = useSimulatedLoading(mockAssets, 1500);
+  // Data mode integration
+  const { assets: marketplaceAssets, quickStats, currentMode, isEmpty } = useMarketplaceData();
+  const { isDemo } = useDataMode();
+
+  // Dynamic categories based on current assets
+  const generateCategories = (assetList: AssetListing[]) => {
+    const categoryCounts = assetList.reduce((acc, asset) => {
+      const type = asset.type.toLowerCase();
+      if (type.includes('real estate')) acc['real-estate'] = (acc['real-estate'] || 0) + 1;
+      else if (type.includes('metal')) acc['precious-metals'] = (acc['precious-metals'] || 0) + 1;
+      else if (type.includes('art') || type.includes('collectible')) acc['art'] = (acc['art'] || 0) + 1;
+      else if (type.includes('vehicle')) acc['vehicles'] = (acc['vehicles'] || 0) + 1;
+      else if (type.includes('energy') || type.includes('renewable')) acc['energy'] = (acc['energy'] || 0) + 1;
+      else acc['other'] = (acc['other'] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    return [
+      { id: 'all', name: 'All Assets', count: assetList.length },
+      { id: 'real-estate', name: 'Real Estate', count: categoryCounts['real-estate'] || 0 },
+      { id: 'precious-metals', name: 'Precious Metals', count: categoryCounts['precious-metals'] || 0 },
+      { id: 'art', name: 'Art & Collectibles', count: categoryCounts['art'] || 0 },
+      { id: 'vehicles', name: 'Luxury Vehicles', count: categoryCounts['vehicles'] || 0 },
+      { id: 'energy', name: 'Energy & Infrastructure', count: categoryCounts['energy'] || 0 }
+    ].filter(cat => cat.count > 0 || cat.id === 'all');
+  };
+
+  // Simulate loading state with demo-aware data
+  const { isLoading, data: assets } = useSimulatedLoading(marketplaceAssets, 1500);
+  
+  const categories = generateCategories(assets || []);
 
   // Simple search and filter logic
   const filteredAssets = (assets || []).filter(asset => {
@@ -235,9 +159,10 @@ const Marketplace: React.FC = () => {
     // Category filter
     const matchesCategory = selectedCategory === 'all' || 
       (selectedCategory === 'real-estate' && asset.type.toLowerCase().includes('real estate')) ||
-      (selectedCategory === 'precious-metals' && asset.type.toLowerCase().includes('metals')) ||
-      (selectedCategory === 'art' && (asset.type.toLowerCase().includes('art') || asset.type.toLowerCase().includes('collectibles'))) ||
-      (selectedCategory === 'vehicles' && asset.type.toLowerCase().includes('vehicles'));
+      (selectedCategory === 'precious-metals' && asset.type.toLowerCase().includes('metal')) ||
+      (selectedCategory === 'art' && (asset.type.toLowerCase().includes('art') || asset.type.toLowerCase().includes('collectible'))) ||
+      (selectedCategory === 'vehicles' && asset.type.toLowerCase().includes('vehicle')) ||
+      (selectedCategory === 'energy' && (asset.type.toLowerCase().includes('energy') || asset.type.toLowerCase().includes('renewable')));
 
     return matchesSearch && matchesCategory;
   });
@@ -260,8 +185,21 @@ const Marketplace: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Marketplace</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">Discover and invest in tokenized real-world assets</p>
+          <div className="flex items-center space-x-3">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Marketplace</h1>
+            {isDemo && (
+              <div className="flex items-center space-x-2 bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300 px-3 py-1 rounded-full text-sm">
+                <Eye className="w-4 h-4" />
+                <span className="font-medium">DEMO MODE</span>
+              </div>
+            )}
+            <div className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
+              {currentMode.toUpperCase()}
+            </div>
+          </div>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
+            Discover and invest in tokenized real-world assets
+          </p>
         </div>
         <div className="flex items-center space-x-2">
           <button
@@ -343,15 +281,15 @@ const Marketplace: React.FC = () => {
             <div className="space-y-3">
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Total Assets</p>
-                <p className="text-lg font-semibold text-gray-900 dark:text-white">{mockAssets.length}</p>
+                <p className="text-lg font-semibold text-gray-900 dark:text-white">{quickStats.totalAssets}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Avg. APY</p>
-                <p className="text-lg font-semibold text-green-600">8.7%</p>
+                <p className="text-lg font-semibold text-green-600">{quickStats.avgAPY}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Total Volume</p>
-                <p className="text-lg font-semibold text-gray-900 dark:text-white">$12.4M</p>
+                <p className="text-lg font-semibold text-gray-900 dark:text-white">{quickStats.totalVolume}</p>
               </div>
             </div>
           </div>
@@ -373,11 +311,17 @@ const Marketplace: React.FC = () => {
               ) : (
                 <div className="col-span-full text-center py-12">
                   <Search className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No assets found</h3>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                    {searchTerm ? 'No assets found' : 'No assets available'}
+                  </h3>
                   <p className="text-gray-600 dark:text-gray-400 mb-4">
                     {searchTerm 
                       ? `No assets match your search for "${searchTerm}"`
-                      : "No assets available"
+                      : currentMode === 'production' 
+                        ? "No live assets available yet. Switch to Demo mode to explore sample assets."
+                        : currentMode === 'development'
+                          ? "No development assets created yet. Create proposals via the Launchpad or switch to Demo mode."
+                          : "No demo assets available."
                     }
                   </p>
                   {searchTerm && (
@@ -387,6 +331,20 @@ const Marketplace: React.FC = () => {
                     >
                       Clear search
                     </button>
+                  )}
+                  {!searchTerm && currentMode !== 'demo' && (
+                    <div className="mt-4">
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+                        Want to explore the platform features?
+                      </p>
+                      <button
+                        onClick={() => navigate('/super-admin')}
+                        className="inline-flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium"
+                      >
+                        <Eye className="w-4 h-4" />
+                        <span>Switch to Demo Mode</span>
+                      </button>
+                    </div>
                   )}
                 </div>
               )}

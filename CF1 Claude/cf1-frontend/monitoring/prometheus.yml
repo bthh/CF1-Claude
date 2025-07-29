@@ -1,0 +1,90 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "alert_rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Node Exporter for system metrics
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+
+  # cAdvisor for container metrics
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+
+  # CF1 Frontend application metrics
+  - job_name: 'cf1-frontend'
+    static_configs:
+      - targets: ['cf1-frontend:80']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # CF1 Backend API metrics
+  - job_name: 'cf1-backend'
+    static_configs:
+      - targets: ['cf1-backend:3001']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # CF1 AI Analyzer metrics
+  - job_name: 'cf1-ai-analyzer'
+    static_configs:
+      - targets: ['cf1-ai-analyzer:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+
+  # CF1 Health Checker
+  - job_name: 'cf1-health-checker'
+    static_configs:
+      - targets: ['cf1-health-checker:9091']
+    scrape_interval: 30s
+
+  # Blackbox exporter for endpoint monitoring
+  - job_name: 'blackbox'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+        - http://cf1-frontend:80/health
+        - http://cf1-backend:3001/health
+        - http://cf1-ai-analyzer:8000/health
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  # External endpoint monitoring
+  - job_name: 'external-endpoints'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+        - https://rpc-palvus.pion-1.ntrn.tech
+        - https://rest-palvus.pion-1.ntrn.tech
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115

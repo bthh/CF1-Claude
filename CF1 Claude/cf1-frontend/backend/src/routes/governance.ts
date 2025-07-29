@@ -5,6 +5,7 @@
 
 import express from 'express';
 import { Request, Response } from 'express';
+import { requireAdmin, requirePermission, logAdminOperation, AdminAuthenticatedRequest } from '../middleware/adminAuth';
 
 const router = express.Router();
 
@@ -12,76 +13,8 @@ const router = express.Router();
 const governanceProposals = new Map<string, any>();
 const votes = new Map<string, any[]>();
 
-// Initialize some mock governance proposals
-const mockGovernanceProposals = [
-  {
-    id: '1',
-    title: 'Increase Asset Management Fee to 3%',
-    description: 'Proposal to increase the annual asset management fee from 2% to 3% to cover increased operational costs and compliance requirements.',
-    proposer: 'creator_wallet_address',
-    assetId: '1',
-    type: 'fee_change',
-    status: 'active',
-    votingPeriod: {
-      startDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
-      endDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days from now
-      duration: 7 // days
-    },
-    voting: {
-      totalVotes: 15000,
-      yesVotes: 8500,
-      noVotes: 6500,
-      participationRate: 45.2,
-      quorumRequired: 30,
-      majorityRequired: 60,
-      currentResult: 'leading_yes'
-    },
-    proposalData: {
-      currentFee: '2%',
-      proposedFee: '3%',
-      effectiveDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-      reasoning: 'Increased regulatory compliance costs and enhanced asset management services'
-    },
-    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date().toISOString()
-  },
-  {
-    id: '2',
-    title: 'Approve Emergency Maintenance Fund',
-    description: 'Proposal to establish a $50,000 emergency maintenance fund for critical building repairs and unexpected expenses.',
-    proposer: 'creator_wallet_address',
-    assetId: '1',
-    type: 'fund_allocation',
-    status: 'active',
-    votingPeriod: {
-      startDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
-      endDate: new Date(Date.now() + 6 * 24 * 60 * 60 * 1000).toISOString(), // 6 days from now
-      duration: 7 // days
-    },
-    voting: {
-      totalVotes: 8200,
-      yesVotes: 7100,
-      noVotes: 1100,
-      participationRate: 24.7,
-      quorumRequired: 30,
-      majorityRequired: 60,
-      currentResult: 'leading_yes'
-    },
-    proposalData: {
-      fundAmount: '$50,000',
-      fundSource: 'Reserve funds',
-      approvalThreshold: '$10,000 per expense',
-      reasoning: 'Proactive maintenance to protect asset value and tenant satisfaction'
-    },
-    createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date().toISOString()
-  }
-];
-
-// Initialize mock data
-mockGovernanceProposals.forEach(proposal => {
-  governanceProposals.set(proposal.id, proposal);
-});
+// Production governance proposals start empty - no mock data
+// Proposals are added only through legitimate API calls
 
 /**
  * GET /api/v1/governance/proposals
@@ -123,13 +56,14 @@ router.get('/proposals/:id', (req: Request, res: Response) => {
  * POST /api/v1/governance/proposals/:id/admin/simulate-pass
  * Admin shortcut to simulate passing a governance proposal for testing
  */
-router.post('/proposals/:id/admin/simulate-pass', (req: Request, res: Response) => {
-  const proposalId = req.params.id;
-  
-  // TODO: Add proper admin authentication middleware
-  // For now, accepting the admin call directly
-  
-  console.log(`🚀 Admin Simulate Pass triggered for governance proposal ${proposalId}`);
+router.post('/proposals/:id/admin/simulate-pass', 
+  requireAdmin,
+  requirePermission('governance'),
+  logAdminOperation,
+  (req: AdminAuthenticatedRequest, res: Response) => {
+    const proposalId = req.params.id;
+    
+    console.log(`🚀 Admin ${req.adminUser?.username} simulating pass for governance proposal ${proposalId}`);
   
   if (!governanceProposals.has(proposalId)) {
     return res.status(404).json({

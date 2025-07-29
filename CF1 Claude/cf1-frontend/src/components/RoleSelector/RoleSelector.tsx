@@ -19,18 +19,13 @@ const roleOptions: { value: SessionRole; icon: React.ReactNode; color: string }[
     color: 'text-orange-600 bg-orange-100 dark:text-orange-400 dark:bg-orange-900/30' 
   },
   { 
-    value: 'platform_admin', 
+    value: 'super_admin', 
     icon: <Shield className="w-5 h-5" />, 
     color: 'text-green-600 bg-green-100 dark:text-green-400 dark:bg-green-900/30' 
   },
   { 
-    value: 'super_admin', 
-    icon: <Crown className="w-5 h-5" />, 
-    color: 'text-red-600 bg-red-100 dark:text-red-400 dark:bg-red-900/30' 
-  },
-  { 
     value: 'owner', 
-    icon: <UserCheck className="w-5 h-5" />, 
+    icon: <Crown className="w-5 h-5" />, 
     color: 'text-purple-600 bg-purple-100 dark:text-purple-400 dark:bg-purple-900/30' 
   }
 ];

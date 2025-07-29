@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
-import { Settings, Plus, Eye, EyeOff, RotateCcw, Grid3X3, Maximize2, Minimize2, ArrowUpDown, Activity, Zap, Bell, User, GripVertical } from 'lucide-react';
+import { Settings, Plus, Eye, EyeOff, RotateCcw, Grid3X3, Maximize2, Minimize2, ArrowUpDown, Activity, Zap, Bell, User, GripVertical, Star } from 'lucide-react';
 import { useDashboardStore, WidgetType, WidgetSize } from '../../store/dashboardStore';
 import MarketplaceWidget from './MarketplaceWidget';
 import LaunchpadWidget from './LaunchpadWidget';
 import GovernanceWidget from './GovernanceWidget';
 import PortfolioWidget from './PortfolioWidget';
 import AnalyticsWidget from './AnalyticsWidget';
-import TradingWidget from './TradingWidget';
 import ActivityWidget from './ActivityWidget';
 import QuickActionsWidget from './QuickActionsWidget';
 import NotificationsWidget from './NotificationsWidget';
 import ProfileWidget from './ProfileWidget';
+import SpotlightWidget from './SpotlightWidget';
 
 const ConfigurableDashboard: React.FC = () => {
   const {
@@ -49,8 +49,6 @@ const ConfigurableDashboard: React.FC = () => {
         return <PortfolioWidget {...commonProps} />;
       case 'analytics':
         return <AnalyticsWidget {...commonProps} />;
-      case 'trading':
-        return <TradingWidget {...commonProps} />;
       case 'activity':
         return <ActivityWidget {...commonProps} />;
       case 'quickActions':
@@ -59,6 +57,8 @@ const ConfigurableDashboard: React.FC = () => {
         return <NotificationsWidget {...commonProps} />;
       case 'profile':
         return <ProfileWidget {...commonProps} />;
+      case 'spotlight':
+        return <SpotlightWidget {...commonProps} />;
       default:
         return null;
     }
@@ -81,11 +81,11 @@ const ConfigurableDashboard: React.FC = () => {
     { type: 'governance', label: 'Governance', icon: <Settings className="w-4 h-4" /> },
     { type: 'portfolio', label: 'Portfolio', icon: <Eye className="w-4 h-4" /> },
     { type: 'analytics', label: 'Analytics', icon: <Grid3X3 className="w-4 h-4" /> },
-    { type: 'trading', label: 'Trading', icon: <ArrowUpDown className="w-4 h-4" /> },
     { type: 'activity', label: 'Activity', icon: <Activity className="w-4 h-4" /> },
     { type: 'quickActions', label: 'Quick Actions', icon: <Zap className="w-4 h-4" /> },
     { type: 'notifications', label: 'Notifications', icon: <Bell className="w-4 h-4" /> },
-    { type: 'profile', label: 'Profile', icon: <User className="w-4 h-4" /> }
+    { type: 'profile', label: 'Profile', icon: <User className="w-4 h-4" /> },
+    { type: 'spotlight', label: 'Spotlight', icon: <Star className="w-4 h-4" /> }
   ];
 
   // Drag and drop handlers

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { callGeminiFlash, generateAssetAnalysisPrompt, generateMarketInsightPrompt, generateContentPrompt, generateRiskAssessmentPrompt, generateChatPrompt } from '../services/geminiAI';
 
 export type AIAssistantFeature = 
   | 'asset_analysis'
@@ -272,23 +273,24 @@ export const useAIAssistantStore = create<AIAssistantState>()(
         set({ isProcessing: true });
         
         try {
-          // Simulate AI analysis
-          await new Promise(resolve => setTimeout(resolve, 2000));
+          // Call real AI service (Gemini Flash)
+          const analysisPrompt = generateAssetAnalysisPrompt(assetId);
+          const analysis = await callGeminiFlash(analysisPrompt);
           
           const newInsight: AIInsight = {
             id: `insight_${Date.now()}`,
             type: 'asset_analysis',
-            title: 'Asset Analysis Complete',
-            description: `Comprehensive analysis for asset ${assetId} shows strong fundamentals with 92% confidence score.`,
+            title: 'AI Asset Analysis',
+            description: analysis,
             priority: 'medium',
             actionable: true,
             timestamp: new Date().toISOString(),
             assetId,
             metadata: {
-              confidence: 0.92,
+              confidence: 0.87,
               impact: 'medium',
               timeframe: 'immediate',
-              category: 'analysis'
+              category: 'ai_analysis'
             }
           };
           
@@ -314,7 +316,9 @@ export const useAIAssistantStore = create<AIAssistantState>()(
         set({ isProcessing: true });
         
         try {
-          await new Promise(resolve => setTimeout(resolve, 2500));
+          // Call real AI service (Gemini Flash)
+          const insightPrompt = generateMarketInsightPrompt(sector);
+          const insights = await callGeminiFlash(insightPrompt);
           
           const marketAnalysis: MarketAnalysis = {
             id: `market_${Date.now()}`,
@@ -324,11 +328,7 @@ export const useAIAssistantStore = create<AIAssistantState>()(
             marketPosition: ['leader', 'challenger', 'follower', 'niche'][Math.floor(Math.random() * 4)] as any,
             growthTrend: ['positive', 'stable', 'negative'][Math.floor(Math.random() * 3)] as any,
             riskLevel: ['low', 'medium', 'high'][Math.floor(Math.random() * 3)] as any,
-            recommendations: [
-              'Optimize operational efficiency',
-              'Expand market presence',
-              'Diversify revenue streams'
-            ],
+            recommendations: insights.split('\n').filter(line => line.trim()).slice(0, 4),
             lastUpdated: new Date().toISOString()
           };
           
@@ -393,13 +393,15 @@ export const useAIAssistantStore = create<AIAssistantState>()(
         set({ isProcessing: true });
         
         try {
-          await new Promise(resolve => setTimeout(resolve, 1500));
+          // Call real AI service (Gemini Flash)
+          const contentPrompt = generateContentPrompt(type, prompt, 'shareholders');
+          const generatedContent = await callGeminiFlash(contentPrompt);
           
           const contentSuggestion: ContentSuggestion = {
             id: `content_${Date.now()}`,
             type,
-            title: `Generated ${type.replace('_', ' ')} Content`,
-            content: `AI-generated content based on: "${prompt}"\n\nThis is a professional ${type} that addresses key stakeholder interests while maintaining transparency and compliance standards.`,
+            title: `AI-Generated ${type.replace('_', ' ')} Content`,
+            content: generatedContent,
             targetAudience: 'shareholders',
             tone: 'professional',
             generatedAt: new Date().toISOString()
@@ -480,43 +482,74 @@ export const useAIAssistantStore = create<AIAssistantState>()(
       },
       
       sendChatMessage: async (message: string, context?: any) => {
-        const chatId = `chat_${Date.now()}`;
+        const store = get();
         
+        // Rate limiting check
+        if (store.usageStats.dailyQueries >= 50 && store.subscriptionTier === 'free') {
+          throw new Error('Daily query limit reached. Please upgrade to continue.');
+        }
+
+        // Validate message length
+        if (message.length > 1000) {
+          throw new Error('Message too long. Please keep messages under 1000 characters.');
+        }
+
+        const chatId = `chat_${Date.now()}`;
+        const timestamp = new Date().toISOString();
+
         // Add user message
+        const userMessage = {
+          id: `${chatId}_user`,
+          type: 'user' as const,
+          message,
+          timestamp,
+          context
+        };
+
         set((state) => ({
-          chatHistory: [
-            ...state.chatHistory,
-            {
-              id: `${chatId}_user`,
-              type: 'user',
-              message,
-              timestamp: new Date().toISOString(),
-              context
-            }
-          ],
+          chatHistory: [...state.chatHistory, userMessage],
           isProcessing: true
         }));
-        
+
         try {
-          await new Promise(resolve => setTimeout(resolve, 1200));
-          
-          // Add AI response
-          const aiResponse = `I understand you're asking about "${message}". Based on your asset performance and market conditions, I recommend focusing on operational efficiency and stakeholder communication. Would you like me to generate specific recommendations?`;
-          
+          // Use specialized chat prompt for better responses
+          const chatPrompt = generateChatPrompt(message, context);
+          const aiResponseText = await callGeminiFlash(chatPrompt);
+
+          const responseMessage = {
+            id: `${chatId}_ai`,
+            type: 'assistant' as const,
+            message: aiResponseText,
+            timestamp: new Date().toISOString(),
+            context
+          };
+
           set((state) => ({
-            chatHistory: [
-              ...state.chatHistory,
-              {
-                id: `${chatId}_ai`,
-                type: 'assistant',
-                message: aiResponse,
-                timestamp: new Date().toISOString(),
-                context
-              }
-            ]
+            chatHistory: [...state.chatHistory, responseMessage],
+            isProcessing: false,
+            usageStats: {
+              ...state.usageStats,
+              dailyQueries: state.usageStats.dailyQueries + 1,
+              monthlyQueries: state.usageStats.monthlyQueries + 1
+            }
           }));
-        } finally {
-          set({ isProcessing: false });
+
+        } catch (error) {
+          console.error('AI chat error:', error);
+          
+          // Add error message to chat instead of throwing
+          const errorMessage = {
+            id: `error_${Date.now()}`,
+            type: 'assistant' as const,
+            message: `I apologize, but I'm having trouble processing your request right now. ${error instanceof Error ? error.message : 'Please try again later.'}`,
+            timestamp: new Date().toISOString(),
+            context
+          };
+
+          set((state) => ({
+            chatHistory: [...state.chatHistory, errorMessage],
+            isProcessing: false
+          }));
         }
       },
       

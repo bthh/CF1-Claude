@@ -17,13 +17,26 @@ import { useSubmissionStore, type SubmittedProposal } from '../store/submissionS
 
 const MySubmissions: React.FC = () => {
   const navigate = useNavigate();
-  const { submissions } = useSubmissionStore();
+  const { submissions, getLocalSubmissions, getBackendReferences } = useSubmissionStore();
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'date' | 'status'>('date');
+  const [viewMode, setViewMode] = useState<'all' | 'local' | 'backend'>('all');
 
 
-  // Filter submissions based on status
-  const filteredSubmissions = submissions.filter(submission => 
+  // Get submissions based on view mode
+  const getSubmissionsByMode = () => {
+    switch (viewMode) {
+      case 'local':
+        return [...getLocalSubmissions(), ...submissions.filter(s => s.status === 'draft')]; // Include drafts as local
+      case 'backend':
+        return getBackendReferences();
+      default:
+        return submissions;
+    }
+  };
+
+  // Filter submissions based on status and view mode
+  const filteredSubmissions = getSubmissionsByMode().filter(submission => 
     statusFilter === 'all' || submission.status === statusFilter
   );
 
@@ -72,6 +85,13 @@ const MySubmissions: React.FC = () => {
           color: 'text-orange-600 bg-orange-50 border-orange-200',
           darkColor: 'dark:text-orange-400 dark:bg-orange-900/20 dark:border-orange-800',
           label: 'Changes Requested'
+        };
+      case 'draft':
+        return {
+          icon: <Clock className="w-4 h-4" />,
+          color: 'text-purple-600 bg-purple-50 border-purple-200',
+          darkColor: 'dark:text-purple-400 dark:bg-purple-900/20 dark:border-purple-800',
+          label: 'Draft'
         };
       default:
         return {
@@ -185,6 +205,16 @@ const MySubmissions: React.FC = () => {
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Filter:</span>
             </div>
             <select
+              value={viewMode}
+              onChange={(e) => setViewMode(e.target.value as 'all' | 'local' | 'backend')}
+              className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            >
+              <option value="all">All Submissions</option>
+              <option value="local">Local Only (Drafts & Fallbacks)</option>
+              <option value="backend">Backend Only (Submitted for Review)</option>
+            </select>
+            
+            <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
               className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -255,6 +285,15 @@ const MySubmissions: React.FC = () => {
                         {statusConfig.icon}
                         <span>{statusConfig.label}</span>
                       </span>
+                      {submission.source && (
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${
+                          submission.source === 'backend' 
+                            ? 'text-green-700 bg-green-50 border-green-200 dark:text-green-400 dark:bg-green-900/20 dark:border-green-800'
+                            : 'text-orange-700 bg-orange-50 border-orange-200 dark:text-orange-400 dark:bg-orange-900/20 dark:border-orange-800'
+                        }`}>
+                          {submission.source === 'backend' ? '🚀 Backend' : '💾 Local'}
+                        </span>
+                      )}
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">

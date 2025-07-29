@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CF1 Duplication Debug Guide</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .section { background: #f8f9fa; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .console { background: #000; color: #0f0; padding: 10px; font-family: monospace; max-height: 200px; overflow-y: auto; }
+        .step { background: #e3f2fd; padding: 10px; margin: 5px 0; border-left: 4px solid #2196f3; }
+        .warning { background: #fff3e0; padding: 10px; margin: 5px 0; border-left: 4px solid #ff9800; }
+        .success { background: #e8f5e8; padding: 10px; margin: 5px 0; border-left: 4px solid #4caf50; }
+    </style>
+</head>
+<body>
+    <h1>CF1 Proposal Duplication Debug Guide</h1>
+    
+    <div class="section">
+        <h2>🐛 Issues Fixed:</h2>
+        <div class="success">
+            <h3>✅ Fixed: notificationService.onProposalApproved missing</h3>
+            <p>Added missing methods: <code>onProposalApproved</code>, <code>onProposalRejected</code>, <code>onChangesRequested</code></p>
+        </div>
+        
+        <div class="success">
+            <h3>✅ Fixed: Proposal Duplication Root Cause</h3>
+            <p>Removed redundant call to <code>addSubmission()</code> when API call succeeds. The duplication was caused by both API and local store being called.</p>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h2>🔍 Debug Steps:</h2>
+        
+        <div class="step">
+            <h3>Step 1: Test Admin Approval</h3>
+            <ol>
+                <li>Navigate to <a href="http://localhost:3000/admin/platform" target="_blank">Platform Admin</a></li>
+                <li>Go to Launchpad section</li>
+                <li>Try to approve a proposal</li>
+                <li>Should now work without errors</li>
+            </ol>
+        </div>
+        
+        <div class="step">
+            <h3>Step 2: Test Proposal Creation</h3>
+            <ol>
+                <li>Open <a href="http://localhost:3000/launchpad/create" target="_blank">Create Proposal</a></li>
+                <li>Open browser console (F12)</li>
+                <li>Fill out a test proposal</li>
+                <li>Submit the proposal</li>
+                <li>Watch console for debug logs</li>
+            </ol>
+        </div>
+        
+        <div class="step">
+            <h3>Step 3: Check for Duplicates</h3>
+            <ol>
+                <li>After creating proposal, go to <a href="http://localhost:3000/my-submissions" target="_blank">My Submissions</a></li>
+                <li>Check if proposal appears only once</li>
+                <li>Also check <a href="http://localhost:3000/admin/platform" target="_blank">Platform Admin</a> launchpad section</li>
+            </ol>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h2>🔧 Expected Debug Output:</h2>
+        <div class="console">
+🔍 [CREATE PROPOSAL] handleSubmit called for: Your Asset Name<br>
+🔍 [CREATE PROPOSAL] Call stack for handleSubmit<br>
+Creating proposal: {...}<br>
+📢 Proposal approved: Your Asset Name (proposal_123)<br>
+✅ Approval notifications sent for proposal: proposal_123<br>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h2>⚠️ If Issues Persist:</h2>
+        
+        <div class="warning">
+            <h3>Potential Remaining Issues:</h3>
+            <ul>
+                <li><strong>Multiple Button Clicks:</strong> User double-clicking submit button</li>
+                <li><strong>React Strict Mode:</strong> Development mode may trigger effects twice</li>
+                <li><strong>Auto-save Conflicts:</strong> Auto-save might interfere with submission</li>
+                <li><strong>Backend Response:</strong> Backend might be returning duplicate data</li>
+            </ul>
+        </div>
+        
+        <div class="warning">
+            <h3>Additional Debug Commands:</h3>
+            <div class="console">
+// Check submission store state<br>
+console.log(useSubmissionStore.getState().submissions)<br><br>
+
+// Clear submissions for testing<br>
+useSubmissionStore.setState({submissions: []})<br><br>
+
+// Check demo mode (should be OFF for no duplicates)<br>
+CF1Debug.checkDemoMode()<br>
+            </div>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h2>🎯 Success Criteria:</h2>
+        <ul>
+            <li>✅ Admin approval works without errors</li>
+            <li>✅ Proposal creation shows only one entry</li>
+            <li>✅ Console shows proper debug logs</li>
+            <li>✅ No duplicate entries in My Submissions</li>
+            <li>✅ No duplicate entries in Admin panel</li>
+        </ul>
+    </div>
+    
+</body>
+</html>

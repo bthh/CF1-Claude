@@ -112,7 +112,7 @@ class ErrorHandler {
     }
 
     // Log to console in development
-    if (process.env.NODE_ENV === 'development') {
+    if (import.meta.env.MODE === 'development') {
       console.group(`🚨 Error Captured: ${error.id}`);
       console.error('Message:', error.message);
       console.error('Stack:', error.stack);
@@ -151,7 +151,7 @@ class ErrorHandler {
   private async sendToMonitoring(error: ErrorInfo): Promise<void> {
     try {
       // In a real app, this would send to a monitoring service like Sentry
-      if (process.env.NODE_ENV === 'production') {
+      if (import.meta.env.MODE === 'production') {
         await fetch('/api/errors', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -489,7 +489,7 @@ const DefaultErrorFallback: React.FC<ErrorBoundaryFallback> = ({
         </button>
       </div>
       
-      {process.env.NODE_ENV === 'development' && (
+      {import.meta.env.MODE === 'development' && (
         <details className="mt-4 text-left">
           <summary className="cursor-pointer text-sm text-gray-500">Error Details</summary>
           <pre className="mt-2 text-xs bg-gray-100 dark:bg-gray-800 p-3 rounded overflow-auto">

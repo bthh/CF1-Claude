@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
-import { useSwipeToDismiss } from '../../hooks/useGestures';
+import { useSwipeToDismiss, useGestures } from '../../hooks/useGestures';
 
 interface SwipeableModalProps {
   isOpen: boolean;

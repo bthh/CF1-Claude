@@ -19,11 +19,15 @@ export default defineConfig(({ mode }) => {
             vendor: ['react', 'react-dom'],
             router: ['react-router-dom'],
             cosmos: ['@cosmjs/cosmwasm-stargate', '@cosmjs/stargate'],
-            ui: ['lucide-react']
+            ui: ['lucide-react'],
+            polyfills: ['buffer', 'process', 'crypto-browserify', 'stream-browserify']
           }
         }
       },
-      chunkSizeWarningLimit: 1000
+      chunkSizeWarningLimit: 1000,
+      commonjsOptions: {
+        transformMixedEsModules: true
+      }
     },
     
     // Development server configuration
@@ -49,15 +53,40 @@ export default defineConfig(({ mode }) => {
       host: true
     },
     
-    // Environment variables
+    // Environment variables and polyfills
     define: {
       __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
-      __BUILD_TIME__: JSON.stringify(new Date().toISOString())
+      __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+      global: 'globalThis',
+      'process.env': '{}',
+      'process.platform': '"browser"',
+      'process.version': '"v18.0.0"',
+      'require.resolve': 'undefined',
+      'require.cache': 'undefined'
+    },
+    
+    // Node.js polyfills for browser compatibility
+    resolve: {
+      alias: {
+        buffer: 'buffer',
+        process: 'process/browser',
+        util: 'util',
+        crypto: 'crypto-browserify',
+        stream: 'stream-browserify'
+      }
     },
     
     // Dependency optimization
     optimizeDeps: {
-      include: ['react', 'react-dom', 'react-router-dom']
+      include: [
+        'react', 
+        'react-dom', 
+        'react-router-dom', 
+        'buffer', 
+        'process',
+        'crypto-browserify',
+        'stream-browserify'
+      ]
     }
   }
 })

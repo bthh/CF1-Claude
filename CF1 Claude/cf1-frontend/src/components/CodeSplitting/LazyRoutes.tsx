@@ -17,7 +17,7 @@ const createLazyComponent = <T extends ComponentType<any>>(
     })
   );
 
-  const WrappedComponent = React.forwardRef<any, React.ComponentProps<T>>((props, ref) => {
+  const WrappedComponent = React.forwardRef<any, any>((props, ref) => {
     const [hasError, setHasError] = React.useState(false);
 
     const handleRetry = () => {
@@ -35,14 +35,14 @@ const createLazyComponent = <T extends ComponentType<any>>(
 
     return (
       <Suspense fallback={<LoadingComponent />}>
-        <TransitionWrapper type="fadeInUp" duration={0.3}>
-          <LazyComponent {...props} ref={ref} />
+        <TransitionWrapper type="slideUp" duration={0.3}>
+          <LazyComponent {...(props as any)} />
         </TransitionWrapper>
       </Suspense>
     );
   });
 
-  WrappedComponent.displayName = `LazyComponent(${LazyComponent.displayName || 'Unknown'})`;
+  WrappedComponent.displayName = `LazyComponent(${(LazyComponent as any).displayName || 'Unknown'})`;
   
   return WrappedComponent;
 };
@@ -106,7 +106,7 @@ const DashboardLoading: React.FC = () => (
     {/* Chart */}
     <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
       <SkeletonLoader variant="text" className="h-6 w-40 mb-4" />
-      <SkeletonLoader variant="chart" className="h-64" />
+      <SkeletonLoader variant="rectangular" className="h-64" />
     </div>
   </div>
 );
@@ -164,7 +164,7 @@ const PortfolioLoading: React.FC = () => (
     {/* Holdings Table */}
     <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
       <SkeletonLoader variant="text" className="h-6 w-32 mb-4" />
-      <SkeletonLoader variant="table" rows={5} />
+      <SkeletonLoader variant="card" lines={5} />
     </div>
   </div>
 );
@@ -225,7 +225,7 @@ export const LazyProfile = createLazyComponent(
 );
 
 export const LazyProfileVerification = createLazyComponent(
-  () => import('../../pages/ProfileVerification'),
+  () => import('../../pages/Verification'),
   DefaultLoadingComponent,
   LazyErrorComponent
 );
@@ -242,11 +242,6 @@ export const LazyMarketSimulation = createLazyComponent(
   LazyErrorComponent
 );
 
-export const LazyTradingInterface = createLazyComponent(
-  () => import('../MarketSimulation/TradingInterface'),
-  DefaultLoadingComponent,
-  LazyErrorComponent
-);
 
 export const LazyPerformanceDashboard = createLazyComponent(
   () => import('../Performance/PerformanceDashboard'),
@@ -256,7 +251,7 @@ export const LazyPerformanceDashboard = createLazyComponent(
 
 // Admin components (lazy loaded separately for security)
 export const LazyAdminDashboard = createLazyComponent(
-  () => import('../../pages/AdminDashboard'),
+  () => import('../../pages/PlatformAdmin'),
   DefaultLoadingComponent,
   LazyErrorComponent
 );
@@ -368,15 +363,15 @@ export const preloadCriticalRoutes = async (): Promise<void> => {
 };
 
 // Route analytics
-export const trackRoutePerformance = (routeName: string): void => {
+export const trackRoutePerformance = (routeName: string) => {
   const startTime = performance.now();
   
   return () => {
     const loadTime = performance.now() - startTime;
     
     // Send to analytics
-    if (window.gtag) {
-      window.gtag('event', 'page_load_time', {
+    if ((window as any).gtag) {
+      (window as any).gtag('event', 'page_load_time', {
         event_category: 'Performance',
         event_label: routeName,
         value: Math.round(loadTime)

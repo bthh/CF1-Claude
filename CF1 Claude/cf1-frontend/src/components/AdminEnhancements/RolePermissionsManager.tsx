@@ -60,7 +60,7 @@ const RolePermissionsManager: React.FC = () => {
     
     // User Permissions
     { id: 'invest', name: 'Make Investments', description: 'Participate in funding rounds', category: 'users', level: 'write' },
-    { id: 'vote', name: 'Vote on Governance', description: 'Participate in governance voting', category: 'users', level: 'write' },
+    { id: 'vote', name: 'Vote on Proposals', description: 'Participate in voting', category: 'users', level: 'write' },
     { id: 'manage_users', name: 'Manage Users', description: 'View and manage user accounts', category: 'users', level: 'admin' },
     { id: 'view_user_details', name: 'View User Details', description: 'Access detailed user information', category: 'users', level: 'read' },
     

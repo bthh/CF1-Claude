@@ -182,7 +182,7 @@ export const useSimulatedLoading = (data: any, delay = 1000) => {
   const [loadedData, setLoadedData] = useState(null);
 
   useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
+    if (import.meta.env.MODE === 'development') {
       const timer = setTimeout(() => {
         setLoadedData(data);
         setIsLoading(false);

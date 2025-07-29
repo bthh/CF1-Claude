@@ -576,7 +576,7 @@ export const TutorialSystem: React.FC<TutorialSystemProps> = ({ className = '' }
       </AnimatePresence>
 
       {/* Tutorial Highlight Styles */}
-      <style jsx global>{`
+      <style>{`
         .tutorial-highlight {
           position: relative;
           z-index: 51;

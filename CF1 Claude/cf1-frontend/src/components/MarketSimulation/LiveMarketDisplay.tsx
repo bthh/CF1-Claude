@@ -36,7 +36,7 @@ export const LiveMarketDisplay: React.FC<LiveMarketDisplayProps> = ({
             </div>
           ))}
         </div>
-        <SkeletonLoader variant="chart" />
+        <SkeletonLoader variant="rectangular" className="h-64" />
       </div>
     );
   }
@@ -416,3 +416,5 @@ export const MarketEventsTicker: React.FC<{ className?: string }> = ({ className
     </div>
   );
 };
+
+export default LiveMarketDisplay;

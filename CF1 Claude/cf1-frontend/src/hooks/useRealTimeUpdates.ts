@@ -248,7 +248,7 @@ export const useRealTimeUpdates = () => {
       checkForUpdates();
       
       // Simulate status changes in development
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.MODE === 'development') {
         simulateStatusChange();
       }
     }, 10000);
@@ -259,6 +259,6 @@ export const useRealTimeUpdates = () => {
   return {
     checkForUpdates,
     // For manual testing in development
-    simulateChange: process.env.NODE_ENV === 'development' ? simulateStatusChange : undefined
+    simulateChange: import.meta.env.MODE === 'development' ? simulateStatusChange : undefined
   };
 };

@@ -26,6 +26,8 @@ import {
 import { useAdminAuthContext } from '../hooks/useAdminAuth';
 import { useNotifications } from '../hooks/useNotifications';
 import { formatAmount, formatPercentage, formatTimeAgo } from '../utils/format';
+import { usePlatformConfigStore } from '../store/platformConfigStore';
+import { DataModeConfig } from '../components/DataMode/DataModeConfig';
 
 interface PlatformMetrics {
   totalUsers: number;
@@ -74,13 +76,14 @@ interface SystemLog {
 const SuperAdmin: React.FC = () => {
   const { currentAdmin, checkPermission, hasAccessToSuperAdminManagement, isOwner } = useAdminAuthContext();
   const { success, error } = useNotifications();
+  const { config: platformConfig, updateTradingMode, updateMaxAPY } = usePlatformConfigStore();
   
   const [metrics, setMetrics] = useState<PlatformMetrics | null>(null);
   const [config, setConfig] = useState<PlatformConfig | null>(null);
   const [alerts, setAlerts] = useState<SecurityAlert[]>([]);
   const [logs, setLogs] = useState<SystemLog[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedTab, setSelectedTab] = useState<'overview' | 'config' | 'security' | 'logs' | 'emergency' | 'admin_management'>('overview');
+  const [selectedTab, setSelectedTab] = useState<'overview' | 'config' | 'security' | 'logs' | 'data_mode' | 'emergency' | 'admin_management'>('overview');
   const [showSensitiveData, setShowSensitiveData] = useState(false);
 
   useEffect(() => {
@@ -344,6 +347,7 @@ const SuperAdmin: React.FC = () => {
               { id: 'config', label: 'Configuration', icon: <Settings className="w-4 h-4" /> },
               { id: 'security', label: 'Security', icon: <Shield className="w-4 h-4" /> },
               { id: 'logs', label: 'System Logs', icon: <FileText className="w-4 h-4" /> },
+              { id: 'data_mode', label: 'Data Mode', icon: <Database className="w-4 h-4" /> },
               { id: 'emergency', label: 'Emergency', icon: <AlertTriangle className="w-4 h-4" /> },
               ...(hasAccessToSuperAdminManagement() ? [{ id: 'admin_management', label: 'Admin Management', icon: <Users className="w-4 h-4" /> }] : [])
             ].map((tab) => (
@@ -631,6 +635,88 @@ const SuperAdmin: React.FC = () => {
                     ))}
                   </div>
                 </div>
+
+                {/* Platform Configuration Settings */}
+                <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-600">
+                  <h4 className="text-md font-medium text-gray-900 dark:text-white mb-4">
+                    Platform Configuration
+                  </h4>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Trading Mode */}
+                    <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                      <div className="mb-4">
+                        <h5 className="font-medium text-gray-900 dark:text-white">Trading Mode</h5>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Configure marketplace trading mode
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="flex items-center">
+                          <input
+                            type="radio"
+                            name="tradingMode"
+                            value="primary"
+                            checked={platformConfig.tradingMode === 'primary'}
+                            onChange={() => updateTradingMode('primary')}
+                            className="mr-3 text-blue-600"
+                          />
+                          <div>
+                            <span className="font-medium text-gray-900 dark:text-white">Primary Trading</span>
+                            <p className="text-xs text-gray-600 dark:text-gray-400">New token sales and asset tokenization</p>
+                          </div>
+                        </label>
+                        <label className="flex items-center">
+                          <input
+                            type="radio"
+                            name="tradingMode"
+                            value="secondary"
+                            checked={platformConfig.tradingMode === 'secondary'}
+                            onChange={() => updateTradingMode('secondary')}
+                            className="mr-3 text-blue-600"
+                          />
+                          <div>
+                            <span className="font-medium text-gray-900 dark:text-white">Secondary Trading</span>
+                            <p className="text-xs text-gray-600 dark:text-gray-400">Peer-to-peer asset trading marketplace</p>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* APY Limits */}
+                    <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                      <div className="mb-4">
+                        <h5 className="font-medium text-gray-900 dark:text-white">APY Guardrails</h5>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Maximum allowed Expected APY percentage
+                        </p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Maximum APY (%)
+                        </label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          max="200"
+                          value={platformConfig.maxAllowedAPY}
+                          onChange={(e) => {
+                            const value = parseFloat(e.target.value);
+                            if (!isNaN(value) && value >= 0 && value <= 200) {
+                              updateMaxAPY(value);
+                              success(`Maximum APY updated to ${value}%`);
+                            }
+                          }}
+                          className="w-full px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        />
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          Current: {platformConfig.maxAllowedAPY}% (Platform safety limit: 200%)
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -836,6 +922,14 @@ const SuperAdmin: React.FC = () => {
               </div>
             </div>
           )}
+
+          {/* Demo Mode Tab */}
+          {selectedTab === 'data_mode' && (
+            <div className="space-y-6">
+              <DataModeConfig />
+            </div>
+          )}
+
 
           {/* Admin Management Tab - Owner Only */}
           {selectedTab === 'admin_management' && hasAccessToSuperAdminManagement() && (

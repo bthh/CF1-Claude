@@ -19,7 +19,7 @@ export const QueryProvider: React.FC<QueryProviderProps> = ({ children }) => {
       {children}
       
       {/* React Query Devtools - only in development */}
-      {process.env.NODE_ENV === 'development' && (
+      {import.meta.env.MODE === 'development' && (
         <ReactQueryDevtools 
           initialIsOpen={false}
         />

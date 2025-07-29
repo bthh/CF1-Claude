@@ -1,0 +1,159 @@
+groups:
+  - name: cf1-platform-alerts
+    rules:
+      # Application availability alerts
+      - alert: CF1FrontendDown
+        expr: up{job="cf1-frontend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: frontend
+        annotations:
+          summary: "CF1 Frontend is down"
+          description: "CF1 Frontend has been down for more than 1 minute"
+
+      - alert: CF1BackendDown
+        expr: up{job="cf1-backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: backend
+        annotations:
+          summary: "CF1 Backend is down"
+          description: "CF1 Backend has been down for more than 1 minute"
+
+      - alert: CF1AIAnalyzerDown
+        expr: up{job="cf1-ai-analyzer"} == 0
+        for: 2m
+        labels:
+          severity: warning
+          service: ai-analyzer
+        annotations:
+          summary: "CF1 AI Analyzer is down"
+          description: "CF1 AI Analyzer has been down for more than 2 minutes"
+
+      # High error rate alerts
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is above 5% for 5 minutes"
+
+      # High response time alerts
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High response time detected"
+          description: "95th percentile response time is above 2 seconds"
+
+      # System resource alerts
+      - alert: HighCPUUsage
+        expr: (100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)) > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage is above 80% for 5 minutes"
+
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage is above 85% for 5 minutes"
+
+      - alert: LowDiskSpace
+        expr: (1 - (node_filesystem_free_bytes / node_filesystem_size_bytes)) * 100 > 90
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Low disk space detected"
+          description: "Disk space usage is above 90%"
+
+      # External service alerts
+      - alert: NeutronRPCDown
+        expr: probe_success{instance="https://rpc-palvus.pion-1.ntrn.tech"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: neutron-rpc
+        annotations:
+          summary: "Neutron RPC endpoint is down"
+          description: "Neutron RPC endpoint has been unreachable for more than 2 minutes"
+
+      - alert: NeutronRESTDown
+        expr: probe_success{instance="https://rest-palvus.pion-1.ntrn.tech"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: neutron-rest
+        annotations:
+          summary: "Neutron REST endpoint is down"
+          description: "Neutron REST endpoint has been unreachable for more than 2 minutes"
+
+      # Application-specific alerts
+      - alert: HighGovernanceProposalCreationRate
+        expr: rate(governance_proposals_created_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High governance proposal creation rate"
+          description: "More than 6 governance proposals created per minute"
+
+      - alert: HighInvestmentFailureRate
+        expr: rate(investment_failures_total[5m]) / rate(investment_attempts_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High investment failure rate"
+          description: "Investment failure rate is above 10%"
+
+      - alert: LowWalletConnectionSuccessRate
+        expr: rate(wallet_connections_successful_total[5m]) / rate(wallet_connections_attempted_total[5m]) < 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low wallet connection success rate"
+          description: "Wallet connection success rate is below 80%"
+
+      # Database alerts (if using database)
+      - alert: DatabaseConnectionsHigh
+        expr: db_connections_active > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High database connection count"
+          description: "Database connections are above 80"
+
+      # Security alerts
+      - alert: FailedAuthenticationAttempts
+        expr: rate(failed_authentication_attempts_total[5m]) > 0.5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High failed authentication rate"
+          description: "More than 30 failed authentication attempts per minute"
+
+      - alert: SuspiciousAdminActivity
+        expr: rate(admin_actions_total[5m]) > 0.2
+        for: 5m
+        labels:
+          severity: info
+        annotations:
+          summary: "High admin activity detected"
+          description: "More than 12 admin actions per minute"

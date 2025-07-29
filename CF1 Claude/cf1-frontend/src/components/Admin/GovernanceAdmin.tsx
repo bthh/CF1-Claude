@@ -10,15 +10,16 @@ interface GovernanceAdminProps {
 }
 
 const GovernanceAdmin: React.FC<GovernanceAdminProps> = ({ selectedSubTab, setSelectedSubTab }) => {
-  const { 
-    getProposalsForAdmin, 
-    getProposalsByStatus, 
-    updateProposalStatus,
-    approveProposal,
-    rejectProposal,
-    requestChanges,
-    saveReviewComments
-  } = useGovernanceStore();
+  const governanceStore = useGovernanceStore();
+  
+  // Add error handling for store methods
+  const getProposalsForAdmin = governanceStore?.getProposalsForAdmin || (() => []);
+  const getProposalsByStatus = governanceStore?.getProposalsByStatus || (() => []);
+  const updateProposalStatus = governanceStore?.updateProposalStatus || (() => {});
+  const approveProposal = governanceStore?.approveProposal || (() => {});
+  const rejectProposal = governanceStore?.rejectProposal || (() => {});
+  const requestChanges = governanceStore?.requestChanges || (() => {});
+  const saveReviewComments = governanceStore?.saveReviewComments || (() => {});
   
   const [selectedProposal, setSelectedProposal] = useState<ProposalQueueItem | null>(null);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
@@ -94,6 +95,23 @@ const GovernanceAdmin: React.FC<GovernanceAdminProps> = ({ selectedSubTab, setSe
     }
     // Future: Add more subtabs like 'voting', 'parameters', etc.
   ];
+
+  // Add error handling if store is not available
+  if (!governanceStore) {
+    return (
+      <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 border border-gray-200 dark:border-gray-700 shadow-lg">
+        <div className="text-center">
+          <Vote className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+            Governance Admin Loading
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400">
+            Loading governance data...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

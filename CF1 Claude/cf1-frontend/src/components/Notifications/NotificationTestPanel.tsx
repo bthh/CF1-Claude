@@ -1,10 +1,10 @@
 import React from 'react';
 import { Bell, TestTube } from 'lucide-react';
-import { useNotificationService } from '../../services/notificationService';
+import { notificationService } from '../../services/notificationService';
 import { NotificationType } from '../../store/notificationSystemStore';
 
 const NotificationTestPanel: React.FC = () => {
-  const notificationService = useNotificationService();
+  // notificationService is already imported directly
 
   const testNotifications: { type: NotificationType; label: string; description: string }[] = [
     {

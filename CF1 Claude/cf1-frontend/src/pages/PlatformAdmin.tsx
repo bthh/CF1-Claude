@@ -37,6 +37,7 @@ import FeatureToggleManager from '../components/AdminEnhancements/FeatureToggleM
 import RolePermissionsManager from '../components/AdminEnhancements/RolePermissionsManager';
 import LaunchpadAdmin from '../components/Admin/LaunchpadAdmin';
 import GovernanceAdmin from '../components/Admin/GovernanceAdmin';
+import AutoCommunicationsModal from '../components/AutoCommunication/AutoCommunicationsModal';
 import { usePlatformConfigStore } from '../store/platformConfigStore';
 
 interface PlatformUser {
@@ -339,11 +340,12 @@ const PlatformAdmin: React.FC = () => {
   const [complianceCases, setComplianceCases] = useState<ComplianceCase[]>([]);
   const [supportTickets, setSupportTickets] = useState<SupportTicket[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedTab, setSelectedTab] = useState<'users' | 'roles' | 'features' | 'launchpad' | 'governance' | 'compliance' | 'support' | 'platform-config' | 'analytics'>('users');
+  const [selectedTab, setSelectedTab] = useState<'users' | 'roles' | 'features' | 'launchpad' | 'governance' | 'compliance' | 'support' | 'platform-config' | 'notifications' | 'analytics'>('users');
   const [selectedSubTab, setSelectedSubTab] = useState<string>('proposals');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showUserDetails, setShowUserDetails] = useState<string | null>(null);
+  const [showPlatformAutoCommunicationsModal, setShowPlatformAutoCommunicationsModal] = useState(false);
 
   useEffect(() => {
     loadPlatformData();
@@ -649,15 +651,16 @@ const PlatformAdmin: React.FC = () => {
         <div className="bg-white dark:bg-gray-800 rounded-2xl p-2 border border-gray-200 dark:border-gray-700 shadow-lg">
           <nav className="flex flex-wrap gap-2" role="tablist">
             {[
-              { id: 'users', label: 'User Management', icon: <Users className="w-4 h-4" />, count: users.length, color: 'blue', permission: 'manage_users' },
-              { id: 'roles', label: 'Roles & Permissions', icon: <Shield className="w-4 h-4" />, color: 'purple', permission: 'manage_user_roles' },
-              { id: 'features', label: 'Feature Toggles', icon: <Settings className="w-4 h-4" />, color: 'indigo', requiresFeatureToggleAccess: true },
-              { id: 'launchpad', label: 'Launchpad', icon: <Target className="w-4 h-4" />, color: 'orange', permission: 'manage_launchpad_proposals' },
-              { id: 'governance', label: 'Governance', icon: <Vote className="w-4 h-4" />, color: 'teal', permission: 'manage_governance_proposals' },
-              { id: 'compliance', label: 'Compliance', icon: <AlertCircle className="w-4 h-4" />, count: complianceCases.filter(c => c.status !== 'resolved').length, color: 'red', permission: 'manage_compliance' },
-              { id: 'support', label: 'Support Tickets', icon: <MessageSquare className="w-4 h-4" />, count: supportTickets.filter(t => t.status === 'open' || t.status === 'in_progress').length, color: 'green', permission: 'manage_support_tickets' },
+              { id: 'users', label: 'User Management', icon: <Users className="w-4 h-4" />, count: users.length, color: 'gray', permission: 'manage_users' },
+              { id: 'roles', label: 'Roles & Permissions', icon: <Shield className="w-4 h-4" />, color: 'gray', permission: 'manage_user_roles' },
+              { id: 'features', label: 'Feature Toggles', icon: <Settings className="w-4 h-4" />, color: 'gray', requiresFeatureToggleAccess: true },
+              { id: 'launchpad', label: 'Launchpad', icon: <Target className="w-4 h-4" />, color: 'gray', permission: 'manage_launchpad_proposals' },
+              { id: 'governance', label: 'Governance', icon: <Vote className="w-4 h-4" />, color: 'gray', permission: 'manage_governance_proposals' },
+              { id: 'compliance', label: 'Compliance', icon: <AlertCircle className="w-4 h-4" />, count: complianceCases.filter(c => c.status !== 'resolved').length, color: 'gray', permission: 'manage_compliance' },
+              { id: 'support', label: 'Support Tickets', icon: <MessageSquare className="w-4 h-4" />, count: supportTickets.filter(t => t.status === 'open' || t.status === 'in_progress').length, color: 'gray', permission: 'manage_support_tickets' },
               { id: 'platform-config', label: 'Platform Settings', icon: <Settings className="w-4 h-4" />, color: 'gray', requiresSuperAdmin: true },
-              { id: 'analytics', label: 'Analytics', icon: <FileText className="w-4 h-4" />, color: 'yellow', permission: 'view_analytics' }
+              { id: 'notifications', label: 'Auto Communications', icon: <Mail className="w-4 h-4" />, color: 'gray', requiresSuperAdmin: true },
+              { id: 'analytics', label: 'Analytics', icon: <FileText className="w-4 h-4" />, color: 'gray', permission: 'view_analytics' }
             ].filter((tab) => {
               // Role-based tab filtering
               if (tab.requiresFeatureToggleAccess) {
@@ -717,32 +720,283 @@ const PlatformAdmin: React.FC = () => {
       ) : (
         <>
           {/* Users Tab */}
-          {selectedTab === 'users' && <UserManagement />}
+          {selectedTab === 'users' && (() => {
+            try {
+              console.log('Rendering UserManagement component');
+              return <UserManagement />;
+            } catch (error) {
+              console.error('UserManagement error:', error);
+              return (
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 border border-gray-200 dark:border-gray-700 shadow-lg">
+                  <div className="text-center">
+                    <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">User Management Error</h3>
+                    <p className="text-gray-600 dark:text-gray-400">Failed to load user management interface.</p>
+                  </div>
+                </div>
+              );
+            }
+          })()}
           
-          {selectedTab === 'roles' && <RolePermissionsManager />}
+          {selectedTab === 'roles' && (() => {
+            try {
+              console.log('Rendering RolePermissionsManager component');
+              return <RolePermissionsManager />;
+            } catch (error) {
+              console.error('RolePermissionsManager error:', error);
+              return (
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 border border-gray-200 dark:border-gray-700 shadow-lg">
+                  <div className="text-center">
+                    <Shield className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Roles & Permissions Error</h3>
+                    <p className="text-gray-600 dark:text-gray-400">Failed to load roles management interface.</p>
+                  </div>
+                </div>
+              );
+            }
+          })()}
           
-          {selectedTab === 'features' && <FeatureToggleManager />}
+          {selectedTab === 'features' && (() => {
+            try {
+              console.log('Rendering FeatureToggleManager component');
+              return <FeatureToggleManager />;
+            } catch (error) {
+              console.error('FeatureToggleManager error:', error);
+              return (
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 border border-gray-200 dark:border-gray-700 shadow-lg">
+                  <div className="text-center">
+                    <Settings className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Feature Toggles Error</h3>
+                    <p className="text-gray-600 dark:text-gray-400 mb-4">Failed to load feature toggle interface.</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-500">Error: {error?.message}</p>
+                  </div>
+                </div>
+              );
+            }
+          })()}
           
           {/* Launchpad Tab */}
-          {selectedTab === 'launchpad' && (
-            <LaunchpadAdmin 
-              selectedSubTab={selectedSubTab} 
-              setSelectedSubTab={setSelectedSubTab} 
-            />
-          )}
+          {selectedTab === 'launchpad' && (() => {
+            try {
+              console.log('Rendering LaunchpadAdmin component');
+              return (
+                <LaunchpadAdmin 
+                  selectedSubTab={selectedSubTab} 
+                  setSelectedSubTab={setSelectedSubTab} 
+                />
+              );
+            } catch (error) {
+              console.error('LaunchpadAdmin error:', error);
+              return (
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 border border-gray-200 dark:border-gray-700 shadow-lg">
+                  <div className="text-center">
+                    <Target className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Launchpad Admin Error</h3>
+                    <p className="text-gray-600 dark:text-gray-400 mb-4">Failed to load launchpad management interface.</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-500">Error: {error?.message}</p>
+                  </div>
+                </div>
+              );
+            }
+          })()}
           
           {/* Governance Tab */}
-          {selectedTab === 'governance' && (
-            <GovernanceAdmin 
-              selectedSubTab={selectedSubTab} 
-              setSelectedSubTab={setSelectedSubTab} 
-            />
-          )}
+          {selectedTab === 'governance' && (() => {
+            try {
+              console.log('Rendering GovernanceAdmin component');
+              return (
+                <GovernanceAdmin 
+                  selectedSubTab={selectedSubTab} 
+                  setSelectedSubTab={setSelectedSubTab} 
+                />
+              );
+            } catch (error) {
+              console.error('GovernanceAdmin error:', error);
+              return (
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 border border-gray-200 dark:border-gray-700 shadow-lg">
+                  <div className="text-center">
+                    <Vote className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Governance Admin Error</h3>
+                    <p className="text-gray-600 dark:text-gray-400 mb-4">Failed to load governance management interface.</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-500">Error: {error?.message}</p>
+                  </div>
+                </div>
+              );
+            }
+          })()}
           
           {/* Platform Configuration Tab */}
-          {selectedTab === 'platform-config' && (
-            <PlatformConfigSection />
-          )}
+          {selectedTab === 'platform-config' && (() => {
+            try {
+              console.log('Rendering PlatformConfigSection component');
+              return <PlatformConfigSection />;
+            } catch (error) {
+              console.error('PlatformConfigSection error:', error);
+              return (
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 border border-gray-200 dark:border-gray-700 shadow-lg">
+                  <div className="text-center">
+                    <Settings className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Platform Settings Error</h3>
+                    <p className="text-gray-600 dark:text-gray-400">Failed to load platform configuration interface.</p>
+                  </div>
+                </div>
+              );
+            }
+          })()}
+
+          {/* Auto Communications Tab */}
+          {selectedTab === 'notifications' && (() => {
+            try {
+              return (
+                <div className="space-y-6" role="tabpanel" id="notifications-panel">
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg">
+                    <div className="flex items-center justify-between mb-6">
+                      <div>
+                        <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                          Platform Auto-Communications
+                        </h3>
+                        <p className="text-gray-600 dark:text-gray-400 mt-1">
+                          Configure default auto-communication templates for all creators
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          try {
+                            setShowPlatformAutoCommunicationsModal(true);
+                          } catch (error) {
+                            console.error('Error opening modal:', error);
+                            error('Failed to open auto-communications modal');
+                          }
+                        }}
+                        className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      >
+                        <Settings className="w-4 h-4" />
+                        <span>Manage Platform Defaults</span>
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-xl p-6 border border-blue-200 dark:border-blue-800">
+                        <div className="flex items-center space-x-3 mb-4">
+                          <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                            <Clock className="w-5 h-5 text-white" />
+                          </div>
+                          <div>
+                            <h4 className="font-semibold text-gray-900 dark:text-white">Time-Based Alerts</h4>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Deadline notifications</p>
+                          </div>
+                        </div>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 dark:text-gray-400">7 Days Before</span>
+                            <span className="text-green-600 font-medium">Active</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 dark:text-gray-400">48 Hours Before</span>
+                            <span className="text-green-600 font-medium">Active</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 dark:text-gray-400">6 Hours Final</span>
+                            <span className="text-gray-400 font-medium">Disabled</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-xl p-6 border border-purple-200 dark:border-purple-800">
+                        <div className="flex items-center space-x-3 mb-4">
+                          <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
+                            <Target className="w-5 h-5 text-white" />
+                          </div>
+                          <div>
+                            <h4 className="font-semibold text-gray-900 dark:text-white">Milestone Alerts</h4>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Funding progress</p>
+                          </div>
+                        </div>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 dark:text-gray-400">75% Funded</span>
+                            <span className="text-green-600 font-medium">Active</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 dark:text-gray-400">90% Funded</span>
+                            <span className="text-gray-400 font-medium">Disabled</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 dark:text-gray-400">Goal Reached</span>
+                            <span className="text-green-600 font-medium">Active</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-xl p-6 border border-green-200 dark:border-green-800">
+                        <div className="flex items-center space-x-3 mb-4">
+                          <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
+                            <Mail className="w-5 h-5 text-white" />
+                          </div>
+                          <div>
+                            <h4 className="font-semibold text-gray-900 dark:text-white">Channel Settings</h4>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Delivery preferences</p>
+                          </div>
+                        </div>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 dark:text-gray-400">Email</span>
+                            <span className="text-green-600 font-medium">Enabled</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 dark:text-gray-400">In-App</span>
+                            <span className="text-green-600 font-medium">Enabled</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600 dark:text-gray-400">SMS</span>
+                            <span className="text-yellow-600 font-medium">Optional</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                      <div className="flex items-start space-x-3">
+                        <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
+                        <div>
+                          <h4 className="font-medium text-blue-900 dark:text-blue-200 mb-1">
+                            Platform Default Templates
+                          </h4>
+                          <p className="text-sm text-blue-800 dark:text-blue-300">
+                            These templates serve as defaults for all creators. Creators can view and customize 
+                            these defaults for their specific assets. Changes here will affect all new proposals 
+                            and existing proposals that haven't been customized by their creators.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            } catch (error) {
+              console.error('Error rendering Auto Communication tab:', error);
+              return (
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 border border-gray-200 dark:border-gray-700 shadow-lg">
+                  <div className="text-center">
+                    <Mail className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      Auto Communication Error
+                    </h3>
+                    <p className="text-gray-600 dark:text-gray-400 mb-4">
+                      There was an error loading the auto-communication settings.
+                    </p>
+                    <button
+                      onClick={() => window.location.reload()}
+                      className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors mx-auto"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                      <span>Reload Page</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            }
+          })()}
           
           {/* Remove the hidden duplicate user management section */}
           {false && selectedTab === 'users' && (
@@ -1312,6 +1566,14 @@ const PlatformAdmin: React.FC = () => {
           )}
         </>
       )}
+
+      {/* Platform Auto Communications Modal */}
+      <AutoCommunicationsModal
+        isOpen={showPlatformAutoCommunicationsModal}
+        onClose={() => setShowPlatformAutoCommunicationsModal(false)}
+        creatorId="platform"
+        isCreatorView={false}
+      />
     </div>
   );
 };

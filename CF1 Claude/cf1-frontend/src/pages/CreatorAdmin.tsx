@@ -44,6 +44,7 @@ import { PublishUpdateModal } from '../components/Creator/PublishUpdateModal';
 import { CreateCampaignModal } from '../components/Creator/CreateCampaignModal';
 import { AssistantManagementModal } from '../components/Creator/AssistantManagementModal';
 import AIAssistantInterface from '../components/AIAssistant/AIAssistantInterface';
+import AutoCommunicationsModal from '../components/AutoCommunication/AutoCommunicationsModal';
 import { apiClient } from '../lib/api/client';
 
 // Creator Toolkit API Types
@@ -156,6 +157,7 @@ const CreatorAdmin: React.FC = () => {
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [showCampaignModal, setShowCampaignModal] = useState(false);
   const [showAssistantModal, setShowAssistantModal] = useState(false);
+  const [showAutoCommunicationsModal, setShowAutoCommunicationsModal] = useState(false);
   const [selectedCommunication, setSelectedCommunication] = useState<CommunicationCampaign | null>(null);
   const [selectedAssetUpdate, setSelectedAssetUpdate] = useState<AssetUpdate | null>(null);
 
@@ -253,7 +255,7 @@ const CreatorAdmin: React.FC = () => {
       const response = await apiClient.get('/api/creator-toolkit/communications');
       console.log('📝 Full response:', response);
       
-      if (response.success && response.data) {
+      if (response?.success && response.data) {
         console.log('📝 Response data:', response.data);
         // Backend: { success: true, data: [...], total: number }
         // API Client wraps as: { data: { success: true, data: [...], total: number }, success: true }
@@ -272,7 +274,7 @@ const CreatorAdmin: React.FC = () => {
         setCampaigns(validCommunications);
         console.log('✅ Loaded communications:', validCommunications.length);
       } else {
-        console.error('Failed to load communications:', response.error);
+        console.error('Failed to load communications:', response?.error || 'No response');
         setCampaigns([]);
       }
     } catch (error) {
@@ -325,7 +327,7 @@ const CreatorAdmin: React.FC = () => {
       const response = await apiClient.get('/api/creator-toolkit/asset-updates');
       console.log('📖 Full response:', response);
       
-      if (response.success && response.data) {
+      if (response?.success && response.data) {
         console.log('📖 Response data:', response.data);
         // Backend: { success: true, data: [...], total: number }
         // API Client wraps as: { data: { success: true, data: [...], total: number }, success: true }
@@ -342,7 +344,7 @@ const CreatorAdmin: React.FC = () => {
         setAssetUpdates(sortedUpdates);
         console.log('✅ Loaded asset updates:', updates.length);
       } else {
-        console.error('Failed to load asset updates:', response.error);
+        console.error('Failed to load asset updates:', response?.error || 'No response');
         setAssetUpdates([]);
       }
     } catch (error) {
@@ -1038,23 +1040,32 @@ const CreatorAdmin: React.FC = () => {
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                     Create New Communication
                   </h3>
-                  <button
-                    onClick={() => createCommunicationCampaign({
-                      title: 'New Campaign',
-                      type: campaignType,
-                      status: 'DRAFT',
-                      targetAudience: 'All Shareholders',
-                      recipientCount: shareholders.length,
-                      content: {
-                        subject: 'Important Update',
-                        body: 'Dear shareholders, we have an important update to share...'
-                      }
-                    })}
-                    className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>Create Campaign</span>
-                  </button>
+                  <div className="flex items-center space-x-3">
+                    <button
+                      onClick={() => setShowAutoCommunicationsModal(true)}
+                      className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                    >
+                      <Settings className="w-4 h-4" />
+                      <span>Auto Communications</span>
+                    </button>
+                    <button
+                      onClick={() => createCommunicationCampaign({
+                        title: 'New Campaign',
+                        type: campaignType,
+                        status: 'DRAFT',
+                        targetAudience: 'All Shareholders',
+                        recipientCount: shareholders.length,
+                        content: {
+                          subject: 'Important Update',
+                          body: 'Dear shareholders, we have an important update to share...'
+                        }
+                      })}
+                      className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>Create Campaign</span>
+                    </button>
+                  </div>
                 </div>
                 
                 <div className="flex items-center space-x-4">
@@ -1714,6 +1725,13 @@ const CreatorAdmin: React.FC = () => {
         onClose={() => setShowAssistantModal(false)}
         creatorId={currentAdmin?.id || ''}
         assets={mockAssets}
+      />
+
+      <AutoCommunicationsModal
+        isOpen={showAutoCommunicationsModal}
+        onClose={() => setShowAutoCommunicationsModal(false)}
+        creatorId={currentAdmin?.id || ''}
+        isCreatorView={true}
       />
 
       {/* Communication Detail Modal */}

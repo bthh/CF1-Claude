@@ -20,6 +20,7 @@ import {
 import { useSubmissionStore } from '../store/submissionStore';
 import { usePlatformConfigStore } from '../store/platformConfigStore';
 import { useNotifications } from '../hooks/useNotifications';
+import { useProposalNotifications } from '../hooks/useProposalNotifications';
 import { TouchInput, TouchSelect, TouchTextarea } from '../components/TouchOptimized';
 import AIProposalAssistant from '../components/AIProposalAssistant/AIProposalAssistant';
 import { aiAnalysisService } from '../services/aiAnalysis';
@@ -62,9 +63,10 @@ interface FormData {
 const CreateProposal: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { addSubmission, saveDraft, updateDraft, getSubmissionById } = useSubmissionStore();
+  const { addSubmission, addBackendProposalReference, saveDraft, updateDraft, getSubmissionById, deleteDraft } = useSubmissionStore();
   const { validateAPY } = usePlatformConfigStore();
   const { success, error: showError, info } = useNotifications();
+  const { scheduleNotificationsForProposal, hasConfiguredNotifications } = useProposalNotifications();
   const [currentStep, setCurrentStep] = useState(1);
   const [isEditingDraft, setIsEditingDraft] = useState(false);
   const [draftId, setDraftId] = useState<string | null>(null);
@@ -75,6 +77,8 @@ const CreateProposal: React.FC = () => {
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
   const [lastAutoSave, setLastAutoSave] = useState<string | null>(null);
   const [isAutoSaving, setIsAutoSaving] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     assetName: '',
     assetType: '',
@@ -396,12 +400,16 @@ const CreateProposal: React.FC = () => {
     }
   };
 
+  const handleSubmitConfirm = () => {
+    setShowSubmitConfirm(true);
+  };
+
   const handleSubmit = async () => {
     if (!validateStep(currentStep)) {
       showError('Please complete all required fields before submitting.');
       return;
     }
-    
+
     // Calculate deadline date from funding days
     const fundingDeadline = formData.fundingDays 
       ? new Date(Date.now() + formData.fundingDays * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
@@ -434,27 +442,133 @@ const CreateProposal: React.FC = () => {
       showError(`Validation failed: ${validation.errors.join(', ')}`);
       return;
     }
+
+    setIsSubmitting(true);
     
     try {
+      
       // Submit to backend API
       const result = await createProposal(submissionData);
       
       if (result.success && result.data) {
-        // Also save to local store for backwards compatibility
+        const proposalId = result.data.id || result.data.proposalId;
+        
+        console.log('✅ [CREATE PROPOSAL] Backend submission successful:', proposalId);
+        
+        // Add a reference to the backend proposal in our local store for tracking
+        addBackendProposalReference(proposalId, {
+          assetName: formData.assetName,
+          assetType: formData.assetType,
+          category: formData.category,
+          location: formData.location,
+          description: formData.description,
+          targetAmount: formData.targetAmount,
+          tokenPrice: formData.tokenPrice,
+          expectedAPY: formData.expectedAPY,
+          fundingDeadline: fundingDeadline,
+          riskFactors: formData.riskFactors,
+          useOfFunds: formData.useOfFunds
+        });
+
+        // If we were editing a draft, remove it from local store since it's now submitted to backend
+        if (isEditingDraft && draftId) {
+          deleteDraft(draftId);
+          console.log('🗑️ [CREATE PROPOSAL] Removed local draft after successful backend submission');
+        }
+        
+        // Trigger AI analysis if suitable documents are available
+        if (proposalId) {
+          triggerAIAnalysis(proposalId);
+        }
+        
+        // Schedule auto-communications for the new proposal
+        if (proposalId) {
+          try {
+            await scheduleNotificationsForProposal(proposalId, 'current_user_id');
+            
+            // Only show notification info if auto-communications are configured
+            if (hasConfiguredNotifications('current_user_id')) {
+              info(
+                'Auto-Communications Scheduled',
+                'Investor notifications will be sent automatically based on your configured settings.',
+                { duration: 5000 }
+              );
+            }
+          } catch (error) {
+            console.error('Failed to schedule auto-communications:', error);
+            // Don't block submission for notification scheduling failures
+          }
+        }
+        
+        success(
+          'Proposal Successfully Submitted!', 
+          'Your proposal has been submitted to our backend system for review and will be evaluated within 3-5 business days. You will receive notifications about the review status.',
+          {
+            duration: 8000,
+            actionLabel: 'View Backend Proposals',
+            onAction: () => navigate('/marketplace') // Navigate to marketplace where backend proposals are displayed
+          }
+        );
+        
+        // Show follow-up info notification
+        setTimeout(() => {
+          info(
+            'Proposal in Review Queue',
+            'Your proposal is now in our backend system awaiting admin review. Check the marketplace to see all active proposals.',
+            { duration: 10000 }
+          );
+        }, 3000);
+        
+        // Navigate to marketplace to see backend proposals
+        navigate('/marketplace');
+      } else {
+        // Handle API errors - fallback to local store
+        console.log('🔄 [CREATE PROPOSAL] API failed, falling back to local store');
+        
         const localResult = addSubmission({
           ...submissionData,
           minimumInvestment: calculatedValues.minimumInvestment.toString(),
           fundingDeadline: fundingDeadline
         });
         
-        // Trigger AI analysis if suitable documents are available
-        if (localResult.proposalId) {
+        if (localResult.success && localResult.proposalId) {
+          // Trigger AI analysis if suitable documents are available
           triggerAIAnalysis(localResult.proposalId);
+          
+          success(
+            'Proposal Submitted Successfully!', 
+            'Your proposal has been submitted locally and will be synced when the server connection is restored.',
+            {
+              duration: 6000,
+              actionLabel: 'View Status',
+              onAction: () => navigate('/my-submissions')
+            }
+          );
+          
+          navigate('/my-submissions');
+        } else {
+          showError(result.error || 'Failed to submit proposal. Please try again.');
         }
+      }
+    } catch (error) {
+      console.error('Error submitting proposal:', error);
+      
+      // Fallback to local store for network errors
+      console.log('🔄 [CREATE PROPOSAL] Network error, falling back to local store');
+      
+      const localResult = addSubmission({
+        ...submissionData,
+        minimumInvestment: calculatedValues.minimumInvestment.toString(),
+        fundingDeadline: fundingDeadline
+      });
+      
+      if (localResult.success && localResult.proposalId) {
+        // Trigger AI analysis if suitable documents are available
+        triggerAIAnalysis(localResult.proposalId);
         
         success(
-          'Proposal Submitted!', 
-          'Your proposal has been created successfully with server-side validation and will be reviewed within 3-5 business days.',
+          'Proposal Submitted Successfully!', 
+          'Your proposal has been submitted offline and will be synced when connection is restored.',
           {
             duration: 6000,
             actionLabel: 'View Status',
@@ -462,28 +576,12 @@ const CreateProposal: React.FC = () => {
           }
         );
         
-        // Show follow-up info notification
-        setTimeout(() => {
-          info(
-            'What Happens Next?',
-            'Our team will review your proposal and documentation. You\'ll receive updates via notifications and email.',
-            { duration: 10000 }
-          );
-        }, 3000);
-        
-        // Navigate to submissions page
         navigate('/my-submissions');
       } else {
-        // Handle API errors
-        if (result.code === 'VALIDATION_ERROR' && result.details) {
-          showError(`Server validation failed: ${result.details.join(', ')}`);
-        } else {
-          showError(result.error || 'Failed to submit proposal. Please try again.');
-        }
+        showError('Failed to save proposal offline. Please try again.');
       }
-    } catch (error) {
-      console.error('Error submitting proposal:', error);
-      showError('An unexpected error occurred. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -1088,12 +1186,23 @@ const CreateProposal: React.FC = () => {
       <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-l-4 border-blue-500 dark:border-blue-400 rounded-lg p-6">
         <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-3 flex items-center">
           <FileText className="w-4 h-4 mr-2" />
-          Next Steps
+          Submission Process
         </h4>
-        <p className="text-sm text-blue-700 dark:text-blue-300 leading-relaxed">
-          After submission, your proposal will be reviewed by our compliance team within 3-5 business days. 
-          You'll receive an email notification once the review is complete and your proposal status updates.
-        </p>
+        <div className="space-y-3 text-sm text-blue-700 dark:text-blue-300 leading-relaxed">
+          <p>
+            <strong>When you click "Submit Proposal for Review":</strong>
+          </p>
+          <ul className="ml-4 space-y-1">
+            <li>• Your proposal will be sent to our compliance team for review</li>
+            <li>• You'll receive a confirmation notification immediately</li>
+            <li>• The review process takes 3-5 business days</li>
+            <li>• You'll be notified of the decision via email and in-app notifications</li>
+            <li>• If approved, your proposal will go live for investor funding</li>
+          </ul>
+          <p className="text-xs mt-3 opacity-80">
+            Note: This is different from saving a draft, which keeps your work private until you're ready to submit.
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -1176,10 +1285,12 @@ const CreateProposal: React.FC = () => {
             {formData.assetName && (
               <button
                 onClick={handleSaveDraft}
-                className="flex items-center space-x-2 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+                disabled={isSubmitting}
+                className="flex items-center space-x-2 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
+                title={isEditingDraft ? 'Save changes to your draft' : 'Save your work as a draft'}
               >
                 <Save className="w-4 h-4" />
-                <span>{isEditingDraft ? 'Update Draft' : 'Save Draft'}</span>
+                <span>{isEditingDraft ? 'Update Draft' : 'Save as Draft'}</span>
               </button>
             )}
 
@@ -1202,16 +1313,25 @@ const CreateProposal: React.FC = () => {
               </button>
             ) : (
               <button
-                onClick={handleSubmit}
-                disabled={!validateStep(currentStep)}
+                onClick={handleSubmitConfirm}
+                disabled={!validateStep(currentStep) || isSubmitting}
                 className={`flex items-center space-x-2 px-6 py-2 rounded-lg transition-colors font-medium ${
-                  validateStep(currentStep)
+                  validateStep(currentStep) && !isSubmitting
                     ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm'
                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 }`}
               >
-                <CheckCircle className="w-4 h-4" />
-                <span>Submit Proposal</span>
+                {isSubmitting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <span>Submitting...</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-4 h-4" />
+                    <span>Submit Proposal for Review</span>
+                  </>
+                )}
               </button>
             )}
           </div>
@@ -1226,6 +1346,59 @@ const CreateProposal: React.FC = () => {
         isVisible={showAIAssistant}
         onToggle={() => setShowAIAssistant(!showAIAssistant)}
       />
+
+      {/* Submit Confirmation Modal */}
+      {showSubmitConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                <CheckCircle className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Submit Proposal for Review
+              </h3>
+            </div>
+            
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
+              Are you ready to submit "<strong>{formData.assetName}</strong>" for review? 
+              Once submitted, your proposal will be evaluated by our team within 3-5 business days.
+            </p>
+            
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+              <h4 className="text-sm font-medium text-blue-900 dark:text-blue-300 mb-2">
+                What happens next:
+              </h4>
+              <ul className="text-sm text-blue-800 dark:text-blue-300 space-y-1">
+                <li>• Your proposal enters the review queue</li>
+                <li>• Our team evaluates all documentation</li>
+                <li>• You'll receive status updates via notifications</li>
+                <li>• If approved, your proposal goes live for investors</li>
+              </ul>
+            </div>
+            
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowSubmitConfirm(false)}
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                disabled={isSubmitting}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setShowSubmitConfirm(false);
+                  handleSubmit();
+                }}
+                disabled={isSubmitting}
+                className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium disabled:opacity-50"
+              >
+                {isSubmitting ? 'Submitting...' : 'Submit Proposal'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

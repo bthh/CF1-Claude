@@ -209,7 +209,7 @@ export const useCommonShortcuts = () => {
     {
       key: 'g',
       action: () => window.location.href = '/governance',
-      description: 'Go to governance',
+      description: 'Go to voting',
       category: 'navigation'
     },
     

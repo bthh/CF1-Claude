@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export type SessionRole = 'investor' | 'creator' | 'platform_admin' | 'super_admin' | 'owner';
+export type SessionRole = 'investor' | 'creator' | 'super_admin' | 'owner';
 
 interface SessionStore {
   selectedRole: SessionRole | null;
@@ -58,10 +58,8 @@ export const getRoleDisplayName = (role: SessionRole): string => {
       return 'Investor';
     case 'creator':
       return 'Creator';
-    case 'platform_admin':
-      return 'Platform Admin';
     case 'super_admin':
-      return 'Super Admin';
+      return 'Platform Admin';
     case 'owner':
       return 'Owner';
     default:
@@ -75,10 +73,8 @@ export const getRoleDescription = (role: SessionRole): string => {
       return 'Standard user with investment capabilities';
     case 'creator':
       return 'Asset creator with proposal management rights';
-    case 'platform_admin':
-      return 'Platform administrator with user management';
     case 'super_admin':
-      return 'Super administrator with full platform access';
+      return 'Platform administrator with full system access';
     case 'owner':
       return 'Platform owner with complete control';
     default:

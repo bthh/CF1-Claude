@@ -174,4 +174,91 @@ router.get('/stats', async (req: Request, res: Response) => {
   }
 });
 
+// Chat rate limiting
+const chatRateLimit = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 20, // limit each IP to 20 chat messages per minute
+  message: 'Too many chat requests, please slow down'
+});
+
+/**
+ * POST /api/v1/ai-analysis/chat
+ * AI chat assistant for asset creators
+ */
+router.post('/chat', 
+  chatRateLimit,
+  async (req: Request, res: Response) => {
+    try {
+      const { message, context, conversationId } = req.body;
+
+      if (!message || typeof message !== 'string') {
+        return res.status(400).json({
+          error: 'Message is required',
+          code: 'MISSING_MESSAGE'
+        });
+      }
+
+      if (message.length > 1000) {
+        return res.status(400).json({
+          error: 'Message too long (max 1000 characters)',
+          code: 'MESSAGE_TOO_LONG'
+        });
+      }
+
+      const chatResponse = await analysisService.handleChatMessage(message, context, conversationId);
+      
+      res.json({
+        success: true,
+        response: chatResponse.response,
+        conversationId: chatResponse.conversationId,
+        timestamp: chatResponse.timestamp,
+        context: chatResponse.context
+      });
+
+    } catch (error) {
+      console.error('Chat processing error:', error);
+      res.status(500).json({
+        error: 'Failed to process chat message',
+        code: 'CHAT_PROCESSING_FAILED',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  }
+);
+
+/**
+ * POST /api/v1/ai-analysis/chat/suggestions
+ * Get AI suggestions for asset creators
+ */
+router.post('/chat/suggestions',
+  chatRateLimit,
+  async (req: Request, res: Response) => {
+    try {
+      const { assetType, context, requestType } = req.body;
+
+      if (!assetType || typeof assetType !== 'string') {
+        return res.status(400).json({
+          error: 'Asset type is required',
+          code: 'MISSING_ASSET_TYPE'
+        });
+      }
+
+      const suggestions = await analysisService.generateSuggestions(assetType, context, requestType);
+      
+      res.json({
+        success: true,
+        suggestions,
+        timestamp: new Date().toISOString()
+      });
+
+    } catch (error) {
+      console.error('Suggestions generation error:', error);
+      res.status(500).json({
+        error: 'Failed to generate suggestions',
+        code: 'SUGGESTIONS_GENERATION_FAILED'
+      });
+    }
+  }
+);
+
 export default router;

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CF1 Demo Mode Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .button { background: #007bff; color: white; padding: 10px 20px; margin: 10px; border: none; border-radius: 5px; cursor: pointer; }
+        .result { background: #f8f9fa; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .console { background: #000; color: #0f0; padding: 10px; font-family: monospace; max-height: 300px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <h1>CF1 Demo Mode Testing</h1>
+    
+    <h2>Instructions:</h2>
+    <ol>
+        <li>Open the CF1 platform at <a href="http://localhost:3000" target="_blank">http://localhost:3000</a></li>
+        <li>Open browser developer console (F12)</li>
+        <li>Use the buttons below or run commands in the console</li>
+        <li>Check the Launchpad and Governance pages for mock data</li>
+    </ol>
+    
+    <h2>Demo Mode Controls:</h2>
+    <button class="button" onclick="checkDemoMode()">Check Demo Mode Status</button>
+    <button class="button" onclick="enableDemoMode()">Enable Demo Mode</button>
+    <button class="button" onclick="disableDemoMode()">Disable Demo Mode</button>
+    <button class="button" onclick="clearStorage()">Clear All Storage</button>
+    
+    <div class="result">
+        <h3>Commands to run in CF1 platform console:</h3>
+        <div class="console">
+// Check current demo mode status<br>
+CF1Debug.checkDemoMode()<br><br>
+
+// Enable demo mode with mock data<br>
+CF1Debug.enableDemoMode('investor_presentation')<br><br>
+
+// Disable demo mode (clear mock data)<br>
+CF1Debug.resetDemoMode()<br><br>
+
+// Test data refresh<br>
+// 1. Check /launchpad page (should be empty in dev mode)<br>
+// 2. Check /governance page (should be empty in dev mode)<br>
+// 3. Enable demo mode<br>
+// 4. Check pages again (should have mock data)<br>
+        </div>
+    </div>
+    
+    <div class="result">
+        <h3>Expected Behavior:</h3>
+        <ul>
+            <li><strong>Development Mode (default):</strong> No mock proposals in Launchpad or Governance</li>
+            <li><strong>Demo Mode Enabled:</strong> Mock proposals appear in both sections</li>
+            <li><strong>Demo Mode Disabled:</strong> Mock proposals disappear immediately</li>
+        </ul>
+    </div>
+    
+    <script>
+        function checkDemoMode() {
+            const newWindow = window.open('http://localhost:3000', '_blank');
+            setTimeout(() => {
+                newWindow.postMessage('CF1Debug.checkDemoMode()', '*');
+                alert('Check the console in the CF1 tab for demo mode status');
+            }, 2000);
+        }
+        
+        function enableDemoMode() {
+            const newWindow = window.open('http://localhost:3000', '_blank');
+            setTimeout(() => {
+                newWindow.postMessage('CF1Debug.enableDemoMode("investor_presentation")', '*');
+                alert('Demo mode enabled. Check the Launchpad and Governance pages for mock data.');
+            }, 2000);
+        }
+        
+        function disableDemoMode() {
+            const newWindow = window.open('http://localhost:3000', '_blank');
+            setTimeout(() => {
+                newWindow.postMessage('CF1Debug.resetDemoMode()', '*');
+                alert('Demo mode disabled. Mock data should be cleared.');
+            }, 2000);
+        }
+        
+        function clearStorage() {
+            localStorage.clear();
+            sessionStorage.clear();
+            alert('All storage cleared. Refresh the CF1 platform to see changes.');
+        }
+    </script>
+</body>
+</html>

@@ -5,6 +5,7 @@
 
 import express from 'express';
 import { Request, Response } from 'express';
+import { requireAdmin, requirePermission, logAdminOperation, AdminAuthenticatedRequest } from '../middleware/adminAuth';
 
 const router = express.Router();
 
@@ -56,66 +57,8 @@ interface Investment {
 const proposals: Map<string, any> = new Map();
 const investments: Map<string, Investment[]> = new Map();
 
-// Initialize with mock proposals for testing
-const mockProposals = [
-  {
-    id: '1',
-    asset_details: {
-      name: 'Downtown Seattle Office Building',
-      type: 'Commercial Real Estate',
-      location: 'Seattle, WA',
-      description: 'Prime commercial real estate in the heart of Seattle\'s business district. Fully leased with AAA tenants and long-term contracts.'
-    },
-    financial_terms: {
-      target_amount: '$3,200,000',
-      token_price: '$100',
-      total_supply: '32,000',
-      minimum_investment: '$500',
-      expected_apy: '9.2%',
-      funding_deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-    },
-    funding_status: {
-      total_raised: 2100000,
-      total_investors: 127,
-      is_funded: false,
-      percentage_funded: 65.6
-    },
-    status: 'Active',
-    created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  {
-    id: '2',
-    asset_details: {
-      name: 'Rare Wine Collection Portfolio',
-      type: 'Collectibles',
-      location: 'Napa Valley, CA',
-      description: 'Curated collection of vintage wines from premier vineyards. Professional storage and authentication included.'
-    },
-    financial_terms: {
-      target_amount: '$850,000',
-      token_price: '$85',
-      total_supply: '10,000',
-      minimum_investment: '$1,000',
-      expected_apy: '11.5%',
-      funding_deadline: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000).toISOString()
-    },
-    funding_status: {
-      total_raised: 680000,
-      total_investors: 89,
-      is_funded: false,
-      percentage_funded: 80
-    },
-    status: 'Active',
-    created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    updated_at: new Date().toISOString()
-  }
-];
-
-// Initialize proposals map
-mockProposals.forEach(proposal => {
-  proposals.set(proposal.id, proposal);
-});
+// Production proposals start empty - no mock data
+// Proposals are added only through legitimate API calls from frontend
 
 /**
  * Calculate minimum investment based on funding goal and max investors
@@ -629,13 +572,14 @@ router.post('/sync-submission', (req: Request, res: Response) => {
  * POST /api/v1/proposals/:id/admin/instant-fund
  * Admin shortcut to instantly fund a proposal for testing
  */
-router.post('/:id/admin/instant-fund', (req: Request, res: Response) => {
-  const proposalId = req.params.id;
-  
-  // TODO: Add proper admin authentication middleware
-  // For now, accepting the admin call directly
-  
-  console.log(`🚀 Admin Instant Fund triggered for proposal ${proposalId}`);
+router.post('/:id/admin/instant-fund',
+  requireAdmin,
+  requirePermission('proposals'),
+  logAdminOperation,
+  (req: AdminAuthenticatedRequest, res: Response) => {
+    const proposalId = req.params.id;
+    
+    console.log(`🚀 Admin ${req.adminUser?.username} instant funding proposal ${proposalId}`);
   
   // First, check if it's a submission-based proposal that needs to be created
   if (!proposals.has(proposalId)) {

@@ -5,6 +5,9 @@ interface PlatformConfig {
   // APY Limits
   maxAllowedAPY: number; // Maximum allowed Expected APY percentage
   
+  // Trading Mode
+  tradingMode: 'primary' | 'secondary'; // Primary = new token sales, Secondary = peer-to-peer trading
+  
   // Future platform-wide settings can be added here
   // Example: maxProposalAmount, minInvestmentAmount, etc.
 }
@@ -16,13 +19,16 @@ interface PlatformConfigState {
   updateMaxAPY: (maxAPY: number) => void;
   getMaxAPY: () => number;
   validateAPY: (apy: number) => { isValid: boolean; error?: string };
+  updateTradingMode: (mode: 'primary' | 'secondary') => void;
+  getTradingMode: () => 'primary' | 'secondary';
   updateConfig: (newConfig: Partial<PlatformConfig>) => void;
   resetToDefaults: () => void;
 }
 
 // Default platform configuration
 const defaultConfig: PlatformConfig = {
-  maxAllowedAPY: 50.0 // Default maximum of 50% APY
+  maxAllowedAPY: 50.0, // Default maximum of 50% APY
+  tradingMode: 'secondary' // Default to secondary trading (peer-to-peer)
 };
 
 export const usePlatformConfigStore = create<PlatformConfigState>()(
@@ -66,6 +72,19 @@ export const usePlatformConfigStore = create<PlatformConfigState>()(
         }
         
         return { isValid: true };
+      },
+
+      updateTradingMode: (mode) => {
+        set((state) => ({
+          config: {
+            ...state.config,
+            tradingMode: mode
+          }
+        }));
+      },
+
+      getTradingMode: () => {
+        return get().config.tradingMode;
       },
 
       updateConfig: (newConfig) => {

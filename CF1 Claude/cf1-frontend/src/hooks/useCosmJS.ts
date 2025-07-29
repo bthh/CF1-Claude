@@ -56,6 +56,10 @@ export interface UseCosmJSReturn {
   // Error state
   error: string | null;
   clearError: () => void;
+  
+  // Utility functions
+  formatAmount: (amount: string | number, decimals?: number) => string;
+  parseAmount: (amount: string, decimals?: number) => string;
 }
 
 export const useCosmJS = (): UseCosmJSReturn => {
@@ -309,6 +313,25 @@ export const useCosmJS = (): UseCosmJSReturn => {
     }
   }, [address]);
 
+  // Utility functions
+  const formatAmount = useCallback((amount: string | number, decimals: number = 6): string => {
+    const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+    if (isNaN(numAmount)) return '0';
+    
+    // Convert from micro units to full units
+    const formatted = (numAmount / Math.pow(10, decimals)).toFixed(2);
+    return formatted;
+  }, []);
+
+  const parseAmount = useCallback((amount: string, decimals: number = 6): string => {
+    const numAmount = parseFloat(amount);
+    if (isNaN(numAmount)) return '0';
+    
+    // Convert from full units to micro units
+    const parsed = (numAmount * Math.pow(10, decimals)).toString();
+    return parsed;
+  }, []);
+
   return {
     // Connection state
     address,
@@ -359,5 +382,9 @@ export const useCosmJS = (): UseCosmJSReturn => {
     // Error state
     error,
     clearError,
+    
+    // Utility functions
+    formatAmount,
+    parseAmount,
   };
 };

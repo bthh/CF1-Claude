@@ -125,7 +125,7 @@ const NotificationsWidget: React.FC<NotificationsWidgetProps> = ({ size, isEditM
                   {notification.title}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {formatTimeAgo(notification.timestamp)}
+                  {formatTimeAgo(notification.timestamp.getTime())}
                 </p>
               </div>
             </div>
@@ -188,7 +188,7 @@ const NotificationsWidget: React.FC<NotificationsWidgetProps> = ({ size, isEditM
                   {notification.message}
                 </p>
                 <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                  {formatTimeAgo(notification.timestamp)}
+                  {formatTimeAgo(notification.timestamp.getTime())}
                 </p>
               </div>
               {!notification.read && (
@@ -280,7 +280,7 @@ const NotificationsWidget: React.FC<NotificationsWidgetProps> = ({ size, isEditM
                     </p>
                     <div className="flex items-center space-x-3 mt-2">
                       <span className="text-xs text-gray-400 dark:text-gray-500">
-                        {formatTimeAgo(notification.timestamp)}
+                        {formatTimeAgo(notification.timestamp.getTime())}
                       </span>
                       <span className={`text-xs px-2 py-0.5 rounded-full ${
                         notification.priority === 'high' 

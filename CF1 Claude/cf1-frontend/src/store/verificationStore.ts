@@ -28,6 +28,11 @@ interface VerificationStore extends UserVerificationState {
   getRequiredStepsForAction: (action: 'invest' | 'create_proposal' | 'vote') => string[];
   canPerformAction: (action: 'invest' | 'create_proposal' | 'vote') => boolean;
   getNextVerificationStep: () => string | null;
+  
+  // Profile page specific methods
+  currentLevel: number;
+  isVerificationComplete: boolean;
+  getVerificationProgress: () => { percentage: number; completedSteps: number; totalSteps: number };
 }
 
 // Default state for new users
@@ -341,6 +346,48 @@ export const useVerificationStore = create<VerificationStore>()(
         }
         
         return null;
+      },
+
+      // Profile page specific methods
+      get currentLevel() {
+        const state = get();
+        
+        if (state.level === 'accredited') return 3;
+        if (state.level === 'verified') return 2;
+        if (state.level === 'basic') return 1;
+        return 0;
+      },
+
+      get isVerificationComplete() {
+        const state = get();
+        return state.level === 'accredited' || state.level === 'verified';
+      },
+
+      getVerificationProgress: () => {
+        const state = get();
+        let completedSteps = 0;
+        const totalSteps = 3;
+
+        // Basic verification
+        if (state.basicVerification && state.basicVerification.status === 'approved') {
+          completedSteps++;
+        }
+
+        // Identity verification
+        if (state.identityVerification && state.identityVerification.status === 'approved') {
+          completedSteps++;
+        }
+
+        // Accredited investor verification
+        if (state.accreditedVerification && state.accreditedVerification.status === 'approved') {
+          completedSteps++;
+        }
+
+        return {
+          completedSteps,
+          totalSteps,
+          percentage: Math.round((completedSteps / totalSteps) * 100)
+        };
       }
     }),
     {

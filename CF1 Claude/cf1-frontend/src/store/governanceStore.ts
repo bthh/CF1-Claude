@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { useDemoModeStore } from './demoModeStore';
 
 export interface GovernanceProposal {
   id: string;
@@ -82,6 +83,7 @@ interface GovernanceState {
   saveReviewComments: (proposalId: string, comments: string) => void;
   updateProposalFromSimulate: (proposalId: string, updatedData: { status: GovernanceProposal['status']; votesFor?: number; votesAgainst?: number; totalVotes?: number }) => void;
   syncWithBackend: () => Promise<void>;
+  refreshDataForDemoMode: () => void;
 }
 
 // Data validation helper
@@ -315,7 +317,9 @@ const mockGovernanceProposals: GovernanceProposal[] = [
 export const useGovernanceStore = create<GovernanceState>()(
   persist(
     (set, get) => ({
-      proposals: mockGovernanceProposals.map(proposal => validateProposalData(proposal)),
+      proposals: useDemoModeStore.getState().isDemoMode() 
+        ? mockGovernanceProposals.map(proposal => validateProposalData(proposal))
+        : [], // Empty array in development mode
 
       addProposal: (proposalData) => {
         try {
@@ -534,7 +538,7 @@ export const useGovernanceStore = create<GovernanceState>()(
                   status,
                   reviewComments: comments,
                   reviewDate: new Date().toISOString(),
-                  reviewedBy: 'Platform Admin' // TODO: Get actual admin name
+                  reviewedBy: localStorage.getItem('adminUsername') || 'Platform Admin'
                 }
               : proposal
           )
@@ -578,7 +582,7 @@ export const useGovernanceStore = create<GovernanceState>()(
                   status: 'active', // Approved proposals become active for voting
                   reviewComments: comments,
                   reviewDate: new Date().toISOString(),
-                  reviewedBy: 'Platform Admin' // TODO: Get actual admin name
+                  reviewedBy: localStorage.getItem('adminUsername') || 'Platform Admin'
                 }
               : proposal
           )
@@ -594,7 +598,7 @@ export const useGovernanceStore = create<GovernanceState>()(
                   status: 'rejected',
                   reviewComments: comments,
                   reviewDate: new Date().toISOString(),
-                  reviewedBy: 'Platform Admin' // TODO: Get actual admin name
+                  reviewedBy: localStorage.getItem('adminUsername') || 'Platform Admin'
                 }
               : proposal
           )
@@ -610,7 +614,7 @@ export const useGovernanceStore = create<GovernanceState>()(
                   status: 'changes_requested',
                   reviewComments: comments,
                   reviewDate: new Date().toISOString(),
-                  reviewedBy: 'Platform Admin' // TODO: Get actual admin name
+                  reviewedBy: localStorage.getItem('adminUsername') || 'Platform Admin'
                 }
               : proposal
           )
@@ -625,7 +629,7 @@ export const useGovernanceStore = create<GovernanceState>()(
                   ...proposal, 
                   reviewComments: comments,
                   reviewDate: new Date().toISOString(),
-                  reviewedBy: 'Platform Admin' // TODO: Get actual admin name
+                  reviewedBy: localStorage.getItem('adminUsername') || 'Platform Admin'
                   // Note: Status remains unchanged - only saving comments
                 }
               : proposal
@@ -715,6 +719,15 @@ export const useGovernanceStore = create<GovernanceState>()(
         } catch (error) {
           console.error('❌ Failed to sync governance store with backend:', error);
         }
+      },
+
+      refreshDataForDemoMode: () => {
+        set(() => ({
+          proposals: useDemoModeStore.getState().isDemoMode() 
+            ? mockGovernanceProposals.map(proposal => validateProposalData(proposal))
+            : [] // Clear all proposals in development mode
+        }));
+        console.log('🔄 Governance store refreshed for demo mode change');
       }
     }),
     {

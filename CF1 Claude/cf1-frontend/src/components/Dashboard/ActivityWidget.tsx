@@ -100,7 +100,7 @@ const ActivityWidget: React.FC<ActivityWidgetProps> = ({ size, isEditMode = fals
                   {activity.title}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {formatTimeAgo(activity.timestamp)}
+                  {formatTimeAgo(activity.timestamp.getTime())}
                 </p>
               </div>
             </div>
@@ -151,7 +151,7 @@ const ActivityWidget: React.FC<ActivityWidgetProps> = ({ size, isEditMode = fals
                   {activity.description}
                 </p>
                 <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                  {formatTimeAgo(activity.timestamp)}
+                  {formatTimeAgo(activity.timestamp.getTime())}
                 </p>
               </div>
             </div>
@@ -227,7 +227,7 @@ const ActivityWidget: React.FC<ActivityWidgetProps> = ({ size, isEditMode = fals
                     </p>
                   </div>
                   <span className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap ml-2">
-                    {formatTimeAgo(activity.timestamp)}
+                    {formatTimeAgo(activity.timestamp.getTime())}
                   </span>
                 </div>
               </div>

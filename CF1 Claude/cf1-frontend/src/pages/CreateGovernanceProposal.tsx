@@ -96,7 +96,8 @@ const CreateGovernanceProposal: React.FC = () => {
           requiredAmount: draft.requiredAmount || '',
           expectedImpact: draft.impact,
           votingDuration: draft.votingDuration.toString(),
-          additionalDetails: draft.additionalDetails || ''
+          additionalDetails: draft.additionalDetails || '',
+          isPrivate: draft.isPrivate || false
         });
       }
     }
@@ -110,7 +111,7 @@ const CreateGovernanceProposal: React.FC = () => {
     { id: 'wine-collection', name: 'Rare Wine Collection', tokens: 92, type: 'Collectibles' }
   ];
 
-  const handleInputChange = (field: keyof ProposalFormData, value: string) => {
+  const handleInputChange = (field: keyof ProposalFormData, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -143,7 +144,8 @@ const CreateGovernanceProposal: React.FC = () => {
       additionalDetails: formData.additionalDetails,
       votingDuration: parseInt(formData.votingDuration),
       userTokens: selectedAsset.tokens,
-      userVotingPower: selectedAsset.tokens
+      userVotingPower: selectedAsset.tokens,
+      isPrivate: formData.isPrivate
     };
 
     if (isEditingDraft && draftId) {
@@ -176,7 +178,7 @@ const CreateGovernanceProposal: React.FC = () => {
       userTokens: selectedAsset.tokens,
       userVotingPower: selectedAsset.tokens,
       isPrivate: formData.isPrivate, // Add privacy setting
-      visibilityPolicy: 'creator_decides' // For now, assume creator decides policy
+      visibilityPolicy: 'creator_decides' as const // For now, assume creator decides policy
     };
 
     const result = addProposal(proposalData);
@@ -243,10 +245,10 @@ const CreateGovernanceProposal: React.FC = () => {
           </button>
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              {isEditingDraft ? 'Edit Draft Proposal' : 'Create Governance Proposal'}
+              {isEditingDraft ? 'Edit Draft Proposal' : 'Create Voting Proposal'}
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-1">
-              {isEditingDraft ? 'Edit and submit your saved draft' : 'Submit a proposal for asset governance decisions'}
+              {isEditingDraft ? 'Edit and submit your saved draft' : 'Submit a proposal for asset voting decisions'}
             </p>
           </div>
         </div>

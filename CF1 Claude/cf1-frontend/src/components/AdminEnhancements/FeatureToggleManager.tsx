@@ -61,11 +61,47 @@ const FeatureToggleManager: React.FC = () => {
     }
   };
 
-  const groupedFeatures = Object.values(features).reduce((acc, feature) => {
+  const groupedFeatures = Object.values(features || {}).reduce((acc, feature) => {
+    if (!feature || !feature.category) return acc;
     if (!acc[feature.category]) acc[feature.category] = [];
     acc[feature.category].push(feature);
     return acc;
-  }, {} as Record<string, typeof features[string][]>);
+  }, {} as Record<string, FeatureToggle[]>);
+
+  // Add loading and error states
+  if (!features) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <span className="ml-2 text-gray-600 dark:text-gray-400">Loading feature toggles...</span>
+      </div>
+    );
+  }
+
+  const hasFeatures = Object.keys(features).length > 0;
+  
+  if (!hasFeatures) {
+    return (
+      <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 border border-gray-200 dark:border-gray-700 shadow-lg">
+        <div className="text-center">
+          <Shield className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+            No Feature Toggles Available
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            Feature toggles are loading or not configured yet.
+          </p>
+          <button
+            onClick={loadFeatureToggles}
+            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors mx-auto"
+          >
+            <RefreshCw className="w-4 h-4" />
+            <span>Reload Features</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -211,10 +247,10 @@ const FeatureToggleManager: React.FC = () => {
           
           <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
             <p className="text-2xl font-bold text-gray-900 dark:text-white">
-              {Object.values(features).filter(f => f.category === 'defi').length}
+              {Object.values(features).filter(f => f.category === 'general').length}
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              DeFi Features
+              General Features
             </p>
           </div>
           

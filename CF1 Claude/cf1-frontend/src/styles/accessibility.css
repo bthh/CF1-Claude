@@ -348,3 +348,320 @@
   background-color: #3B82F6;
   color: white;
 }
+
+/* ========================================
+   Enhanced Accessibility Features
+   WCAG 2.1 AA Compliance Enhancements
+   ======================================== */
+
+/* High Contrast Mode Enhancements */
+.high-contrast {
+  --bg-primary: #000000;
+  --bg-secondary: #ffffff;
+  --text-primary: #ffffff;
+  --text-secondary: #000000;
+  --border-color: #ffffff;
+  --focus-color: #ffff00;
+  --link-color: #00ffff;
+  --button-bg: #0000ff;
+  --button-text: #ffffff;
+  --error-color: #ff0000;
+  --success-color: #00ff00;
+  --warning-color: #ffff00;
+}
+
+.high-contrast * {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+.high-contrast .bg-white,
+.high-contrast .bg-gray-50,
+.high-contrast .bg-gray-100,
+.high-contrast .bg-gray-200,
+.high-contrast [class*="bg-white"],
+.high-contrast [class*="bg-gray-"] {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-secondary) !important;
+}
+
+.high-contrast a,
+.high-contrast .text-blue-600,
+.high-contrast [class*="text-blue-"] {
+  color: var(--link-color) !important;
+}
+
+.high-contrast button,
+.high-contrast .bg-blue-600,
+.high-contrast [class*="bg-blue-"] {
+  background-color: var(--button-bg) !important;
+  color: var(--button-text) !important;
+  border: 2px solid var(--border-color) !important;
+}
+
+.high-contrast .text-red-600,
+.high-contrast [class*="text-red-"] {
+  color: var(--error-color) !important;
+}
+
+.high-contrast .text-green-600,
+.high-contrast [class*="text-green-"] {
+  color: var(--success-color) !important;
+}
+
+.high-contrast .text-yellow-600,
+.high-contrast [class*="text-yellow-"] {
+  color: var(--warning-color) !important;
+}
+
+/* Reduced Motion Enhancements */
+.reduce-motion,
+.reduce-motion *,
+.reduce-motion *::before,
+.reduce-motion *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+.reduce-motion .animate-spin,
+.reduce-motion .animate-pulse,
+.reduce-motion .animate-bounce {
+  animation: none !important;
+}
+
+/* Font Size System */
+.font-small {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.font-small h1 { font-size: 1.5rem; line-height: 2rem; }
+.font-small h2 { font-size: 1.25rem; line-height: 1.75rem; }
+.font-small h3 { font-size: 1.125rem; line-height: 1.5rem; }
+.font-small h4 { font-size: 1rem; line-height: 1.25rem; }
+.font-small h5 { font-size: 0.875rem; line-height: 1.25rem; }
+.font-small h6 { font-size: 0.75rem; line-height: 1rem; }
+
+.font-medium {
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+
+.font-medium h1 { font-size: 2.25rem; line-height: 2.5rem; }
+.font-medium h2 { font-size: 1.875rem; line-height: 2.25rem; }
+.font-medium h3 { font-size: 1.5rem; line-height: 2rem; }
+.font-medium h4 { font-size: 1.25rem; line-height: 1.75rem; }
+.font-medium h5 { font-size: 1.125rem; line-height: 1.5rem; }
+.font-medium h6 { font-size: 1rem; line-height: 1.5rem; }
+
+.font-large {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+}
+
+.font-large h1 { font-size: 3rem; line-height: 1; }
+.font-large h2 { font-size: 2.25rem; line-height: 2.5rem; }
+.font-large h3 { font-size: 1.875rem; line-height: 2.25rem; }
+.font-large h4 { font-size: 1.5rem; line-height: 2rem; }
+.font-large h5 { font-size: 1.25rem; line-height: 1.75rem; }
+.font-large h6 { font-size: 1.125rem; line-height: 1.75rem; }
+
+.font-extra-large {
+  font-size: 1.25rem;
+  line-height: 1.875rem;
+}
+
+.font-extra-large h1 { font-size: 3.75rem; line-height: 1; }
+.font-extra-large h2 { font-size: 3rem; line-height: 1; }
+.font-extra-large h3 { font-size: 2.25rem; line-height: 2.5rem; }
+.font-extra-large h4 { font-size: 1.875rem; line-height: 2.25rem; }
+.font-extra-large h5 { font-size: 1.5rem; line-height: 2rem; }
+.font-extra-large h6 { font-size: 1.25rem; line-height: 1.75rem; }
+
+/* Enhanced Focus Indicators */
+.focus-visible-enabled *:focus,
+.focus-visible-enabled *:focus-visible {
+  outline: 3px solid #3b82f6 !important;
+  outline-offset: 2px !important;
+  border-radius: 4px;
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 5px #3b82f6 !important;
+}
+
+.focus-visible-enabled .high-contrast *:focus,
+.focus-visible-enabled .high-contrast *:focus-visible {
+  outline: 3px solid var(--focus-color) !important;
+  box-shadow: 0 0 0 2px #000000, 0 0 0 5px var(--focus-color) !important;
+}
+
+/* Keyboard Navigation System */
+.keyboard-navigation-enabled {
+  --focus-ring: 0 0 0 3px #3b82f6;
+}
+
+.keyboard-navigation-enabled button:focus-visible,
+.keyboard-navigation-enabled a:focus-visible,
+.keyboard-navigation-enabled input:focus-visible,
+.keyboard-navigation-enabled select:focus-visible,
+.keyboard-navigation-enabled textarea:focus-visible,
+.keyboard-navigation-enabled [role="button"]:focus-visible,
+.keyboard-navigation-enabled [role="link"]:focus-visible,
+.keyboard-navigation-enabled [role="menuitem"]:focus-visible,
+.keyboard-navigation-enabled [role="option"]:focus-visible,
+.keyboard-navigation-enabled [tabindex]:focus-visible {
+  box-shadow: var(--focus-ring) !important;
+  outline: none;
+  border-radius: 4px;
+}
+
+.keyboard-navigation-enabled .high-contrast button:focus-visible,
+.keyboard-navigation-enabled .high-contrast a:focus-visible,
+.keyboard-navigation-enabled .high-contrast input:focus-visible,
+.keyboard-navigation-enabled .high-contrast select:focus-visible,
+.keyboard-navigation-enabled .high-contrast textarea:focus-visible,
+.keyboard-navigation-enabled .high-contrast [tabindex]:focus-visible {
+  box-shadow: 0 0 0 3px var(--focus-color) !important;
+}
+
+/* Interactive Element Standards */
+.interactive-element {
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+button[disabled],
+input[disabled],
+select[disabled],
+textarea[disabled] {
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
+}
+
+/* Focus Trap Implementation */
+.focus-trap {
+  position: relative;
+}
+
+.focus-trap::before,
+.focus-trap::after {
+  content: '';
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Screen Reader Announcements */
+.announcer {
+  position: absolute !important;
+  left: -10000px !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+}
+
+/* Accessible Form Enhancements */
+input[aria-invalid="true"],
+select[aria-invalid="true"],
+textarea[aria-invalid="true"] {
+  border: 2px solid #dc2626 !important;
+  box-shadow: 0 0 0 1px #dc2626 !important;
+}
+
+.form-error {
+  color: #dc2626;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  display: flex;
+  align-items: center;
+}
+
+.form-error::before {
+  content: "⚠️";
+  margin-right: 0.25rem;
+}
+
+/* Motion Preferences Detection */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* High Contrast Preferences */
+@media (prefers-contrast: high) {
+  :root {
+    --bg-primary: #000000;
+    --text-primary: #ffffff;
+    --border-color: #ffffff;
+    --focus-color: #ffff00;
+  }
+}
+
+/* Print Accessibility */
+@media print {
+  * {
+    background: transparent !important;
+    color: black !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  a,
+  a:visited {
+    text-decoration: underline;
+  }
+
+  a[href]:after {
+    content: " (" attr(href) ")";
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* Windows High Contrast Mode */
+@media screen and (-ms-high-contrast: active) {
+  button {
+    border: 1px solid;
+  }
+
+  input,
+  select,
+  textarea {
+    border: 1px solid;
+    background: window;
+    color: windowText;
+  }
+
+  a {
+    color: linkText;
+  }
+
+  a:visited {
+    color: visitedText;
+  }
+}
+
+/* Dark Mode Accessibility */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --focus-color: #60a5fa;
+  }
+
+  .focus-visible-enabled *:focus,
+  .focus-visible-enabled *:focus-visible {
+    outline: 3px solid var(--focus-color) !important;
+    box-shadow: 0 0 0 2px #1f2937, 0 0 0 5px var(--focus-color) !important;
+  }
+}

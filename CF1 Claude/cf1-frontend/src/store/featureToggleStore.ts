@@ -6,7 +6,7 @@ export interface FeatureToggle {
   name: string;
   description: string;
   enabled: boolean;
-  category: 'trading' | 'defi' | 'governance' | 'launchpad' | 'general';
+  category: 'trading' | 'governance' | 'launchpad' | 'general';
   requiredRole?: 'super_admin' | 'platform_admin';
   lastModified: string;
   modifiedBy?: string;
@@ -22,41 +22,6 @@ interface FeatureToggleState {
 
 // Default feature toggles
 const defaultFeatures: Record<string, FeatureToggle> = {
-  'lending': {
-    id: 'lending',
-    name: 'Lending & Borrowing',
-    description: 'Enable lending and borrowing functionality',
-    enabled: true,
-    category: 'defi',
-    requiredRole: 'platform_admin',
-    lastModified: new Date().toISOString()
-  },
-  'staking': {
-    id: 'staking',
-    name: 'Staking',
-    description: 'Enable staking pools and rewards',
-    enabled: true,
-    category: 'defi',
-    requiredRole: 'platform_admin',
-    lastModified: new Date().toISOString()
-  },
-  'liquidity_pools': {
-    id: 'liquidity_pools',
-    name: 'Liquidity Pools',
-    description: 'Enable AMM liquidity pools',
-    enabled: true,
-    category: 'defi',
-    requiredRole: 'platform_admin',
-    lastModified: new Date().toISOString()
-  },
-  'primary_trading': {
-    id: 'primary_trading',
-    name: 'Primary Trading',
-    description: 'Enable primary market trading for RWA tokens',
-    enabled: true,
-    category: 'trading',
-    lastModified: new Date().toISOString()
-  },
   'secondary_trading': {
     id: 'secondary_trading',
     name: 'Secondary Trading',

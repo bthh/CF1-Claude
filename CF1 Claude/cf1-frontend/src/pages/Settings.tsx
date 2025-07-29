@@ -11,8 +11,14 @@ import {
   Trash2,
   Download,
   Upload,
-  AlertTriangle
+  AlertTriangle,
+  Eye,
+  Type,
+  MousePointer,
+  Volume2
 } from 'lucide-react';
+import { useAccessibility } from '../providers/AccessibilityProvider';
+import { AccessibilityPanel } from '../components/Accessibility/AccessibilityPanel';
 
 const Settings: React.FC = () => {
   const [notifications, setNotifications] = useState({
@@ -29,6 +35,9 @@ const Settings: React.FC = () => {
   });
 
   const [theme, setTheme] = useState('light');
+  const [showAccessibilityPanel, setShowAccessibilityPanel] = useState(false);
+  
+  const { settings, isHighContrastEnabled, isReducedMotionEnabled } = useAccessibility();
 
   const handleNotificationChange = (key: keyof typeof notifications) => {
     setNotifications(prev => ({
@@ -282,6 +291,87 @@ const Settings: React.FC = () => {
               </div>
             </div>
           </div>
+
+          {/* Accessibility */}
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
+            <div className="flex items-center space-x-3 mb-6">
+              <Eye className="w-6 h-6 text-green-600" />
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Accessibility</h2>
+            </div>
+
+            <div className="space-y-6">
+              {/* Current Settings Summary */}
+              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                <h3 className="font-medium text-gray-900 dark:text-white mb-3">Current Settings</h3>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="flex items-center space-x-2">
+                    <Type className="w-4 h-4 text-gray-500" />
+                    <span className="text-gray-600 dark:text-gray-400">Font Size:</span>
+                    <span className="font-medium text-gray-900 dark:text-white capitalize">{settings.fontSize}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Eye className="w-4 h-4 text-gray-500" />
+                    <span className="text-gray-600 dark:text-gray-400">High Contrast:</span>
+                    <span className={`font-medium ${isHighContrastEnabled ? 'text-green-600' : 'text-gray-500'}`}>
+                      {isHighContrastEnabled ? 'Enabled' : 'Disabled'}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <MousePointer className="w-4 h-4 text-gray-500" />
+                    <span className="text-gray-600 dark:text-gray-400">Reduced Motion:</span>
+                    <span className={`font-medium ${isReducedMotionEnabled ? 'text-green-600' : 'text-gray-500'}`}>
+                      {isReducedMotionEnabled ? 'Enabled' : 'Disabled'}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Volume2 className="w-4 h-4 text-gray-500" />
+                    <span className="text-gray-600 dark:text-gray-400">Announcements:</span>
+                    <span className={`font-medium ${settings.announcements ? 'text-green-600' : 'text-gray-500'}`}>
+                      {settings.announcements ? 'Enabled' : 'Disabled'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Open Accessibility Panel Button */}
+              <button
+                onClick={() => setShowAccessibilityPanel(true)}
+                className="w-full flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
+                <div className="flex items-center space-x-3">
+                  <Eye className="w-5 h-5 text-green-600" />
+                  <div className="text-left">
+                    <p className="font-medium text-gray-900 dark:text-white">Customize Accessibility Settings</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Adjust display, interaction, and audio preferences</p>
+                  </div>
+                </div>
+                <div className="text-gray-400">→</div>
+              </button>
+
+              {/* Quick Actions */}
+              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+                <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">Keyboard Shortcuts</h4>
+                <div className="space-y-2 text-sm text-blue-800 dark:text-blue-200">
+                  <div className="flex justify-between">
+                    <span>Toggle High Contrast:</span>
+                    <kbd className="px-2 py-1 bg-white dark:bg-gray-700 rounded text-xs">Alt + H</kbd>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Toggle Reduced Motion:</span>
+                    <kbd className="px-2 py-1 bg-white dark:bg-gray-700 rounded text-xs">Alt + M</kbd>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Increase Font Size:</span>
+                    <kbd className="px-2 py-1 bg-white dark:bg-gray-700 rounded text-xs">Alt + +</kbd>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Decrease Font Size:</span>
+                    <kbd className="px-2 py-1 bg-white dark:bg-gray-700 rounded text-xs">Alt + -</kbd>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Sidebar */}
@@ -347,6 +437,12 @@ const Settings: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Accessibility Panel */}
+      <AccessibilityPanel
+        isOpen={showAccessibilityPanel}
+        onClose={() => setShowAccessibilityPanel(false)}
+      />
     </div>
   );
 };

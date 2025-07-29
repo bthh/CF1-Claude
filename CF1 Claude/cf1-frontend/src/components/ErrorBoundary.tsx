@@ -3,6 +3,8 @@
 
 import React, { Component, type ErrorInfo, type ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, Home, Bug } from 'lucide-react';
+import { performanceMonitor } from '../utils/performanceMonitoring';
+import { SecureErrorHandler } from '../utils/secureErrorHandler';
 
 interface Props {
   children: ReactNode;
@@ -47,12 +49,23 @@ export class ErrorBoundary extends Component<Props, State> {
       eventId,
     });
 
+    // Track error with performance monitor
+    performanceMonitor.trackError(error, 'ErrorBoundary');
+
+    // Process error through secure error handler
+    const secureError = SecureErrorHandler.handle(error, 'Error Boundary');
+
     // Call optional error handler
     this.props.onError?.(error, errorInfo);
 
-    // Log to console in development
-    if (process.env.NODE_ENV === 'development') {
-      console.error('ErrorBoundary caught an error:', error, errorInfo);
+    // Enhanced logging for development
+    if (import.meta.env.MODE === 'development') {
+      console.group(`🚨 Error Boundary [${eventId}]`);
+      console.error('Error:', error);
+      console.error('Error Info:', errorInfo);
+      console.error('Component Stack:', errorInfo.componentStack);
+      console.error('Secure Error:', secureError);
+      console.groupEnd();
     }
   }
 
@@ -97,7 +110,7 @@ Please describe what you were doing when this error occurred:
       }
 
       const { error, errorInfo } = this.state;
-      const isDevelopment = process.env.NODE_ENV === 'development';
+      const isDevelopment = import.meta.env.MODE === 'development';
       const showDetails = this.props.showDetails || isDevelopment;
 
       return (

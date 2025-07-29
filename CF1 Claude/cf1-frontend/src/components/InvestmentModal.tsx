@@ -6,6 +6,7 @@ import { VerificationGate } from './Verification/VerificationGate';
 import { TouchModal, TouchModalActions, TouchModalButton } from './TouchOptimized/TouchModal';
 import { TouchInput } from './TouchOptimized/TouchInput';
 import { formatAmount, parseAmount } from '../utils/format';
+import { usePortfolioStore } from '../store/portfolioStore';
 
 interface InvestmentModalProps {
   isOpen: boolean;
@@ -37,6 +38,7 @@ export const InvestmentModal: React.FC<InvestmentModalProps> = ({
   } = useCosmJS();
   
   const { success, error: showError, warning } = useNotifications();
+  const { addTransaction } = usePortfolioStore();
 
   // Calculate shares and returns based on order type
   useEffect(() => {
@@ -130,6 +132,20 @@ export const InvestmentModal: React.FC<InvestmentModalProps> = ({
       const result = await invest(proposal.id, amountInMicroUnits);
       
       if (result) {
+        // Add the investment to user's portfolio
+        addTransaction({
+          type: 'investment',
+          assetId: proposal.id,
+          assetName: proposal.asset_details?.name || 'Unknown Asset',
+          amount: parseFloat(totalAmount),
+          shares: calculatedShares,
+          price: parseFloat(proposal.financial_terms?.token_price || '0') / 1000000, // Convert from micro units
+          timestamp: new Date().toISOString(),
+          status: 'completed'
+        });
+        
+        console.log(`📈 Added investment to portfolio: $${totalAmount} in ${proposal.asset_details?.name}`);
+        
         success(
           'Investment Successful!', 
           `You have successfully invested $${totalAmount} in ${proposal.asset_details?.name || 'this proposal'}.`,

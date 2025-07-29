@@ -68,7 +68,7 @@ const GovernanceWidget: React.FC<GovernanceWidgetProps> = ({ size, isEditMode = 
     return (
       <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 h-full flex flex-col">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Governance</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Voting</h3>
           {!isEditMode && (
             <button 
               onClick={handleNavigate}
@@ -103,7 +103,7 @@ const GovernanceWidget: React.FC<GovernanceWidgetProps> = ({ size, isEditMode = 
     return (
       <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 h-full flex flex-col">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Governance Activity</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Voting Activity</h3>
           {!isEditMode && (
             <button 
               onClick={handleNavigate}
@@ -160,7 +160,7 @@ const GovernanceWidget: React.FC<GovernanceWidgetProps> = ({ size, isEditMode = 
     <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 h-full flex flex-col">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Governance Dashboard</h3>
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Voting Dashboard</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400">Community voting and proposal management</p>
         </div>
         {!isEditMode && (

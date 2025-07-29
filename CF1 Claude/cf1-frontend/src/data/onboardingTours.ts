@@ -30,7 +30,7 @@ export const CF1_ONBOARDING_TOURS: OnboardingTour[] = [
       {
         id: 'navigation-header',
         title: 'Platform Navigation',
-        content: 'Use the header navigation to access different sections: Marketplace, Portfolio, Launchpad, and Governance.',
+        content: 'Use the header navigation to access different sections: Marketplace, Portfolio, Launchpad, and Voting.',
         target: '[data-tour="main-nav"]',
         placement: 'tooltip',
         position: 'bottom',

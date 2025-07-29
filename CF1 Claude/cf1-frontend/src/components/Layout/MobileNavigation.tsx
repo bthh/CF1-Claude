@@ -84,7 +84,7 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
       description: 'New asset launches'
     },
     {
-      label: 'Governance',
+      label: 'Voting',
       to: '/governance',
       icon: <Vote className="w-5 h-5" />,
       description: 'Voting and proposals'

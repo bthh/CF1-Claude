@@ -1,4 +1,6 @@
-import { ErrorHandler } from '../errorHandler';
+import { SecureErrorHandler } from '../../utils/secureErrorHandler';
+import { CSRFProtection } from '../../utils/csrfProtection';
+import { performanceMonitor } from '../../utils/performanceMonitoring';
 
 export interface ApiResponse<T = any> {
   data?: T;
@@ -47,14 +49,26 @@ class ApiClient {
         config.timeout || this.defaultTimeout
       );
 
+      // Get CSRF headers for non-GET requests
+      const method = config.method || 'GET';
+      const csrfHeaders = ['GET', 'HEAD', 'OPTIONS'].includes(method) ? {} : CSRFProtection.getHeaders();
+      
+      // Add CSRF token to body for non-GET requests
+      let body = config.body;
+      if (body && !['GET', 'HEAD', 'OPTIONS'].includes(method)) {
+        body = CSRFProtection.addTokenToJSON(body);
+      }
+
       const response = await fetch(url, {
-        method: config.method || 'GET',
+        method,
         headers: {
           ...this.defaultHeaders,
+          ...csrfHeaders,
           ...config.headers,
         },
-        body: config.body ? JSON.stringify(config.body) : undefined,
+        body: body ? JSON.stringify(body) : undefined,
         signal: controller.signal,
+        credentials: 'include', // Include cookies for CSRF tokens
       });
 
       clearTimeout(timeoutId);
@@ -75,9 +89,15 @@ class ApiClient {
     config: ApiRequestConfig = {}
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseUrl}${endpoint}`;
+    const startTime = performance.now();
+    const method = config.method || 'GET';
 
     try {
       const response = await this.fetchWithRetry(url, config);
+      const duration = performance.now() - startTime;
+
+      // Track API performance
+      performanceMonitor.trackAPIResponse(endpoint, duration, response?.status || 200, method);
 
       // Handle non-2xx responses
       if (!response.ok) {
@@ -94,11 +114,25 @@ class ApiClient {
         success: true,
       };
     } catch (error) {
-      // Let ErrorHandler process the error
-      ErrorHandler.handle(error, `API Request: ${config.method || 'GET'} ${endpoint}`);
+      // Track failed API performance
+      const duration = performance.now() - startTime;
+      // Handle different error types
+      let status = 500;
+      if (error && typeof error === 'object') {
+        const errorObj = error as any;
+        if (errorObj.response?.status) {
+          status = errorObj.response.status;
+        } else if (errorObj.status) {
+          status = errorObj.status;
+        }
+      }
+      performanceMonitor.trackAPIResponse(endpoint, duration, status, method);
+
+      // Let SecureErrorHandler process the error
+      const secureError = SecureErrorHandler.handle(error, `API Request: ${method} ${endpoint}`);
 
       return {
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: secureError.userMessage,
         success: false,
       };
     }

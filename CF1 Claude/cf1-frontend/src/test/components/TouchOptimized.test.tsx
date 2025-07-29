@@ -169,12 +169,21 @@ describe('TouchOptimized Components', () => {
 
       const modal = screen.getByRole('dialog');
       
-      // Simulate swipe down gesture
+      // Simulate complete swipe down gesture sequence
       fireEvent.touchStart(modal, {
         touches: [{ clientY: 100 }]
       });
+      
+      fireEvent.touchMove(modal, {
+        touches: [{ clientY: 150 }]
+      });
+      
+      fireEvent.touchMove(modal, {
+        touches: [{ clientY: 200 }]
+      });
+      
       fireEvent.touchEnd(modal, {
-        changedTouches: [{ clientY: 300 }]
+        changedTouches: [{ clientY: 200 }]
       });
       
       expect(onClose).toHaveBeenCalled();

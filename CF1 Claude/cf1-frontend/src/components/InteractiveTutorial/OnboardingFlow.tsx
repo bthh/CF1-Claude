@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, ArrowRight, Wallet, Shield, TrendingUp, Users, Zap, Target } from 'lucide-react';
 import { AnimatedButton, AnimatedCounter } from '../LoadingStates/TransitionWrapper';
 import { SwipeableModal } from '../GestureComponents/SwipeableModal';
+import { useCosmJS } from '../../hooks/useCosmJS';
+import { useNavigate } from 'react-router-dom';
 
 interface OnboardingStep {
   id: string;
@@ -31,6 +33,8 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<string[]>([]);
   const [isAnimating, setIsAnimating] = useState(false);
+  const { connect, isConnected } = useCosmJS();
+  const navigate = useNavigate();
 
   const steps: OnboardingStep[] = [
     {
@@ -46,11 +50,13 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({
       icon: <Wallet className="w-8 h-8 text-purple-600" />,
       action: {
         label: 'Connect Wallet',
-        onClick: () => {
-          // Simulate wallet connection
-          setTimeout(() => {
+        onClick: async () => {
+          try {
+            await connect();
             markStepComplete('connect-wallet');
-          }, 2000);
+          } catch (error) {
+            console.error('Failed to connect wallet:', error);
+          }
         }
       }
     },
@@ -62,10 +68,8 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({
       action: {
         label: 'Start Verification',
         onClick: () => {
-          // Navigate to verification
-          setTimeout(() => {
-            markStepComplete('verification');
-          }, 1500);
+          navigate('/profile');
+          markStepComplete('verification');
         }
       }
     },
@@ -77,7 +81,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({
       action: {
         label: 'Browse Marketplace',
         onClick: () => {
-          // Navigate to marketplace
+          navigate('/marketplace');
           markStepComplete('explore-assets');
         }
       }
@@ -161,6 +165,13 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({
 
     return () => clearInterval(timer);
   }, []);
+
+  // Check if wallet is already connected and mark step complete
+  useEffect(() => {
+    if (isConnected && !completedSteps.includes('connect-wallet')) {
+      markStepComplete('connect-wallet');
+    }
+  }, [isConnected, completedSteps]);
 
   return (
     <SwipeableModal

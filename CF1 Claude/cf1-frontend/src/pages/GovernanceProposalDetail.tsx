@@ -137,7 +137,7 @@ const GovernanceProposalDetail: React.FC = () => {
   };
 
   // Check if user has admin privileges for simulate pass
-  const canSimulatePass = selectedRole === 'super_admin' || selectedRole === 'owner' || selectedRole === 'platform_admin';
+  const canSimulatePass = selectedRole === 'super_admin' || selectedRole === 'owner';
 
   // Handle simulate pass (Admin only)
   const handleSimulatePass = async () => {
@@ -202,8 +202,7 @@ const GovernanceProposalDetail: React.FC = () => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            // TODO: Add authorization header when auth is implemented
-            // 'Authorization': `Bearer ${authToken}`
+            'x-api-key': import.meta.env.VITE_ADMIN_API_KEY || 'cf1-dev-admin-api-key-secure-64-chars'
           }
         });
         

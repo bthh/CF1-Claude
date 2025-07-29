@@ -1,8 +1,32 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
+import { notificationScheduler } from '../services/notificationScheduler';
+
+export interface Investor {
+  address: string;
+  email?: string;
+  phone?: string;
+  name?: string;
+  amount: number;
+  accredited?: boolean;
+}
+
+export interface FundingStatus {
+  raised_amount: string;
+  investor_count: number;
+  is_funded: boolean;
+  tokens_minted: boolean;
+  investors?: Investor[];
+}
 
 export interface Proposal {
   id: string;
+  basic_info: {
+    title: string;
+    creator_name?: string;
+    description: string;
+    asset_type: string;
+  };
   asset_details: {
     name: string;
     asset_type: string;
@@ -11,19 +35,14 @@ export interface Proposal {
     description: string;
   };
   financial_terms: {
-    target_amount: string;
+    target_amount: number;
     token_price: string;
     total_shares: number;
-    minimum_investment: string;
+    minimum_investment: number;
     expected_apy: string;
     funding_deadline: number;
   };
-  funding_status: {
-    raised_amount: string;
-    investor_count: number;
-    is_funded: boolean;
-    tokens_minted: boolean;
-  };
+  funding_status?: FundingStatus;
   status: 'Active' | 'Funded' | 'Expired' | 'Cancelled';
   creator: string;
   created_at: string;
@@ -80,13 +99,20 @@ const generateMockProposal = (id: string): Proposal => {
   ];
 
   const category = categories[Math.floor(Math.random() * categories.length)];
-  const targetAmount = (Math.random() * 10000000 + 1000000).toString();
-  const raisedAmount = (parseFloat(targetAmount) * (Math.random() * 0.8 + 0.1)).toString();
+  const name = names[Math.floor(Math.random() * names.length)];
+  const targetAmount = Math.random() * 10000000 + 1000000;
+  const raisedAmount = targetAmount * (Math.random() * 0.8 + 0.1);
 
   return {
     id,
+    basic_info: {
+      title: name,
+      creator_name: 'Sample Creator',
+      description: `Premium ${category.toLowerCase()} investment opportunity with strong fundamentals.`,
+      asset_type: category
+    },
     asset_details: {
-      name: names[Math.floor(Math.random() * names.length)],
+      name,
       asset_type: category,
       category,
       location: locations[Math.floor(Math.random() * locations.length)],
@@ -95,16 +121,17 @@ const generateMockProposal = (id: string): Proposal => {
     financial_terms: {
       target_amount: targetAmount,
       token_price: '1000000',
-      total_shares: Math.floor(parseFloat(targetAmount) / 1000),
-      minimum_investment: '1000000000',
+      total_shares: Math.floor(targetAmount / 1000),
+      minimum_investment: 1000000000,
       expected_apy: `${(Math.random() * 10 + 8).toFixed(1)}%`,
       funding_deadline: Date.now() / 1000 + 86400 * (Math.random() * 60 + 30)
     },
     funding_status: {
-      raised_amount: raisedAmount,
+      raised_amount: raisedAmount.toString(),
       investor_count: Math.floor(Math.random() * 100 + 10),
-      is_funded: parseFloat(raisedAmount) >= parseFloat(targetAmount),
-      tokens_minted: false
+      is_funded: raisedAmount >= targetAmount,
+      tokens_minted: false,
+      investors: []
     },
     status: 'Active',
     creator: 'neutron1creator123',
@@ -202,6 +229,9 @@ export const useProposalStore = create<ProposalState>()(
       },
 
       updateProposal: (id: string, updates: Partial<Proposal>) => {
+        const { proposals } = get();
+        const originalProposal = proposals.find(p => p.id === id);
+        
         set(state => ({
           proposals: state.proposals.map(proposal =>
             proposal.id === id ? { ...proposal, ...updates } : proposal
@@ -210,6 +240,16 @@ export const useProposalStore = create<ProposalState>()(
             ? { ...state.selectedProposal, ...updates }
             : state.selectedProposal
         }));
+
+        // Handle status changes for auto-communications
+        if (updates.status && originalProposal && updates.status !== originalProposal.status) {
+          try {
+            notificationScheduler.handleProposalStatusChange(id, updates.status);
+            console.log(`📊 Processed status change for proposal ${id}: ${originalProposal.status} → ${updates.status}`);
+          } catch (error) {
+            console.error('Failed to process proposal status change:', error);
+          }
+        }
       },
 
       invest: async (proposalId: string, amount: string) => {
@@ -231,27 +271,36 @@ export const useProposalStore = create<ProposalState>()(
           // Update proposal funding
           const { proposals } = get();
           const proposal = proposals.find(p => p.id === proposalId);
-          if (proposal) {
+          if (proposal && proposal.funding_status) {
             const newRaisedAmount = (
               parseFloat(proposal.funding_status.raised_amount) + parseFloat(amount)
             ).toString();
             
+            const updatedProposal = {
+              ...proposal,
+              funding_status: {
+                ...proposal.funding_status,
+                raised_amount: newRaisedAmount,
+                investor_count: proposal.funding_status.investor_count + 1
+              }
+            };
+
             set(state => ({
               proposals: state.proposals.map(p =>
-                p.id === proposalId
-                  ? {
-                      ...p,
-                      funding_status: {
-                        ...p.funding_status,
-                        raised_amount: newRaisedAmount,
-                        investor_count: p.funding_status.investor_count + 1
-                      }
-                    }
-                  : p
+                p.id === proposalId ? updatedProposal : p
               ),
               userInvestments: [investment, ...state.userInvestments],
               loading: false
             }));
+
+            // Trigger milestone notifications for funding updates
+            try {
+              await notificationScheduler.handleFundingUpdate(proposalId, proposal.creator);
+              console.log(`🎯 Processed milestone notifications for proposal ${proposalId}`);
+            } catch (error) {
+              console.error('Failed to process milestone notifications:', error);
+              // Don't block investment flow for notification failures
+            }
           }
         } catch (error) {
           set({

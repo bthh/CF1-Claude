@@ -1,11 +1,14 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { notificationService } from '../services/notificationService';
+import { useDemoModeStore } from './demoModeStore';
 
 export interface SubmittedProposal {
   id: string;
   submissionDate: string;
   status: 'submitted' | 'under_review' | 'approved' | 'rejected' | 'changes_requested' | 'draft';
+  source?: 'local' | 'backend'; // Track whether this is a local draft/submission or backend proposal
+  createdBy?: string;
   
   // Asset Details
   assetName: string;
@@ -53,7 +56,8 @@ const validateSubmissionData = (submission: Partial<SubmittedProposal>): Submitt
     // Ensure all required string fields have valid defaults
     id: submission.id || '',
     submissionDate: submission.submissionDate || new Date().toISOString(),
-    status: submission.status || 'draft',
+    status: submission.status || 'submitted', // Default to 'submitted' instead of 'draft'
+    source: submission.source || 'local', // Default to local if not specified
     assetName: submission.assetName || '',
     assetType: submission.assetType || '',
     category: submission.category || '',
@@ -75,17 +79,21 @@ interface SubmissionState {
   
   // Actions
   addSubmission: (proposal: Omit<SubmittedProposal, 'id' | 'submissionDate' | 'status'>) => { success: boolean; proposalId?: string; error?: string };
+  addBackendProposalReference: (backendProposalId: string, originalData: Partial<SubmittedProposal>) => void;
   saveDraft: (proposal: Omit<SubmittedProposal, 'id' | 'submissionDate' | 'status'>) => string;
   submitDraft: (draftId: string) => { success: boolean; proposalId?: string; error?: string };
   updateDraft: (draftId: string, proposalData: Partial<SubmittedProposal>) => void;
   deleteDraft: (draftId: string) => void;
   getDrafts: () => SubmittedProposal[];
+  getLocalSubmissions: () => SubmittedProposal[];
+  getBackendReferences: () => SubmittedProposal[];
   updateSubmissionStatus: (id: string, status: SubmittedProposal['status'], comments?: string) => void;
   updateFundingStatus: (id: string, fundingStatus: SubmittedProposal['fundingStatus']) => void;
   saveReviewComments: (id: string, comments: string) => void;
   getSubmissionById: (id: string) => SubmittedProposal | undefined;
   getSubmissionsByStatus: (status: SubmittedProposal['status']) => SubmittedProposal[];
   removeSubmission: (id: string) => void;
+  refreshDataForDemoMode: () => void;
 }
 
 // Add some mock data for testing
@@ -163,7 +171,9 @@ const mockSubmissions: SubmittedProposal[] = [
 export const useSubmissionStore = create<SubmissionState>()(
   persist(
     (set, get) => ({
-      submissions: mockSubmissions.map(submission => validateSubmissionData(submission)),
+      submissions: useDemoModeStore.getState().isDemoMode() 
+        ? mockSubmissions.map(submission => validateSubmissionData(submission))
+        : [], // Empty array in development mode
 
       addSubmission: (proposalData) => {
         try {
@@ -182,9 +192,10 @@ export const useSubmissionStore = create<SubmissionState>()(
           const submissionBase = {
             id,
             submissionDate,
-            status: 'submitted' as const,
             estimatedReviewDate: estimatedReviewDate.toISOString(),
-            ...proposalData
+            ...proposalData,
+            status: 'submitted' as const, // Set status AFTER spreading proposalData to ensure it's not overridden
+            source: 'local' as const, // Mark as local submission (fallback case)
           };
           
           const newSubmission = validateSubmissionData(submissionBase);
@@ -200,6 +211,36 @@ export const useSubmissionStore = create<SubmissionState>()(
         }
       },
 
+      addBackendProposalReference: (backendProposalId, originalData) => {
+        // Create a reference entry for the backend proposal
+        const reference: SubmittedProposal = {
+          id: backendProposalId,
+          submissionDate: new Date().toISOString(),
+          status: 'under_review', // Backend proposals start in review
+          source: 'backend',
+          estimatedReviewDate: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString(),
+          // Use provided data or defaults
+          assetName: originalData.assetName || 'Backend Proposal',
+          assetType: originalData.assetType || '',
+          category: originalData.category || '',
+          location: originalData.location || '',
+          description: originalData.description || '',
+          targetAmount: originalData.targetAmount || '0',
+          tokenPrice: originalData.tokenPrice || '0',
+          minimumInvestment: originalData.minimumInvestment || '0',
+          expectedAPY: originalData.expectedAPY || '0',
+          fundingDeadline: originalData.fundingDeadline || '',
+          riskFactors: originalData.riskFactors || '',
+          useOfFunds: originalData.useOfFunds || ''
+        };
+
+        set((state) => ({
+          submissions: [reference, ...state.submissions]
+        }));
+
+        console.log('📋 [SUBMISSION STORE] Added backend proposal reference:', backendProposalId);
+      },
+
       saveDraft: (proposalData) => {
         const id = `draft_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         const submissionDate = new Date().toISOString();
@@ -208,6 +249,7 @@ export const useSubmissionStore = create<SubmissionState>()(
           id,
           submissionDate,
           status: 'draft',
+          source: 'local', // Drafts are always local
           estimatedReviewDate: '',
           ...proposalData
         };
@@ -243,6 +285,7 @@ export const useSubmissionStore = create<SubmissionState>()(
             ...draft,
             id: newId,
             status: 'submitted',
+            source: 'local', // Draft converted to local submission (fallback case)
             submissionDate: new Date().toISOString(),
             estimatedReviewDate: estimatedReviewDate.toISOString()
           };
@@ -279,6 +322,14 @@ export const useSubmissionStore = create<SubmissionState>()(
 
       getDrafts: () => {
         return get().submissions.filter(s => s.status === 'draft');
+      },
+
+      getLocalSubmissions: () => {
+        return get().submissions.filter(s => s.source === 'local' && s.status !== 'draft');
+      },
+
+      getBackendReferences: () => {
+        return get().submissions.filter(s => s.source === 'backend');
       },
 
       updateSubmissionStatus: (id, status, comments) => {
@@ -359,6 +410,15 @@ export const useSubmissionStore = create<SubmissionState>()(
               : submission
           )
         }));
+      },
+
+      refreshDataForDemoMode: () => {
+        set(() => ({
+          submissions: useDemoModeStore.getState().isDemoMode() 
+            ? mockSubmissions.map(submission => validateSubmissionData(submission))
+            : [] // Clear all submissions in development mode
+        }));
+        console.log('🔄 Submissions store refreshed for demo mode change');
       }
     }),
     {

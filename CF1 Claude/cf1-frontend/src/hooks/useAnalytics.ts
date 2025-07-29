@@ -95,6 +95,9 @@ export const useAnalytics = () => {
   }, []);
 
   const formatCurrency = useCallback((amount: number, currency = 'USD') => {
+    if (amount === undefined || amount === null || isNaN(amount)) {
+      return '$0';
+    }
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency,
@@ -104,10 +107,16 @@ export const useAnalytics = () => {
   }, []);
 
   const formatPercentage = useCallback((value: number, decimals = 1) => {
+    if (value === undefined || value === null || isNaN(value)) {
+      return '0.0%';
+    }
     return `${value.toFixed(decimals)}%`;
   }, []);
 
   const formatNumber = useCallback((value: number, decimals = 0) => {
+    if (value === undefined || value === null || isNaN(value)) {
+      return '0';
+    }
     return new Intl.NumberFormat('en-US', {
       minimumFractionDigits: decimals,
       maximumFractionDigits: decimals

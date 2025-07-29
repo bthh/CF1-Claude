@@ -144,7 +144,7 @@ const SearchInterface: React.FC<SearchInterfaceProps> = ({
   const getResultTypeLabel = (type: SearchResultType) => {
     switch (type) {
       case 'asset_proposal': return 'Asset Proposal';
-      case 'governance_proposal': return 'Governance';
+      case 'governance_proposal': return 'Voting';
       case 'user_profile': return 'User';
       case 'document': return 'Document';
       case 'transaction': return 'Transaction';
@@ -154,7 +154,7 @@ const SearchInterface: React.FC<SearchInterfaceProps> = ({
 
   const resultTypeFilters: { type: SearchResultType; label: string; count?: number }[] = [
     { type: 'asset_proposal', label: 'Assets', count: results.filter(r => r.type === 'asset_proposal').length },
-    { type: 'governance_proposal', label: 'Governance', count: results.filter(r => r.type === 'governance_proposal').length },
+    { type: 'governance_proposal', label: 'Voting', count: results.filter(r => r.type === 'governance_proposal').length },
     { type: 'document', label: 'Documents', count: results.filter(r => r.type === 'document').length },
     { type: 'user_profile', label: 'Users', count: results.filter(r => r.type === 'user_profile').length }
   ];
@@ -198,7 +198,7 @@ const SearchInterface: React.FC<SearchInterfaceProps> = ({
 
           {preferences.enableAIEnhancement && (
             <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-              <Sparkles className="w-4 h-4 text-blue-500" title="AI-Enhanced Search" />
+              <Sparkles className="w-4 h-4 text-blue-500" />
             </div>
           )}
         </div>

@@ -292,7 +292,7 @@ const LaunchpadWithQuery: React.FC = () => {
       )}
 
       {/* Cache Status for Development */}
-      {process.env.NODE_ENV === 'development' && (
+      {import.meta.env.MODE === 'development' && (
         <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
           Cache status: {isStale ? 'Stale' : 'Fresh'} | 
           Total proposals: {proposalsData?.total || 0}

@@ -12,6 +12,9 @@ import { RoleSelector } from '../RoleSelector';
 import AdminLogin from '../AdminLogin';
 import { NotificationBell } from '../Notifications';
 import { HeaderSearch } from '../Search';
+import { useNotifications } from '../../hooks/useNotifications';
+import { useDataMode } from '../../store/dataModeStore';
+import { PortfolioTestingPanel } from '../Debug/PortfolioTestingPanel';
 
 const Header: React.FC = () => {
   const location = useLocation();
@@ -23,7 +26,10 @@ const Header: React.FC = () => {
   const { startTour } = useOnboardingContext();
   
   // Verification store
-  const { initializeUser, level } = useVerificationStore();
+  const { initializeUser, level, updateProfile, submitBasicVerification, submitIdentityVerification, submitAccreditedVerification } = useVerificationStore();
+  
+  // Notifications
+  const { success } = useNotifications();
   
   // Admin authentication
   const { 
@@ -34,6 +40,7 @@ const Header: React.FC = () => {
     hasAccessToPlatformAdmin 
   } = useAdminAuthContext();
   const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [showTestingPanel, setShowTestingPanel] = useState(false);
   
   // Feature toggles
   const { isFeatureEnabled } = useFeatureToggleStore();
@@ -41,6 +48,9 @@ const Header: React.FC = () => {
   // Session role management
   const { selectedRole, isRoleSelected, setRole, clearRole } = useSessionStore();
   const [showRoleSelector, setShowRoleSelector] = useState(false);
+  
+  // Data mode management
+  const { currentMode } = useDataMode();
   
   // Simple local state for theme and notifications
   const [darkMode, setDarkMode] = useState(() => {
@@ -122,6 +132,64 @@ const Header: React.FC = () => {
     connect();
   };
   
+  // Create a test user with full verification for easier testing
+  const createTestUser = async () => {
+    if (!isConnected || !address) {
+      connect();
+      return;
+    }
+    
+    try {
+      // Initialize user
+      initializeUser(address);
+      
+      // Complete profile
+      await updateProfile({
+        firstName: 'Test',
+        lastName: 'User',
+        email: 'testuser@cf1platform.com',
+        phone: '+1-555-0123',
+        dateOfBirth: '1990-01-01'
+      });
+      
+      // Complete basic verification
+      await submitBasicVerification({
+        email: 'testuser@cf1platform.com',
+        phone: '+1-555-0123',
+        dateOfBirth: '1990-01-01',
+        country: 'US'
+      });
+      
+      // Complete identity verification
+      await submitIdentityVerification({
+        idType: 'passport',
+        idNumber: 'TEST123456789',
+        documentImages: ['test-id-front.jpg', 'test-id-back.jpg'],
+        selfieImage: 'test-selfie.jpg',
+        address: {
+          street: '123 Test Street',
+          city: 'Test City',
+          state: 'CA',
+          zipCode: '90210',
+          country: 'US'
+        }
+      });
+      
+      // Complete accredited investor verification
+      await submitAccreditedVerification({
+        verificationType: 'net_worth',
+        income: 250000,
+        netWorth: 1500000,
+        documentation: ['test-tax-return.pdf', 'test-bank-statement.pdf'],
+        cpaLetter: 'test-cpa-letter.pdf'
+      });
+      
+      success('Test User Created', 'Full verification completed for testing purposes');
+    } catch (error) {
+      console.error('Error creating test user:', error);
+    }
+  };
+  
   const isActive = (path: string) => {
     return location.pathname === path || (path === '/dashboard' && location.pathname === '/');
   };
@@ -137,7 +205,7 @@ const Header: React.FC = () => {
       label: 'Vote for Proposal',
       icon: <Vote className="w-4 h-4" />,
       to: '/governance',
-      description: 'All governance proposals'
+      description: 'All voting proposals'
     },
     {
       label: 'Create New Proposal',
@@ -176,6 +244,20 @@ const Header: React.FC = () => {
       action: () => setShowRoleSelector(true),
       description: 'Select different role for testing'
     },
+    // Add test user creation for easier testing
+    {
+      label: 'Create Test User',
+      icon: <Shield className="w-4 h-4" />,
+      action: createTestUser,
+      description: 'Create fully verified test user for easier testing'
+    },
+    // Add portfolio testing panel for development
+    ...(currentMode === 'development' ? [{
+      label: 'Portfolio Testing',
+      icon: <Shield className="w-4 h-4" />,
+      action: () => setShowTestingPanel(true),
+      description: 'Test investment-to-portfolio workflow'
+    }] : []),
     ...(isAdmin ? [{
       label: `${adminRole?.replace('_', ' ')} Panel`,
       icon: adminRole === 'creator' ? <Users className="w-4 h-4" /> : 
@@ -235,6 +317,17 @@ const Header: React.FC = () => {
             </div>
             <span className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">CF1 Platform</span>
           </div>
+          
+          {/* Data Mode Indicator */}
+          <div className={`px-2 py-1 rounded-md text-xs font-medium ${
+            currentMode === 'development' 
+              ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' 
+              : currentMode === 'demo'
+              ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+              : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+          }`}>
+            {currentMode.toUpperCase()} MODE
+          </div>
         </div>
         
         {/* Desktop Navigation */}
@@ -277,7 +370,7 @@ const Header: React.FC = () => {
               isActive('/governance') ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white'
             }`}
           >
-            Governance
+            Voting
           </Link>
           <Link 
             to="/analytics"
@@ -287,16 +380,6 @@ const Header: React.FC = () => {
           >
             Analytics
           </Link>
-          {isFeatureEnabled('lending') && (
-            <Link 
-              to="/lending"
-              className={`px-4 py-2 rounded-lg text-sm font-medium ${
-                isActive('/lending') ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white'
-              }`}
-            >
-              Lending
-            </Link>
-          )}
           {isAdmin && (
             <>
               {/* Creator Admin - Available to Creator, Platform Admin, Super Admin, and Owner */}
@@ -541,6 +624,12 @@ const Header: React.FC = () => {
         isOpen={showAdminLogin}
         onClose={() => setShowAdminLogin(false)}
         onSuccess={() => setShowAdminLogin(false)}
+      />
+
+      {/* Portfolio Testing Panel */}
+      <PortfolioTestingPanel
+        isOpen={showTestingPanel}
+        onClose={() => setShowTestingPanel(false)}
       />
     </>
   );

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export type WidgetType = 'marketplace' | 'launchpad' | 'governance' | 'portfolio' | 'analytics' | 'trading' | 'activity' | 'quickActions' | 'notifications' | 'profile';
+export type WidgetType = 'marketplace' | 'launchpad' | 'governance' | 'portfolio' | 'analytics' | 'activity' | 'quickActions' | 'notifications' | 'profile' | 'spotlight';
 export type WidgetSize = 'small' | 'medium' | 'large' | 'full';
 
 export interface DashboardWidget {
@@ -31,10 +31,11 @@ interface DashboardState {
 // Default widget configuration
 const defaultWidgets: DashboardWidget[] = [
   { id: 'portfolio-1', type: 'portfolio', size: 'medium', position: 0, isVisible: true },
-  { id: 'marketplace-1', type: 'marketplace', size: 'medium', position: 1, isVisible: true },
-  { id: 'launchpad-1', type: 'launchpad', size: 'medium', position: 2, isVisible: true },
-  { id: 'governance-1', type: 'governance', size: 'medium', position: 3, isVisible: true },
-  { id: 'analytics-1', type: 'analytics', size: 'medium', position: 4, isVisible: true },
+  { id: 'spotlight-1', type: 'spotlight', size: 'large', position: 1, isVisible: true },
+  { id: 'marketplace-1', type: 'marketplace', size: 'medium', position: 2, isVisible: true },
+  { id: 'launchpad-1', type: 'launchpad', size: 'medium', position: 3, isVisible: true },
+  { id: 'governance-1', type: 'governance', size: 'medium', position: 4, isVisible: true },
+  { id: 'analytics-1', type: 'analytics', size: 'medium', position: 5, isVisible: true },
 ];
 
 export const useDashboardStore = create<DashboardState>()(

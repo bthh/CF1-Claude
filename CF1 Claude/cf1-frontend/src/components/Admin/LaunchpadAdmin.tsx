@@ -10,9 +10,14 @@ interface LaunchpadAdminProps {
 }
 
 const LaunchpadAdmin: React.FC<LaunchpadAdminProps> = ({ selectedSubTab, setSelectedSubTab }) => {
-  const { getSubmissionsByStatus, updateSubmissionStatus, saveReviewComments } = useSubmissionStore();
+  const submissionStore = useSubmissionStore();
   const [selectedProposal, setSelectedProposal] = useState<ProposalQueueItem | null>(null);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  
+  // Add error handling for store methods
+  const getSubmissionsByStatus = submissionStore?.getSubmissionsByStatus || (() => []);
+  const updateSubmissionStatus = submissionStore?.updateSubmissionStatus || (() => {});
+  const saveReviewComments = submissionStore?.saveReviewComments || (() => {});
   
   // Get proposals by status
   const submittedProposals = getSubmissionsByStatus('submitted');
@@ -34,7 +39,7 @@ const LaunchpadAdmin: React.FC<LaunchpadAdminProps> = ({ selectedSubTab, setSele
   ].map(submission => ({
     id: submission.id,
     title: submission.assetName || 'Untitled Asset',
-    creator: 'Asset Creator', // TODO: Add createdBy field to SubmittedProposal interface
+    creator: submission.createdBy || 'Unknown Creator',
     status: submission.status as ProposalQueueItem['status'],
     submissionDate: submission.submissionDate,
     category: submission.assetType,
@@ -73,6 +78,23 @@ const LaunchpadAdmin: React.FC<LaunchpadAdminProps> = ({ selectedSubTab, setSele
     }
     // Future: Add more subtabs like 'settings', 'metrics', etc.
   ];
+
+  // Add error handling if store is not available
+  if (!submissionStore) {
+    return (
+      <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 border border-gray-200 dark:border-gray-700 shadow-lg">
+        <div className="text-center">
+          <Target className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+            Launchpad Admin Loading
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400">
+            Loading proposal data...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

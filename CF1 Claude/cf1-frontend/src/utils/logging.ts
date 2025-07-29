@@ -62,8 +62,8 @@ class Logger {
   constructor(config: Partial<LoggerConfig> = {}) {
     this.config = {
       level: LogLevel.INFO,
-      enableConsole: process.env.NODE_ENV === 'development',
-      enableRemote: process.env.NODE_ENV === 'production',
+      enableConsole: import.meta.env.MODE === 'development',
+      enableRemote: import.meta.env.MODE === 'production',
       maxEntries: 1000,
       batchSize: 50,
       flushInterval: 30000, // 30 seconds

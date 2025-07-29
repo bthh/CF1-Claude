@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Shield, Key, Users, Crown, X } from 'lucide-react';
 import { useAdminAuthContext, AdminRole } from '../hooks/useAdminAuth';
 import { useCosmJS } from '../hooks/useCosmJS';
@@ -16,6 +17,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ isOpen, onClose, onSuccess }) =
   const { loginAsAdmin } = useAdminAuthContext();
   const { isConnected, connect, address } = useCosmJS();
   const { success, error } = useNotifications();
+  const navigate = useNavigate();
   
   console.log('AdminLogin render - isConnected:', isConnected, 'address:', address);
 
@@ -39,6 +41,20 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ isOpen, onClose, onSuccess }) =
     try {
       await loginAsAdmin(selectedRole);
       success(`Successfully logged in as ${selectedRole.replace('_', ' ')} admin`);
+      
+      // Navigate to appropriate admin dashboard based on role
+      const adminRoutes = {
+        'creator': '/admin/creator',
+        'platform_admin': '/admin/platform',
+        'super_admin': '/admin/super',
+        'owner': '/admin/super'
+      };
+      
+      const targetRoute = adminRoutes[selectedRole!];
+      if (targetRoute) {
+        navigate(targetRoute);
+      }
+      
       onSuccess?.();
       onClose();
     } catch (err: any) {

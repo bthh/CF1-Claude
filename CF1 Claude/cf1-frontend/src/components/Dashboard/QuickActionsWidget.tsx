@@ -22,7 +22,7 @@ const QuickActionsWidget: React.FC<QuickActionsWidgetProps> = ({ size, isEditMod
     {
       id: 'proposal',
       title: 'Create Proposal',
-      description: 'Submit governance proposal',
+      description: 'Submit voting proposal',
       icon: Plus,
       color: 'bg-blue-100 dark:bg-blue-900/20 text-blue-600',
       action: () => navigate('/governance/create')
@@ -30,7 +30,7 @@ const QuickActionsWidget: React.FC<QuickActionsWidgetProps> = ({ size, isEditMod
     {
       id: 'vote',
       title: 'Vote on Proposals',
-      description: 'Participate in governance',
+      description: 'Participate in voting',
       icon: Vote,
       color: 'bg-purple-100 dark:bg-purple-900/20 text-purple-600',
       action: () => navigate('/governance')

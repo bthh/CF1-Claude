@@ -39,7 +39,7 @@ const mockAnalyses = [
       "Interest rate fluctuations could impact financing costs",
       "Local economic conditions may affect rental demand"
     ],
-    complexity_score: 72,
+    complexity_score: 7,
     processing_time_seconds: 15.3
   },
   {
@@ -56,7 +56,7 @@ const mockAnalyses = [
       "Significant capital requirements for scaling",
       "Technology adoption risks and market timing"
     ],
-    complexity_score: 89,
+    complexity_score: 9,
     processing_time_seconds: 22.7
   }
 ];
