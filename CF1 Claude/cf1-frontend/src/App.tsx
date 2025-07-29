@@ -37,9 +37,11 @@ import ShareholderDetail from './pages/ShareholderDetail';
 import CreatorAdmin from './pages/CreatorAdmin';
 import SuperAdmin from './pages/SuperAdmin';
 import PlatformAdmin from './pages/PlatformAdmin';
+import RoleBasedTestingPage from './pages/RoleBasedTestingPage';
 import { AdminAuthProvider } from './hooks/useAdminAuth';
 import { CosmJSProvider } from './providers/CosmJSProvider';
 import DemoModeIndicator from './components/DemoMode/DemoModeIndicator';
+import DemoModeInitializer from './components/DemoMode/DemoModeInitializer';
 import PerformanceDashboard from './components/Performance/PerformanceDashboard';
 
 // Component for tracking page views
@@ -61,6 +63,7 @@ function App() {
                 <Router>
                   <PageTracker />
                   <DemoModeIndicator />
+                  <DemoModeInitializer />
                   <PerformanceDashboard />
                   <Layout>
                 <RouteErrorBoundary>
@@ -99,6 +102,7 @@ function App() {
               <Route path="/admin/creator" element={<CreatorAdmin />} />
               <Route path="/admin/super" element={<SuperAdmin />} />
               <Route path="/admin/platform" element={<PlatformAdmin />} />
+              <Route path="/admin/testing" element={<RoleBasedTestingPage />} />
               </Routes>
             </RouteErrorBoundary>
             </Layout>

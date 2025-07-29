@@ -59,3 +59,5 @@ pnpm-lock.yaml
 *~
 *.bak
 *.backup
+# Local Netlify folder
+.netlify

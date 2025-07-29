@@ -70,11 +70,11 @@ export interface DemoModeState extends DemoModeConfig {
   refreshStoresForDemoModeChange: () => void;
 }
 
-// Default configuration - ALWAYS start with demo mode OFF
+// Default configuration - START with demo mode ON for role-based testing
 const defaultConfig: DemoModeConfig = {
-  isEnabled: false,
-  scenario: 'investor_presentation',
-  sessionId: '',
+  isEnabled: true,
+  scenario: 'development_testing',
+  sessionId: `demo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
   
   showRealisticNumbers: true,
   showPositivePerformance: true,
@@ -129,14 +129,14 @@ export const DEMO_SCENARIOS: Record<DemoScenario, Partial<DemoModeConfig>> = {
   },
   
   development_testing: {
-    showRealisticNumbers: false,     // Can use obvious test data
-    showPositivePerformance: false,
-    hideNegativeData: false,
-    showDemoIndicator: true,
+    showRealisticNumbers: true,      // Show realistic data for better demos
+    showPositivePerformance: true,   // Show good performance for presentations
+    hideNegativeData: false,         // Keep all data for comprehensive testing
+    showDemoIndicator: true,         // Keep demo indicator visible
     enableDemoTutorials: false,
     highlightFeatures: false,
     accelerateTimeframes: false,
-    demoUserRole: 'admin',
+    demoUserRole: 'investor',        // Start as investor for general appeal
   },
   
   regulatory_showcase: {

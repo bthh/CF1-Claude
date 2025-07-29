@@ -7,7 +7,7 @@ license = "MIT"
 repository = "https://github.com/bthh/CF1-Claude"
 
 [lib]
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 cosmwasm-std = "2.0"
@@ -37,7 +37,7 @@ required-features = []
 opt-level = 3
 debug = false
 rpath = false
-lto = true
+lto = false
 debug-assertions = false
 codegen-units = 1
 panic = 'abort'
@@ -48,6 +48,6 @@ overflow-checks = true
 [profile.gas-optimized]
 inherits = "release"
 opt-level = 'z'        # Optimize for size
-lto = "fat"            # Full LTO
+lto = false            # Disable LTO for compatibility
 codegen-units = 1      # Single codegen unit
 strip = "symbols"      # Strip symbols for smaller binary

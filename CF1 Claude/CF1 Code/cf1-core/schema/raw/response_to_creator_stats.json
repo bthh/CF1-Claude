@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CreatorStats",
+  "type": "object",
+  "required": [
+    "rating",
+    "success_rate",
+    "total_raised_formatted"
+  ],
+  "properties": {
+    "rating": {
+      "type": "string"
+    },
+    "success_rate": {
+      "type": "integer",
+      "format": "uint16",
+      "minimum": 0.0
+    },
+    "total_raised_formatted": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

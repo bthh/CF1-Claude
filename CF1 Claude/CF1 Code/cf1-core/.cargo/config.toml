@@ -1,13 +1,8 @@
 [build]
-target = "wasm32-unknown-unknown"
+rustflags = []
 
-[env]
-RUSTFLAGS = "-C link-arg=-s"
+[profile.release]
+lto = false
 
-[target.wasm32-unknown-unknown]
-rustflags = [
-  "-C", "link-arg=-s",           # Strip symbols for smaller binary
-  "-C", "opt-level=z",           # Optimize for size
-  "-C", "lto=fat",              # Full link-time optimization
-  "-C", "codegen-units=1",      # Single codegen unit for better optimization
-]
+[profile.dev]
+lto = false
