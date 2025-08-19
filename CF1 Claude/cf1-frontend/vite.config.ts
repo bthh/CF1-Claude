@@ -43,7 +43,9 @@ export default defineConfig(({ mode }) => {
                   id.includes('bitcoinjs-') || id.includes('bech32') || id.includes('ripemd160') ||
                   id.includes('sha') || id.includes('keccak') || id.includes('scrypt') || 
                   id.includes('pbkdf2') || id.includes('aes') || id.includes('cipher') ||
-                  id.includes('randombytes') || id.includes('safe-buffer')) {
+                  id.includes('randombytes') || id.includes('safe-buffer') || id.includes('tx-') ||
+                  id.includes('/tx/') || id.includes('transaction') || id.includes('signing') ||
+                  id.includes('proto') || id.includes('protobuf')) {
                 return 'vendor-cosmos'; // Include ALL crypto polyfills WITH cosmos
               }
               // Blockchain - large dependencies that need polyfills
