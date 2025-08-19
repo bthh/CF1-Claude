@@ -49,11 +49,20 @@ export default defineConfig(({ mode }) => {
               './src/components/Admin/LaunchpadAdmin.tsx'
             ],
             
-            // Store (state management)
+            // Store (state management) - include ALL stores to prevent circular deps
             stores: [
+              './src/store/authStore.ts',
+              './src/store/portfolioStore.ts', 
+              './src/store/proposalStore.ts',
+              './src/store/uiStore.ts',
+              './src/store/walletStore.ts',
+              './src/store/rewardsStore.ts',
               './src/store/dashboardV2Store.ts',
               './src/store/discoveryStore.ts',
-              './src/store/portfolioStore.ts'
+              './src/store/enhancedDashboardStore.ts',
+              './src/store/dataModeStore.ts',
+              './src/store/demoModeStore.ts',
+              './src/store/featureToggleStore.ts'
             ],
             
             // Polyfills
