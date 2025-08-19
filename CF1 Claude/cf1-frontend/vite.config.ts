@@ -15,58 +15,87 @@ export default defineConfig(({ mode }) => {
       minify: mode === 'production' ? 'esbuild' : false,
       rollupOptions: {
         output: {
-          manualChunks: {
-            // Core dependencies
-            vendor: ['react', 'react-dom'],
-            router: ['react-router-dom'],
-            query: ['@tanstack/react-query'],
+          manualChunks: (id) => {
+            // Core dependencies - group by function, not arbitrary boundaries
+            if (id.includes('node_modules')) {
+              // React ecosystem
+              if (id.includes('react') || id.includes('react-dom')) {
+                return 'vendor-react';
+              }
+              // Router
+              if (id.includes('react-router')) {
+                return 'vendor-router';
+              }
+              // Query/Data
+              if (id.includes('@tanstack/react-query')) {
+                return 'vendor-query';
+              }
+              // Blockchain - large dependencies
+              if (id.includes('@cosmjs/') || id.includes('cosmwasm')) {
+                return 'vendor-cosmos';
+              }
+              // Charts - large UI dependency
+              if (id.includes('recharts')) {
+                return 'vendor-charts';
+              }
+              // UI components
+              if (id.includes('lucide-react') || id.includes('framer-motion')) {
+                return 'vendor-ui';
+              }
+              // Monitoring
+              if (id.includes('web-vitals') || id.includes('@sentry/react')) {
+                return 'vendor-monitoring';
+              }
+              // Polyfills
+              if (id.includes('buffer') || id.includes('process') || id.includes('crypto-browserify') || id.includes('stream-browserify')) {
+                return 'vendor-polyfills';
+              }
+              // Everything else goes to default vendor
+              return 'vendor-misc';
+            }
+
+            // Application code - group by functional dependency relationships
             
-            // Blockchain dependencies
-            cosmos: ['@cosmjs/cosmwasm-stargate', '@cosmjs/stargate'],
+            // All stores together - they have complex interdependencies
+            if (id.includes('/src/store/')) {
+              return 'app-stores';
+            }
             
-            // UI dependencies
-            ui: ['lucide-react', 'framer-motion'],
-            charts: ['recharts'],
+            // Admin functionality - includes components AND their store dependencies
+            if (id.includes('/src/components/Admin/') || 
+                id.includes('/src/pages/') && (id.includes('Admin') || id.includes('SuperAdmin'))) {
+              return 'app-admin';
+            }
             
-            // Performance monitoring
-            monitoring: ['web-vitals', '@sentry/react'],
+            // Discovery functionality
+            if (id.includes('/src/components/Discovery/') || 
+                id.includes('/src/pages/Discovery')) {
+              return 'app-discovery';
+            }
             
-            // Dashboard variants (code splitting)
-            'dashboard-a': ['./src/components/Dashboard/DashboardVariantA.tsx'],
-            'dashboard-b': ['./src/components/Dashboard/DashboardVariantB.tsx'],
-            'dashboard-c': ['./src/components/Dashboard/DashboardVariantC.tsx'],
+            // Dashboard variants - keep heavy components separate for lazy loading
+            if (id.includes('DashboardVariantA')) {
+              return 'app-dashboard-a';
+            }
+            if (id.includes('DashboardVariantB')) {
+              return 'app-dashboard-b';
+            }
+            if (id.includes('DashboardVariantC')) {
+              return 'app-dashboard-c';
+            }
             
-            // Discovery components
-            'discovery-hub': ['./src/components/Discovery/DiscoveryHub.tsx'],
-            'video-library': ['./src/components/Discovery/VideoLibrary.tsx'],
-            'market-insights': ['./src/components/Discovery/MarketInsights.tsx'],
+            // Core dashboard components
+            if (id.includes('/src/components/Dashboard/')) {
+              return 'app-dashboard-core';
+            }
             
-            // Admin components
-            'admin-panel': [
-              './src/components/Admin/AdminHeader.tsx',
-              './src/components/Admin/AdminSidebar.tsx',
-              './src/components/Admin/GovernanceAdmin.tsx',
-              './src/components/Admin/LaunchpadAdmin.tsx'
-            ],
+            // Utils and services
+            if (id.includes('/src/utils/') || id.includes('/src/services/') || id.includes('/src/lib/')) {
+              return 'app-utils';
+            }
             
-            // Store (state management) - include ALL stores to prevent circular deps
-            stores: [
-              './src/store/authStore.ts',
-              './src/store/portfolioStore.ts', 
-              './src/store/proposalStore.ts',
-              './src/store/uiStore.ts',
-              './src/store/walletStore.ts',
-              './src/store/rewardsStore.ts',
-              './src/store/dashboardV2Store.ts',
-              './src/store/discoveryStore.ts',
-              './src/store/enhancedDashboardStore.ts',
-              './src/store/dataModeStore.ts',
-              './src/store/demoModeStore.ts',
-              './src/store/featureToggleStore.ts'
-            ],
-            
-            // Polyfills
-            polyfills: ['buffer', 'process', 'crypto-browserify', 'stream-browserify']
+            // Everything else stays in main bundle for now
+            return null;
           }
         }
       },
