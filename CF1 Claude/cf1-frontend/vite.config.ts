@@ -30,7 +30,11 @@ export default defineConfig(({ mode }) => {
               if (id.includes('@tanstack/react-query')) {
                 return 'vendor-query';
               }
-              // Blockchain - large dependencies
+              // Polyfills - must be loaded before everything else
+              if (id.includes('buffer') || id.includes('process') || id.includes('crypto-browserify') || id.includes('stream-browserify')) {
+                return 'vendor-cosmos'; // Include polyfills WITH cosmos to ensure proper loading order
+              }
+              // Blockchain - large dependencies that need polyfills
               if (id.includes('@cosmjs/') || id.includes('cosmwasm')) {
                 return 'vendor-cosmos';
               }
@@ -45,10 +49,6 @@ export default defineConfig(({ mode }) => {
               // Monitoring
               if (id.includes('web-vitals') || id.includes('@sentry/react')) {
                 return 'vendor-monitoring';
-              }
-              // Polyfills
-              if (id.includes('buffer') || id.includes('process') || id.includes('crypto-browserify') || id.includes('stream-browserify')) {
-                return 'vendor-polyfills';
               }
               // Everything else goes to default vendor
               return 'vendor-misc';
