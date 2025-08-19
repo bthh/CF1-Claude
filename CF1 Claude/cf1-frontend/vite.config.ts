@@ -33,7 +33,9 @@ export default defineConfig(({ mode }) => {
               // Polyfills and crypto dependencies - must be loaded together
               if (id.includes('buffer') || id.includes('process') || id.includes('crypto-browserify') || 
                   id.includes('stream-browserify') || id.includes('base64-js') || id.includes('ieee754') ||
-                  id.includes('bn.js') || id.includes('/bn/')) {
+                  id.includes('bn.js') || id.includes('/bn/') || id.includes('elliptic') || 
+                  id.includes('hash.js') || id.includes('hmac-drbg') || id.includes('brorand') ||
+                  id.includes('minimalistic-') || id.includes('secp256k1')) {
                 return 'vendor-cosmos'; // Include ALL crypto polyfills WITH cosmos
               }
               // Blockchain - large dependencies that need polyfills
