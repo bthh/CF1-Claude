@@ -30,6 +30,10 @@ export default defineConfig(({ mode }) => {
               if (id.includes('@tanstack/react-query')) {
                 return 'vendor-query';
               }
+              // Charts - large UI dependency (check BEFORE crypto patterns to avoid conflicts)
+              if (id.includes('recharts')) {
+                return 'vendor-charts';
+              }
               // Polyfills and crypto dependencies - must be loaded together
               if (id.includes('buffer') || id.includes('process') || id.includes('crypto-browserify') || 
                   id.includes('stream-browserify') || id.includes('base64-js') || id.includes('ieee754') ||
@@ -45,10 +49,6 @@ export default defineConfig(({ mode }) => {
               // Blockchain - large dependencies that need polyfills
               if (id.includes('@cosmjs/') || id.includes('cosmwasm')) {
                 return 'vendor-cosmos';
-              }
-              // Charts - large UI dependency
-              if (id.includes('recharts')) {
-                return 'vendor-charts';
               }
               // UI components
               if (id.includes('lucide-react') || id.includes('framer-motion')) {
