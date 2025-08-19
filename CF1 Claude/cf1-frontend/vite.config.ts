@@ -30,9 +30,10 @@ export default defineConfig(({ mode }) => {
               if (id.includes('@tanstack/react-query')) {
                 return 'vendor-query';
               }
-              // Polyfills - must be loaded before everything else
-              if (id.includes('buffer') || id.includes('process') || id.includes('crypto-browserify') || id.includes('stream-browserify')) {
-                return 'vendor-cosmos'; // Include polyfills WITH cosmos to ensure proper loading order
+              // Polyfills and crypto dependencies - must be loaded together
+              if (id.includes('buffer') || id.includes('process') || id.includes('crypto-browserify') || 
+                  id.includes('stream-browserify') || id.includes('base64-js') || id.includes('ieee754')) {
+                return 'vendor-cosmos'; // Include ALL crypto polyfills WITH cosmos
               }
               // Blockchain - large dependencies that need polyfills
               if (id.includes('@cosmjs/') || id.includes('cosmwasm')) {
