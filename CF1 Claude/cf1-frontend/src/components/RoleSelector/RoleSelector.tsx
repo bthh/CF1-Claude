@@ -116,7 +116,7 @@ export const RoleSelector: React.FC<RoleSelectorProps> = ({ onRoleSelected, onCa
               </button>
 
               {isOpen && (
-                <div className="absolute z-10 mt-1 w-full rounded-lg bg-white dark:bg-gray-700 shadow-lg border border-gray-200 dark:border-gray-600 max-h-64 overflow-auto">
+                <div className="absolute z-10 mt-1 w-full rounded-lg bg-white dark:bg-gray-700 shadow-lg border border-gray-200 dark:border-gray-600 max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
                   {roleOptions.map((option) => (
                     <button
                       key={option.value}

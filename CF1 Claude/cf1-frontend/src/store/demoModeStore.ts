@@ -73,7 +73,7 @@ export interface DemoModeState extends DemoModeConfig {
 // Default configuration - START with demo mode ON for role-based testing
 const defaultConfig: DemoModeConfig = {
   isEnabled: true,
-  scenario: 'development_testing',
+  scenario: 'sales_demo',
   sessionId: `demo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
   
   showRealisticNumbers: true,
@@ -81,7 +81,7 @@ const defaultConfig: DemoModeConfig = {
   hideNegativeData: false,
   accelerateTimeframes: false,
   
-  showDemoIndicator: true,
+  showDemoIndicator: false, // Hide the demo indicator button by default
   enableDemoTutorials: false,
   highlightFeatures: false,
   

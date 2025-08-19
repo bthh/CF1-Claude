@@ -11,7 +11,7 @@ export default defineConfig({
     css: true,
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'json', 'html'],
+      reporter: ['text', 'json', 'html', 'lcov'],
       exclude: [
         'node_modules/',
         'src/test/',
@@ -19,13 +19,34 @@ export default defineConfig({
         '**/*.config.*',
         'dist/',
         'src/vite-env.d.ts',
+        'src/polyfills.ts',
+        'src/main.tsx',
       ],
       thresholds: {
         global: {
-          branches: 70,
-          functions: 70,
-          lines: 70,
-          statements: 70,
+          branches: 95,
+          functions: 95,
+          lines: 95,
+          statements: 95,
+        },
+        // Per-file thresholds for critical components
+        'src/components/AdminEnhancements/**/*.tsx': {
+          branches: 98,
+          functions: 98,
+          lines: 98,
+          statements: 98,
+        },
+        'src/components/Dashboard/**/*.tsx': {
+          branches: 96,
+          functions: 96,
+          lines: 96,
+          statements: 96,
+        },
+        'src/store/**/*.ts': {
+          branches: 97,
+          functions: 97,
+          lines: 97,
+          statements: 97,
         },
       },
     },

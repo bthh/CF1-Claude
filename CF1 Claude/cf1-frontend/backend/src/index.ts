@@ -24,6 +24,7 @@ import { handleValidationError } from './middleware/validation';
 import { generateCSRFToken, csrfErrorHandler } from './middleware/csrfProtection';
 import { secureErrorHandler, requestIdMiddleware } from './middleware/secureErrorHandler';
 import { AuditLogger, auditMiddleware, AuditEventType } from './middleware/auditLogger';
+import { serverSideAuthorization } from './middleware/serverSideAuthorization';
 
 // Environment variables already loaded at the top
 
@@ -58,6 +59,9 @@ app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
 // CSRF protection for all routes
 app.use(generateCSRFToken);
+
+// Server-side authorization for all API endpoints
+app.use('/api', serverSideAuthorization);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

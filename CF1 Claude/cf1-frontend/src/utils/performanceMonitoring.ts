@@ -4,6 +4,7 @@
  */
 
 import { onCLS, onFCP, onLCP, onTTFB, onINP, Metric } from 'web-vitals';
+import { useMemo } from 'react';
 
 // Configuration
 const PERFORMANCE_ENDPOINT = '/api/analytics/performance';
@@ -586,14 +587,46 @@ export class PerformanceMonitor {
 export const performanceMonitor = PerformanceMonitor.getInstance();
 
 // Export React hooks for easy integration
+// Use stable function references to prevent infinite re-renders
 export const usePerformanceMonitor = () => {
+  // Memoize bound methods to ensure stable references
+  const trackAPIResponse = useMemo(
+    () => performanceMonitor.trackAPIResponse.bind(performanceMonitor),
+    []
+  );
+  
+  const trackUserInteraction = useMemo(
+    () => performanceMonitor.trackUserInteraction.bind(performanceMonitor),
+    []
+  );
+  
+  const trackBlockchainOperation = useMemo(
+    () => performanceMonitor.trackBlockchainOperation.bind(performanceMonitor),
+    []
+  );
+  
+  const trackComponentRender = useMemo(
+    () => performanceMonitor.trackComponentRender.bind(performanceMonitor),
+    []
+  );
+  
+  const trackError = useMemo(
+    () => performanceMonitor.trackError.bind(performanceMonitor),
+    []
+  );
+  
+  const getPerformanceSummary = useMemo(
+    () => performanceMonitor.getPerformanceSummary.bind(performanceMonitor),
+    []
+  );
+
   return {
-    trackAPIResponse: performanceMonitor.trackAPIResponse.bind(performanceMonitor),
-    trackUserInteraction: performanceMonitor.trackUserInteraction.bind(performanceMonitor),
-    trackBlockchainOperation: performanceMonitor.trackBlockchainOperation.bind(performanceMonitor),
-    trackComponentRender: performanceMonitor.trackComponentRender.bind(performanceMonitor),
-    trackError: performanceMonitor.trackError.bind(performanceMonitor),
-    getPerformanceSummary: performanceMonitor.getPerformanceSummary.bind(performanceMonitor)
+    trackAPIResponse,
+    trackUserInteraction,
+    trackBlockchainOperation,
+    trackComponentRender,
+    trackError,
+    getPerformanceSummary
   };
 };
 

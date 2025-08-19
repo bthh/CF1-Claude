@@ -1,4 +1,5 @@
 import { useDemoModeStore, DemoScenario } from '../store/demoModeStore';
+import { getScenarioOptimizedImage, getAssetImage } from './assetImageService';
 
 export interface AssetListing {
   id: string;
@@ -37,7 +38,7 @@ const generateDemoAssets = (scenario: DemoScenario): AssetListing[] => {
           totalTokens: 17000,
           apy: `${Math.min(varyNumber(14, 0.05), 15).toFixed(1)}%`,
           rating: 4.9,
-          imageUrl: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400&h=300&fit=crop',
+          imageUrl: getScenarioOptimizedImage('Commercial Real Estate', scenario, 0)?.url || 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400&h=300&fit=crop',
           tags: ['Prime Location', 'High Yield', 'Institutional Grade']
         },
         {
@@ -169,6 +170,132 @@ const generateDemoAssets = (scenario: DemoScenario): AssetListing[] => {
           rating: 4.4,
           imageUrl: 'https://images.unsplash.com/photo-1563720223185-11003d516935?w=400&h=300&fit=crop',
           tags: ['Collectible Market', 'Rental Income', 'Appreciation']
+        },
+        {
+          id: 'demo-s7',
+          name: 'Miami Beachfront Resort',
+          type: 'Hospitality Real Estate',
+          location: 'Miami Beach, FL',
+          totalValue: `$${varyNumber(8200000).toLocaleString()}`,
+          tokenPrice: '$250',
+          tokensAvailable: varyNumber(6500),
+          totalTokens: 32800,
+          apy: `${varyNumber(11, 0.1).toFixed(1)}%`,
+          rating: 4.8,
+          imageUrl: 'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=400&h=300&fit=crop',
+          tags: ['Tourism Recovery', 'Seasonal Revenue', 'Premium Location']
+        },
+        {
+          id: 'demo-s8',
+          name: 'Industrial Warehouse Portfolio',
+          type: 'Industrial Real Estate',
+          location: 'Phoenix, AZ',
+          totalValue: `$${varyNumber(5600000).toLocaleString()}`,
+          tokenPrice: '$125',
+          tokensAvailable: varyNumber(8200),
+          totalTokens: 44800,
+          apy: `${varyNumber(8, 0.1).toFixed(1)}%`,
+          rating: 4.6,
+          imageUrl: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=400&h=300&fit=crop',
+          tags: ['E-commerce Demand', 'Long-term Leases', 'Distribution Hub']
+        },
+        {
+          id: 'demo-s9',
+          name: 'Vintage Wine Investment Fund',
+          type: 'Collectibles',
+          location: 'Napa Valley, CA',
+          totalValue: `$${varyNumber(1850000).toLocaleString()}`,
+          tokenPrice: '$350',
+          tokensAvailable: varyNumber(2400),
+          totalTokens: 5286,
+          apy: `${varyNumber(12, 0.1).toFixed(1)}%`,
+          rating: 4.5,
+          imageUrl: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=400&h=300&fit=crop',
+          tags: ['Luxury Market', 'Age Appreciation', 'Expert Curation']
+        },
+        {
+          id: 'demo-s10',
+          name: 'Student Housing Complex',
+          type: 'Educational Real Estate',
+          location: 'Austin, TX',
+          totalValue: `$${varyNumber(3400000).toLocaleString()}`,
+          tokenPrice: '$85',
+          tokensAvailable: varyNumber(9500),
+          totalTokens: 40000,
+          apy: `${varyNumber(9, 0.1).toFixed(1)}%`,
+          rating: 4.4,
+          imageUrl: 'https://images.unsplash.com/photo-1555854877-bab0e460b1e1?w=400&h=300&fit=crop',
+          tags: ['Student Demand', 'Stable Occupancy', 'University Partnership']
+        },
+        {
+          id: 'demo-s11',
+          name: 'Green Building Office Park',
+          type: 'Sustainable Real Estate',
+          location: 'Portland, OR',
+          totalValue: `$${varyNumber(7200000).toLocaleString()}`,
+          tokenPrice: '$180',
+          tokensAvailable: varyNumber(7800),
+          totalTokens: 40000,
+          apy: `${varyNumber(10, 0.1).toFixed(1)}%`,
+          rating: 4.7,
+          imageUrl: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400&h=300&fit=crop',
+          tags: ['LEED Certified', 'ESG Investment', 'Tax Benefits']
+        },
+        {
+          id: 'demo-s12',
+          name: 'Cryptocurrency Mining Facility',
+          type: 'Digital Infrastructure',
+          location: 'Wyoming, US',
+          totalValue: `$${varyNumber(4100000).toLocaleString()}`,
+          tokenPrice: '$205',
+          tokensAvailable: varyNumber(4500),
+          totalTokens: 20000,
+          apy: `${varyNumber(15, 0.1).toFixed(1)}%`,
+          rating: 4.3,
+          imageUrl: 'https://images.unsplash.com/photo-1518186233392-c232efbf2373?w=400&h=300&fit=crop',
+          tags: ['High Yield', 'Tech Infrastructure', 'Crypto Exposure']
+        },
+        {
+          id: 'demo-s13',
+          name: 'Farmland Agriculture Fund',
+          type: 'Agricultural Real Estate',
+          location: 'Iowa, US',
+          totalValue: `$${varyNumber(6800000).toLocaleString()}`,
+          tokenPrice: '$95',
+          tokensAvailable: varyNumber(12000),
+          totalTokens: 71579,
+          apy: `${varyNumber(7, 0.1).toFixed(1)}%`,
+          rating: 4.5,
+          imageUrl: 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=400&h=300&fit=crop',
+          tags: ['Food Security', 'Stable Returns', 'Commodity Exposure']
+        },
+        {
+          id: 'demo-s14',
+          name: 'Medical Office Buildings',
+          type: 'Healthcare Real Estate',
+          location: 'Dallas, TX',
+          totalValue: `$${varyNumber(9200000).toLocaleString()}`,
+          tokenPrice: '$275',
+          tokensAvailable: varyNumber(5800),
+          totalTokens: 33455,
+          apy: `${varyNumber(8, 0.1).toFixed(1)}%`,
+          rating: 4.6,
+          imageUrl: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=400&h=300&fit=crop',
+          tags: ['Healthcare Growth', 'Essential Services', 'Long-term Leases']
+        },
+        {
+          id: 'demo-s15',
+          name: 'Self-Storage Facility Network',
+          type: 'Storage Real Estate',
+          location: 'Multi-State',
+          totalValue: `$${varyNumber(2900000).toLocaleString()}`,
+          tokenPrice: '$65',
+          tokensAvailable: varyNumber(11500),
+          totalTokens: 44615,
+          apy: `${varyNumber(9, 0.1).toFixed(1)}%`,
+          rating: 4.4,
+          imageUrl: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop',
+          tags: ['Recession Resistant', 'High Margins', 'Growing Demand']
         }
       ];
 
@@ -371,4 +498,10 @@ export const useMarketplaceAssets = () => {
     isDemoMode: isEnabled,
     scenario: isEnabled ? scenario : null
   };
+};
+
+// Helper function to get a single demo asset by ID for use in asset detail pages
+export const getDemoMarketplaceAssetById = (id: string, scenario: DemoScenario): AssetListing | null => {
+  const assets = generateDemoAssets(scenario);
+  return assets.find(asset => asset.id === id) || null;
 };

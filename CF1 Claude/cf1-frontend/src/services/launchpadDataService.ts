@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useDataModeStore } from '../store/dataModeStore';
+import { useDemoModeStore } from '../store/demoModeStore';
 import { useSubmissionStore } from '../store/submissionStore';
+import { getDemoLaunchpadProposals } from './demoLaunchpadData';
 
 export interface LaunchpadProposal {
   id: string;
@@ -20,60 +22,31 @@ export interface LaunchpadProposal {
   source: 'production' | 'development' | 'demo';
 }
 
-// Demo data for testing
-const getDemoProposals = (): LaunchpadProposal[] => [
-  {
-    id: 'demo-l1',
-    title: 'Downtown Austin Tech Hub',
-    description: 'Modern office complex in the heart of Austin\'s tech district',
-    category: 'Commercial Real Estate',
-    location: 'Austin, TX',
-    targetAmount: '$3,200,000',
-    raisedAmount: '$2,100,000',
-    raisedPercentage: 65,
-    backers: 89,
-    daysLeft: 23,
-    expectedAPY: '11.2%',
-    minimumInvestment: '$1,000',
-    imageUrl: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400&h=300&fit=crop',
-    status: 'active',
-    source: 'demo'
-  },
-  {
-    id: 'demo-l2',
-    title: 'Diversified Precious Metals Fund',
-    description: 'Gold, silver, and platinum holdings in secure vaults',
-    category: 'Precious Metals',
-    location: 'Multiple Locations',
-    targetAmount: '$1,800,000',
-    raisedAmount: '$1,800,000',
-    raisedPercentage: 100,
-    backers: 124,
-    daysLeft: 0,
-    expectedAPY: '8.5%',
-    minimumInvestment: '$500',
-    imageUrl: 'https://images.unsplash.com/photo-1610375461246-83df859d849d?w=400&h=300&fit=crop',
-    status: 'funded',
-    source: 'demo'
-  },
-  {
-    id: 'demo-l3',
-    title: 'Contemporary Art Collection',
-    description: 'Curated collection of emerging contemporary artists',
-    category: 'Art & Collectibles',
-    location: 'New York, NY',
-    targetAmount: '$950,000',
-    raisedAmount: '$320,000',
-    raisedPercentage: 34,
-    backers: 45,
-    daysLeft: 45,
-    expectedAPY: '15.3%',
-    minimumInvestment: '$2,500',
-    imageUrl: 'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=400&h=300&fit=crop',
-    status: 'active',
-    source: 'demo'
-  }
-];
+// Demo data using expanded demo launchpad data
+const getDemoProposals = (): LaunchpadProposal[] => {
+  const demoModeState = useDemoModeStore.getState();
+  const scenario = demoModeState.scenario || 'sales_demo';
+  const demoProposals = getDemoLaunchpadProposals(scenario);
+  
+  // Convert demo launchpad proposals to LaunchpadProposal format
+  return demoProposals.map(proposal => ({
+    id: proposal.id,
+    title: proposal.title,
+    description: proposal.description,
+    category: proposal.category,
+    location: proposal.location,
+    targetAmount: proposal.targetAmount,
+    raisedAmount: proposal.raisedAmount,
+    raisedPercentage: Math.round((parseFloat(proposal.raisedAmount.replace(/[$,]/g, '')) / parseFloat(proposal.targetAmount.replace(/[$,]/g, ''))) * 100),
+    backers: proposal.backers,
+    daysLeft: proposal.daysLeft,
+    expectedAPY: proposal.expectedAPY,
+    minimumInvestment: proposal.minimumInvestment,
+    imageUrl: proposal.imageUrl,
+    status: proposal.status,
+    source: 'demo' as const
+  }));
+};
 
 // Production data (empty for true production environment)
 const getProductionProposals = async (): Promise<LaunchpadProposal[]> => {

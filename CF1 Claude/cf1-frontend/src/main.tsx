@@ -7,6 +7,7 @@ import './index.css'
 import App from './App.tsx'
 import { initializeMonitoring, initializePerformanceMonitoring, startSession } from './lib/monitoring'
 import { performanceMonitor } from './utils/performanceMonitoring'
+import { performanceBudgetManager } from './utils/performanceBudgets'
 
 // Initialize monitoring before app starts
 initializeMonitoring();
@@ -14,6 +15,9 @@ initializePerformanceMonitoring();
 
 // Initialize our enhanced performance monitoring
 performanceMonitor.init();
+
+// Initialize performance budgets and monitoring
+performanceBudgetManager.init();
 
 // Start session tracking
 const sessionId = startSession();

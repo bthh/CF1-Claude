@@ -14,11 +14,14 @@ import {
   Moon,
   Sun,
   Wallet,
-  LogOut
+  LogOut,
+  Shield
 } from 'lucide-react';
 import { useMobileNavigation } from '../../hooks/useMobileNavigation';
 import { useCosmJS } from '../../hooks/useCosmJS';
 import { useVerificationStore } from '../../store/verificationStore';
+import { useFeatureToggleStore } from '../../store/featureToggleStore';
+import { useAdminAuthContext } from '../../hooks/useAdminAuth';
 
 interface NavigationItem {
   label: string;
@@ -46,6 +49,8 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
   const { focusManagement, overlayClasses, navigationClasses } = useMobileNavigation();
   const { isConnected, address, disconnect } = useCosmJS();
   const { level } = useVerificationStore();
+  const { isFeatureEnabled } = useFeatureToggleStore();
+  const { isAdmin } = useAdminAuthContext();
 
   // Focus management
   useEffect(() => {
@@ -65,36 +70,42 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
       icon: <BarChart3 className="w-5 h-5" />,
       description: 'Platform overview and metrics'
     },
-    {
+    ...(isFeatureEnabled('marketplace') ? [{
       label: 'Marketplace',
       to: '/marketplace',
       icon: <Store className="w-5 h-5" />,
       description: 'Browse tokenized assets'
-    },
+    }] : []),
     {
       label: 'Portfolio',
       to: '/portfolio',
       icon: <TrendingUp className="w-5 h-5" />,
       description: 'Your investments and performance'
     },
-    {
+    ...(isFeatureEnabled('launchpad') ? [{
       label: 'Launchpad',
       to: '/launchpad',
       icon: <Rocket className="w-5 h-5" />,
       description: 'New asset launches'
-    },
-    {
+    }] : []),
+    ...(isFeatureEnabled('governance') ? [{
       label: 'Voting',
       to: '/governance',
       icon: <Vote className="w-5 h-5" />,
       description: 'Voting and proposals'
-    },
-    {
+    }] : []),
+    ...(isFeatureEnabled('analytics') ? [{
       label: 'Analytics',
       to: '/analytics',
       icon: <PieChart className="w-5 h-5" />,
       description: 'Detailed platform analytics'
-    }
+    }] : []),
+    ...(isAdmin ? [{
+      label: 'Admin',
+      to: '/admin',
+      icon: <Shield className="w-5 h-5" />,
+      description: 'Admin functions and management tools'
+    }] : [])
   ];
 
   const handleLinkClick = () => {

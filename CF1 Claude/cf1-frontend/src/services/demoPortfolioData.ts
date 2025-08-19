@@ -1,4 +1,5 @@
 import { useDemoModeStore, DemoScenario } from '../store/demoModeStore';
+import { getScenarioOptimizedImage, getAssetImage } from './assetImageService';
 
 export interface PortfolioAsset {
   id: string;
@@ -44,7 +45,7 @@ const generateDemoPortfolio = (scenario: DemoScenario): { assets: PortfolioAsset
           changePercent: `+${varyNumber(19, 0.1).toFixed(1)}%`,
           isPositive: true,
           apy: `${Math.min(varyNumber(14, 0.05), 15).toFixed(1)}%`,
-          imageUrl: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=100&h=100&fit=crop'
+          imageUrl: getScenarioOptimizedImage('Commercial Real Estate', scenario, 0)?.url || getAssetImage('Commercial Real Estate', 0)?.url || 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=100&h=100&fit=crop'
         },
         {
           id: 'port-inv-2',
@@ -57,7 +58,7 @@ const generateDemoPortfolio = (scenario: DemoScenario): { assets: PortfolioAsset
           changePercent: `+${varyNumber(13, 0.1).toFixed(1)}%`,
           isPositive: true,
           apy: `${Math.min(varyNumber(12, 0.05), 15).toFixed(1)}%`,
-          imageUrl: 'https://images.unsplash.com/photo-1610375461246-83df859d849d?w=100&h=100&fit=crop'
+          imageUrl: getScenarioOptimizedImage('Precious Metals', scenario, 0)?.url || getAssetImage('Precious Metals', 0)?.url || 'https://images.unsplash.com/photo-1610375461246-83df859d849d?w=100&h=100&fit=crop'
         },
         {
           id: 'port-inv-3',
@@ -70,7 +71,7 @@ const generateDemoPortfolio = (scenario: DemoScenario): { assets: PortfolioAsset
           changePercent: `+${varyNumber(15, 0.1).toFixed(1)}%`,
           isPositive: true,
           apy: `${Math.min(varyNumber(13, 0.05), 15).toFixed(1)}%`,
-          imageUrl: 'https://images.unsplash.com/photo-1466611653911-95081537e5b7?w=100&h=100&fit=crop'
+          imageUrl: getScenarioOptimizedImage('Green Infrastructure', scenario, 0)?.url || getAssetImage('Green Infrastructure', 0)?.url || 'https://images.unsplash.com/photo-1466611653911-95081537e5b7?w=100&h=100&fit=crop'
         },
         {
           id: 'port-inv-4',
@@ -83,7 +84,7 @@ const generateDemoPortfolio = (scenario: DemoScenario): { assets: PortfolioAsset
           changePercent: `+${varyNumber(16, 0.1).toFixed(1)}%`,
           isPositive: true,
           apy: `${Math.min(varyNumber(11, 0.05), 15).toFixed(1)}%`,
-          imageUrl: 'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=100&h=100&fit=crop'
+          imageUrl: getScenarioOptimizedImage('Hospitality Real Estate', scenario, 0)?.url || getAssetImage('Hospitality Real Estate', 0)?.url || 'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=100&h=100&fit=crop'
         }
       ];
 
@@ -116,7 +117,7 @@ const generateDemoPortfolio = (scenario: DemoScenario): { assets: PortfolioAsset
           changePercent: `+${varyNumber(14, 0.1).toFixed(1)}%`,
           isPositive: true,
           apy: `${varyNumber(9, 0.1).toFixed(1)}%`,
-          imageUrl: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=100&h=100&fit=crop'
+          imageUrl: getScenarioOptimizedImage('Commercial Real Estate', scenario, 1)?.url || getAssetImage('Commercial Real Estate', 1)?.url || 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=100&h=100&fit=crop'
         },
         {
           id: 'port-sales-2',
@@ -129,7 +130,7 @@ const generateDemoPortfolio = (scenario: DemoScenario): { assets: PortfolioAsset
           changePercent: `+${varyNumber(10, 0.1).toFixed(1)}%`,
           isPositive: true,
           apy: `${varyNumber(7, 0.1).toFixed(1)}%`,
-          imageUrl: 'https://images.unsplash.com/photo-1610375461246-83df859d849d?w=100&h=100&fit=crop'
+          imageUrl: getScenarioOptimizedImage('Precious Metals', scenario, 1)?.url || getAssetImage('Precious Metals', 1)?.url || 'https://images.unsplash.com/photo-1610375461246-83df859d849d?w=100&h=100&fit=crop'
         },
         {
           id: 'port-sales-3',
@@ -142,7 +143,7 @@ const generateDemoPortfolio = (scenario: DemoScenario): { assets: PortfolioAsset
           changePercent: `+${varyNumber(12, 0.1).toFixed(1)}%`,
           isPositive: true,
           apy: `${varyNumber(11, 0.1).toFixed(1)}%`,
-          imageUrl: 'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=100&h=100&fit=crop'
+          imageUrl: getScenarioOptimizedImage('Fine Art', scenario, 0)?.url || getAssetImage('Fine Art', 0)?.url || 'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=100&h=100&fit=crop'
         },
         {
           id: 'port-sales-4',
@@ -155,7 +156,7 @@ const generateDemoPortfolio = (scenario: DemoScenario): { assets: PortfolioAsset
           changePercent: `+${varyNumber(11, 0.1).toFixed(1)}%`,
           isPositive: true,
           apy: `${varyNumber(10, 0.1).toFixed(1)}%`,
-          imageUrl: 'https://images.unsplash.com/photo-1466611653911-95081537e5b7?w=100&h=100&fit=crop'
+          imageUrl: getScenarioOptimizedImage('Renewable Energy', scenario, 1)?.url || getAssetImage('Renewable Energy', 1)?.url || 'https://images.unsplash.com/photo-1466611653911-95081537e5b7?w=100&h=100&fit=crop'
         },
         {
           id: 'port-sales-5',
@@ -168,7 +169,7 @@ const generateDemoPortfolio = (scenario: DemoScenario): { assets: PortfolioAsset
           changePercent: `+${varyNumber(9, 0.1).toFixed(1)}%`,
           isPositive: true,
           apy: `${varyNumber(8, 0.1).toFixed(1)}%`,
-          imageUrl: 'https://images.unsplash.com/photo-1563720223185-11003d516935?w=100&h=100&fit=crop'
+          imageUrl: getScenarioOptimizedImage('Luxury Vehicles', scenario, 0)?.url || getAssetImage('Luxury Vehicles', 0)?.url || 'https://images.unsplash.com/photo-1563720223185-11003d516935?w=100&h=100&fit=crop'
         }
       ];
 
@@ -201,7 +202,7 @@ const generateDemoPortfolio = (scenario: DemoScenario): { assets: PortfolioAsset
           changePercent: `+${varyNumber(12, 0.2).toFixed(1)}%`,
           isPositive: true,
           apy: `${varyNumber(6, 0.1).toFixed(1)}%`,
-          imageUrl: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=100&h=100&fit=crop'
+          imageUrl: getScenarioOptimizedImage('Residential Real Estate', scenario, 0)?.url || getAssetImage('Residential Real Estate', 0)?.url || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=100&h=100&fit=crop'
         },
         {
           id: 'port-onboard-2',
@@ -319,7 +320,7 @@ const generateDemoPortfolio = (scenario: DemoScenario): { assets: PortfolioAsset
           changePercent: '0.0%',
           isPositive: true,
           apy: '0.0%',
-          imageUrl: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=100&h=100&fit=crop'
+          imageUrl: getScenarioOptimizedImage('Residential Real Estate', scenario, 0)?.url || getAssetImage('Residential Real Estate', 0)?.url || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=100&h=100&fit=crop'
         },
         {
           id: 'test-port-2',
@@ -362,7 +363,7 @@ const generateDemoPortfolio = (scenario: DemoScenario): { assets: PortfolioAsset
           changePercent: `+${varyNumber(14, 0.2).toFixed(1)}%`,
           isPositive: varyNumber(1) > 0.5,
           apy: `${varyNumber(8, 0.2).toFixed(1)}%`,
-          imageUrl: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=100&h=100&fit=crop'
+          imageUrl: getScenarioOptimizedImage('Residential Real Estate', scenario, 0)?.url || getAssetImage('Residential Real Estate', 0)?.url || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=100&h=100&fit=crop'
         }
       ];
 

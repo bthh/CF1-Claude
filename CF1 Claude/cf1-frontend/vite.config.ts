@@ -16,15 +16,52 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         output: {
           manualChunks: {
+            // Core dependencies
             vendor: ['react', 'react-dom'],
             router: ['react-router-dom'],
+            query: ['@tanstack/react-query'],
+            
+            // Blockchain dependencies
             cosmos: ['@cosmjs/cosmwasm-stargate', '@cosmjs/stargate'],
-            ui: ['lucide-react'],
+            
+            // UI dependencies
+            ui: ['lucide-react', 'framer-motion'],
+            charts: ['recharts'],
+            
+            // Performance monitoring
+            monitoring: ['web-vitals', '@sentry/react'],
+            
+            // Dashboard variants (code splitting)
+            'dashboard-a': ['./src/components/Dashboard/DashboardVariantA.tsx'],
+            'dashboard-b': ['./src/components/Dashboard/DashboardVariantB.tsx'],
+            'dashboard-c': ['./src/components/Dashboard/DashboardVariantC.tsx'],
+            
+            // Discovery components
+            'discovery-hub': ['./src/components/Discovery/DiscoveryHub.tsx'],
+            'video-library': ['./src/components/Discovery/VideoLibrary.tsx'],
+            'market-insights': ['./src/components/Discovery/MarketInsights.tsx'],
+            
+            // Admin components
+            'admin-panel': [
+              './src/components/Admin/AdminHeader.tsx',
+              './src/components/Admin/AdminSidebar.tsx',
+              './src/components/Admin/GovernanceAdmin.tsx',
+              './src/components/Admin/LaunchpadAdmin.tsx'
+            ],
+            
+            // Store (state management)
+            stores: [
+              './src/store/dashboardV2Store.ts',
+              './src/store/discoveryStore.ts',
+              './src/store/portfolioStore.ts'
+            ],
+            
+            // Polyfills
             polyfills: ['buffer', 'process', 'crypto-browserify', 'stream-browserify']
           }
         }
       },
-      chunkSizeWarningLimit: 1000,
+      chunkSizeWarningLimit: 800, // Reduced to encourage smaller chunks
       commonjsOptions: {
         transformMixedEsModules: true
       }

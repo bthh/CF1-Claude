@@ -139,7 +139,7 @@ const PlatformConfigSection: React.FC = () => {
   // Safety check - don't render if config is not available
   if (!config) {
     return (
-      <div className="flex items-center justify-center py-12">
+      <div className="w-full flex items-center justify-center py-12">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         <span className="ml-2 text-gray-600 dark:text-gray-400">Loading platform configuration...</span>
       </div>
@@ -604,7 +604,7 @@ const PlatformAdmin: React.FC = () => {
 
   if (!currentAdmin || !hasAccessToPlatformAdmin()) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="w-full h-full flex items-center justify-center">
         <div className="text-center">
           <Shield className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
@@ -622,7 +622,7 @@ const PlatformAdmin: React.FC = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="w-full min-h-full space-y-6">
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between">

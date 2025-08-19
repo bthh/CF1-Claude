@@ -1,7 +1,61 @@
-import React from 'react';
-import { PieChart, TrendingUp, TrendingDown, DollarSign, ArrowRight, Target, Calendar, Wallet } from 'lucide-react';
+import React, { useState } from 'react';
+import { PieChart, TrendingUp, TrendingDown, DollarSign, ArrowRight, Target, Calendar, Wallet, Image as ImageIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { formatCurrency, formatPercentage } from '../../utils/format';
+import { getAssetImage } from '../../services/assetImageService';
+
+// Professional Asset Image Component with fallback handling
+interface AssetImageProps {
+  src?: string;
+  alt: string;
+  className?: string;
+  fallbackClassName?: string;
+}
+
+const AssetImage: React.FC<AssetImageProps> = ({ 
+  src, 
+  alt, 
+  className = "w-10 h-10 rounded-lg object-cover",
+  fallbackClassName = "w-10 h-10 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center"
+}) => {
+  const [imageError, setImageError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const handleImageLoad = () => {
+    setIsLoading(false);
+  };
+
+  const handleImageError = () => {
+    setImageError(true);
+    setIsLoading(false);
+  };
+
+  if (!src || imageError) {
+    return (
+      <div className={fallbackClassName}>
+        <ImageIcon className="w-4 h-4 text-gray-400" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative">
+      {isLoading && (
+        <div className={fallbackClassName}>
+          <div className="animate-pulse bg-gray-300 dark:bg-gray-600 rounded-lg w-full h-full"></div>
+        </div>
+      )}
+      <img
+        src={src}
+        alt={alt}
+        className={`${className} ${isLoading ? 'absolute inset-0 opacity-0' : ''}`}
+        onLoad={handleImageLoad}
+        onError={handleImageError}
+        loading="lazy"
+      />
+    </div>
+  );
+};
 
 // Pie Chart Component
 interface PieChartComponentProps {
@@ -140,49 +194,59 @@ const PortfolioWidget: React.FC<PortfolioWidgetProps> = ({ size, isEditMode = fa
     activeInvestments: 12,
     assets: [
       {
-        name: 'Green Energy Fund',
+        name: 'Renewable Energy Portfolio',
+        type: 'Renewable Energy',
         value: 15420,
         allocation: 33.8,
         gain: 2340,
         gainPercent: 17.9,
         trend: 'up',
-        color: '#10B981' // green-500
+        color: '#10B981', // green-500
+        imageUrl: getAssetImage('Renewable Energy')?.url
       },
       {
-        name: 'Tech Innovation',
+        name: 'Technology Infrastructure',
+        type: 'Technology',
         value: 12650,
         allocation: 27.7,
         gain: 1890,
         gainPercent: 17.6,
         trend: 'up',
-        color: '#3B82F6' // blue-500
+        color: '#3B82F6', // blue-500
+        imageUrl: getAssetImage('Technology')?.url
       },
       {
-        name: 'Real Estate Portfolio',
+        name: 'Commercial Real Estate',
+        type: 'Commercial Real Estate',
         value: 9870,
         allocation: 21.6,
         gain: 1240,
         gainPercent: 14.4,
         trend: 'up',
-        color: '#8B5CF6' // violet-500
+        color: '#8B5CF6', // violet-500
+        imageUrl: getAssetImage('Commercial Real Estate')?.url
       },
       {
-        name: 'Healthcare Research',
+        name: 'Precious Metals Reserve',
+        type: 'Precious Metals',
         value: 5210,
         allocation: 11.4,
         gain: 890,
         gainPercent: 20.6,
         trend: 'up',
-        color: '#F59E0B' // amber-500
+        color: '#F59E0B', // amber-500
+        imageUrl: getAssetImage('Precious Metals')?.url
       },
       {
         name: 'Sustainable Agriculture',
+        type: 'Agriculture',
         value: 2500,
         allocation: 5.5,
         gain: 420,
         gainPercent: 20.2,
         trend: 'up',
-        color: '#EF4444' // red-500
+        color: '#EF4444', // red-500
+        imageUrl: getAssetImage('Agriculture')?.url
       }
     ]
   };
@@ -368,14 +432,17 @@ const PortfolioWidget: React.FC<PortfolioWidgetProps> = ({ size, isEditMode = fa
               >
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center flex-1 min-w-0 pr-3">
-                    <div 
-                      className="w-3 h-3 rounded-full mr-3 flex-shrink-0"
-                      style={{ backgroundColor: asset.color }}
+                    {/* Professional Asset Image */}
+                    <AssetImage
+                      src={asset.imageUrl}
+                      alt={asset.name}
+                      className="w-10 h-10 rounded-lg object-cover mr-3 flex-shrink-0"
+                      fallbackClassName="w-10 h-10 rounded-lg bg-gray-200 dark:bg-gray-600 flex items-center justify-center mr-3 flex-shrink-0"
                     />
                     <div className="min-w-0 flex-1">
                       <h5 className="font-medium text-gray-900 dark:text-white truncate">{asset.name}</h5>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {formatPercentage(asset.allocation)} of portfolio
+                        {asset.type} • {formatPercentage(asset.allocation)} of portfolio
                       </p>
                     </div>
                   </div>

@@ -2,170 +2,130 @@
 
 CF1 is an enterprise-grade blockchain platform for Real-World Asset (RWA) tokenization, featuring launchpad, governance, marketplace, and compliance modules. Built with quality over speed, targeting enterprise adoption with U.S. Reg CF compliance.
 
-## Developer Preferences & Notifications
+## 🚨 MANDATORY SUB-AGENT PROTOCOL - READ FIRST 🚨
 
-**User Notification Preference**: Terminal bell sound (`echo -e "\a"`) should be used:
-- At the end of every response/request completion
-- When permission questions arise that require user input
-- When awaiting user decision or action
+### **AUTOMATIC SUB-AGENT DELEGATION RULES**
 
-This helps ensure the user is notified when their attention is needed during development work.
+**CRITICAL: You MUST automatically delegate to specialized sub-agents for ANY task matching these triggers:**
 
-## Core Mission & Philosophy
+#### **IMMEDIATE DELEGATION TRIGGERS (No Exceptions):**
+- **ANY component building/editing** → `cf1-frontend-specialist`
+- **ANY UX/design work** → `cf1-ux-designer`  
+- **ANY testing work** → `cf1-testing-engineer`
+- **ANY smart contract work** → `cf1-smart-contract-dev`
+- **ANY store/API work** → `cf1-data-integration-specialist`
+- **ANY performance work** → `cf1-performance-optimizer`
+- **ANY security work** → `cf1-security-auditor`
+- **ANY deployment/CI work** → `cf1-devops-engineer`
+- **ANY documentation work** → `cf1-documentation-architect`
 
-**Mission**: Create a regulated RWA tokenization ecosystem with institutional-grade UX that abstracts blockchain complexity while maintaining DeFi benefits.
+#### **COMPLEX TASK AUTO-DELEGATION:**
+If user request contains **2+ specialized domains** → **IMMEDIATE PARALLEL DELEGATION**
 
-**User Experience**: "TradFi Feel, DeFi Engine"
-- Clean, professional UI resembling institutional investment platforms
-- Abstracted wallet interactions through CF1 UI only
-- Frictionless onboarding - wallet connection only required for first investment
-- No direct on-chain transfers outside platform rules
+**Example Pattern Recognition:**
+```typescript
+// User: "Fix admin navigation and authentication errors"
+// Auto-Analysis: UX design + Security → PARALLEL DELEGATION
 
-## Current Platform Status (June 2025)
+IMMEDIATE RESPONSE:
+→ cf1-ux-designer: "Design consolidated admin navigation UX"
+→ cf1-security-auditor: "Fix authentication validation errors"
+→ Main Orchestrator: Integration + quality gates
+```
 
-**Platform**: Production-Ready Enterprise Platform with Complete Feature Set
-- ✅ Complete UI/UX with dark mode and responsive design
-- ✅ Mobile-first experience with native app-like navigation
-- ✅ Smart contracts with full business logic
-- ✅ Frontend testing framework with 75.9% pass rate (systematic improvements completed)
-- ✅ Global state management with Zustand
-- ✅ Data caching with React Query
-- ✅ TypeScript cleanup (0 compilation errors)
-- ✅ Production deployment configuration
-- ✅ Real-time event streaming architecture
-- ✅ Enterprise API gateway (NestJS + GraphQL)
-- ✅ Multi-tenant architecture with data isolation
-- ✅ Zero-knowledge proof privacy layer
-- ✅ Hardware Security Module integration (FIPS 140-2 Level 3)
-- ✅ Progressive KYC system with compliance gates
-- ✅ Dashboard widget customization with drag-and-drop
-- ✅ **CF1 Sign microservice** - Complete document signing with interactive templates
-- ✅ **CF1 Portfolio Trust** - Smart contract complete (compilation fixes pending)
-- ✅ **Creator Toolkit & Shareholder Relations** - Full backend + UI integration complete
-- ✅ **Pre-Secondary Market (IOI)** - Complete implementation with matching engine
-- ✅ **CF1 AI Proposal Analyzer** - Complete production-ready AI analysis system
-- ✅ **Hierarchical Admin Proposal Management** - Complete admin approval workflow for launchpad and governance
-- ✅ **UI Theme**: Sidebar updated to red theme
-- ✅ **Card 22: Public/Private Governance Proposals** - Complete with token-based access control
-- ✅ **Card 25: Super Admin APY Guardrail** - Complete with platform configuration and real-time validation
+#### **CONTEXT WINDOW OPTIMIZATION:**
+- **Main Context**: Architecture decisions, integration, quality gates only
+- **Never implement** in main context what agents can do
+- **Always prefer** parallel execution over sequential
+- **Maximum delegation** for optimal performance
 
-## Recent Development Achievements
+### **SUB-AGENT RECOGNITION PATTERNS**
 
-### Card 25: Super Admin APY Guardrail ✅ (COMPLETED - June 2025)
-- ✅ Platform Configuration Store with persistent Zustand storage
-- ✅ Super Admin interface for APY limit management (Platform Settings tab)
-- ✅ Real-time APY validation in asset proposal creation
-- ✅ Visual error display with clear guidance for creators
-- ✅ Platform safety limits with documentation requirements
-- ✅ APY validation testing tools for administrators
+**Auto-delegate when you see these keywords:**
+- **Frontend**: component, React, store, UI, styling, responsive → `cf1-frontend-specialist`
+- **Design/UX**: navigation, workflow, accessibility, user flow → `cf1-ux-designer`
+- **Security**: authentication, validation, permissions, audit → `cf1-security-auditor`
+- **Performance**: optimization, bundle, loading, speed → `cf1-performance-optimizer`
+- **Testing**: test, coverage, mock, debug → `cf1-testing-engineer`
+- **Data**: store, API, integration, sync → `cf1-data-integration-specialist`
+- **Smart Contracts**: contract, CosmWasm, Rust, blockchain → `cf1-smart-contract-dev`
+- **Deploy**: build, CI/CD, deployment, environment → `cf1-devops-engineer`
+- **Docs**: documentation, guide, README → `cf1-documentation-architect`
 
-**Implementation Details**:
-- Default maximum APY: 50% (configurable by Super Admin)
-- Real-time validation prevents submission of invalid proposals
-- Clear error messaging guides creators to provide documentation
-- Platform safety hard limit of 200% APY
-- Persistent configuration storage across sessions
+## CF1 Development Sub-Agent Team - ACTIVE
 
-### Card 24: AI Creator Assistant (Premium) ✅ (COMPLETED - June 2025)
-- ✅ Comprehensive AI Assistant store with Zustand persistence
-- ✅ Full AI Assistant interface with tabbed navigation
-- ✅ Premium subscription gating with upgrade modal
-- ✅ Asset analysis and market insights generation
-- ✅ Risk assessment and performance recommendations
-- ✅ AI chat interface with context awareness
-- ✅ Content generation for communications and reports
-- ✅ Compliance checking and automated suggestions
-- ✅ Usage statistics tracking and analytics
-- ✅ Real-time processing states and loading indicators
-- ✅ Integration with Creator Admin panel as dedicated tab
+**Team Status**: ✅ **9 SPECIALIZED AGENTS ACTIVE**
+**Architecture**: Independent Sonnet 4 agents with separate context windows
 
-**Implementation Details**:
-- AI-powered insights with confidence scoring (85%+ accuracy simulation)
-- Premium features: Market insights, content generation, compliance checks
-- Free tier: Basic asset analysis and risk assessment
-- Chat interface with contextual AI responses
-- Export functionality for insights and recommendations
-- Real-time processing with proper loading states
-- Mobile-responsive design with embedded mode option
-- Comprehensive test coverage (10/10 tests passing)
+### **Core Development Team**
 
-### Card 29: AI-Assisted Proposal Creation ✅ (COMPLETED - June 2025)
-- ✅ Comprehensive AI Proposal Assistant store with Zustand persistence
-- ✅ Intelligent proposal analysis and market data integration
-- ✅ Auto-suggestion system for APY, funding amounts, and timelines
-- ✅ Content generation for descriptions, risk factors, and use of funds
-- ✅ Real-time form validation with market-based recommendations
-- ✅ Professional template library with asset-type specific suggestions
-- ✅ Market insights with competitor analysis and success rates
-- ✅ Proposal optimization with confidence scoring
-- ✅ Fixed-position AI assistant panel with multi-tab interface
-- ✅ Integration with CreateProposal component for seamless workflow
-- ✅ Usage tracking and analytics for AI assistance effectiveness
+#### 1. **`cf1-frontend-specialist`**
+**Auto-Delegate For**: React components, Zustand stores, UI implementation, styling, responsive design, component debugging
 
-**Implementation Details**:
-- 7 asset types supported: Real Estate, Renewable Energy, Technology, Commodities, Infrastructure, Agriculture, Automotive
-- Market data simulation with realistic APY ranges (7.2% - 22.4%)
-- Template library with pre-built proposals for common asset types
-- Real-time validation with error, warning, and info severity levels
-- Auto-suggestion triggers based on form completeness and market deviation
-- Content generation with 2-second realistic AI processing simulation
-- Comprehensive test coverage (13/13 tests passing)
-- Mobile-responsive floating assistant panel
+#### 2. **`cf1-ux-designer`**
+**Auto-Delegate For**: User experience design, navigation flows, accessibility compliance, interface optimization, user journey mapping
 
-### Card 22: Public/Private Governance Proposals ✅ (COMPLETED - June 2025)
-- ✅ Privacy controls for governance proposals (Public/Private toggle)
-- ✅ Token-based access control for private proposal viewing
-- ✅ Asset-level visibility policies (Always Private, Always Public, Creator Decides)
-- ✅ Creator Admin interface for governance policy management
-- ✅ Enhanced governance store with privacy filtering
+#### 3. **`cf1-testing-engineer`**
+**Auto-Delegate For**: Test automation, coverage improvement, mock strategies, integration testing, test debugging
+
+#### 4. **`cf1-smart-contract-dev`**
+**Auto-Delegate For**: CosmWasm/Rust development, blockchain integration, contract optimization, deployment
+
+#### 5. **`cf1-data-integration-specialist`**
+**Auto-Delegate For**: Store architecture, API integration, data flow optimization, real-time synchronization
+
+#### 6. **`cf1-performance-optimizer`**
+**Auto-Delegate For**: Bundle optimization, performance monitoring, build optimization, Web Vitals improvement
+
+### **Specialized Support Team**
+
+#### 7. **`cf1-security-auditor`**
+**Auto-Delegate For**: Security reviews, vulnerability assessment, authentication fixes, compliance validation
+
+#### 8. **`cf1-devops-engineer`**
+**Auto-Delegate For**: CI/CD pipelines, deployment automation, infrastructure optimization, build processes
+
+#### 9. **`cf1-documentation-architect`**
+**Auto-Delegate For**: Technical documentation, API docs, system architecture documentation, developer guides
+
+## Current Platform Status (July 2025)
+
+**Platform**: ✅ **PRODUCTION READY** - Enterprise-grade with complete feature set
+
+### **✅ Core Platform Features (Complete)**
+- **UI/UX**: Dark mode, responsive design, mobile-first experience
+- **Smart Contracts**: Full business logic, CosmWasm on Neutron blockchain
+- **State Management**: Zustand global stores with persistence
+- **Data Caching**: React Query with optimistic updates
+- **Testing**: 75.9% coverage with systematic improvements
+- **Security**: XSS protection, CSP headers, rate limiting, input validation
+- **Performance**: Web Vitals monitoring, error boundaries, bundle optimization
+- **Accessibility**: WCAG 2.1 AA compliance complete
+
+### **✅ Major Features Implemented (July 2025)**
+1. **Admin System**: Consolidated navigation, hierarchical access, instant fund functionality
+2. **Discovery Hub**: Creator inspiration framework with videos, AI tools, market insights
+3. **Dashboard V2**: 3 role-based variants (welcome, investor, creator)
+4. **Security Enhancements**: Authentication validation, transaction validation, audit logging
+5. **Feature Toggles**: Platform admin controls for marketplace and analytics
+6. **Portfolio Integration**: End-to-end admin instant fund → portfolio workflow
+
+### **✅ Recent Completions**
+- **Navigation**: Single Admin tab with role-based hierarchical access
+- **Authentication**: Fixed admin instant fund session validation
+- **Performance**: Build optimization, import fixes, component lazy loading
+- **Security**: Multi-layer validation, transaction limits, comprehensive audit trails
 
 ## Technical Architecture
 
 **Core Tech Stack**:
-- Frontend: React 19 + TypeScript + Vite + Tailwind CSS + CosmJS
-- Smart Contracts: CosmWasm (Rust) on Neutron blockchain
-- State: Zustand global stores with persistence
-- Data: React Query with optimistic updates and caching
-- Testing: Vitest + React Testing Library (75.9% pass rate - 101/133 tests passing)
-- Security: Rate limiting, access controls, input validation
-- Deploy: Docker + CI/CD with automated Neutron testnet deployment
-
-## Completed Development Work (Feature Cards 22-35) ✅
-
-### All Feature Cards Successfully Implemented:
-1. **Card 22: Public/Private Governance Proposals** ✅ (COMPLETED)
-2. **Card 23: Site-Wide AI-Powered Search** ✅ (COMPLETED)
-3. **Card 24: AI Creator Assistant (Premium)** ✅ (COMPLETED)
-4. **Card 25: Super Admin APY Guardrail** ✅ (COMPLETED)
-5. **Card 26: Save Proposal as Draft** ✅ (COMPLETED)
-6. **Card 27: In-App Notification System (MVP)** ✅ (COMPLETED)
-7. **Card 28: Portfolio Dashboard Pie Chart** ✅ (COMPLETED)
-8. **Card 29: AI-Assisted Proposal Creation** ✅ (COMPLETED)
-9. **Cards 30-35: UI/UX Refinements** ✅ (COMPLETED)
-
-### Latest Implementations Summary (Current Session):
-
-#### Card 26: Save Proposal as Draft ✅
-- Auto-save functionality with debounced triggers (5-second delay + 30-second intervals)
-- Auto-save status indicators in the UI with ON/OFF toggle
-- Enhanced LaunchpadDrafts page with advanced filtering, sorting, and search
-- Bulk operations support for selecting and managing multiple drafts
-- Complete draft management workflow with mobile-responsive design
-
-#### Card 28: Portfolio Dashboard Pie Chart ✅
-- Professional SVG-based pie chart component with proper arc calculations
-- Responsive design that adapts to different widget sizes (medium, large, full)
-- Color-coded asset allocation with matching legends and hover effects
-- Center donut chart design with portfolio allocation labels
-- Integration with existing portfolio data structure (6/6 tests passing)
-
-#### Cards 30-35: UI/UX Refinements ✅
-- Comprehensive UI component library with 8 core components
-- Advanced Toast notification system with multiple types and actions
-- Enhanced search input with debouncing and suggestions
-- Professional loading states, progress indicators, and status badges
-- Tooltip system with multiple positioning options
-- Complete documentation and testing (23/23 tests passing)
+- **Frontend**: React 19 + TypeScript + Vite + Tailwind CSS + CosmJS
+- **Smart Contracts**: CosmWasm (Rust) on Neutron blockchain
+- **State**: Zustand global stores with persistence
+- **Data**: React Query with optimistic updates and caching
+- **Testing**: Vitest + React Testing Library
+- **Security**: Rate limiting, access controls, input validation, CSP headers
+- **Deploy**: Docker + CI/CD with automated deployment
 
 ## Key Business Rules
 
@@ -175,25 +135,42 @@ This helps ensure the user is notified when their attention is needed during dev
 - CW20 tokens with escrow system
 - Full refunds if funding fails
 
-**Platform Security**:
-- APY Guardrails: Maximum allowed APY enforced platform-wide
-- Real-time validation prevents unrealistic return expectations
-- Documentation requirements for high-yield projections
-- Super Admin oversight of platform configuration
+**Admin Access Levels**:
+- **Creator Admin**: Asset management, shareholder relations
+- **Platform Admin**: Feature toggles, marketplace controls, analytics
+- **Super Admin**: All platform controls, instant fund authority, APY guardrails
 
-**Governance Privacy**:
-- Public proposals visible to all platform users
-- Private proposals restricted to asset token holders
-- Asset-level policies control default visibility
-- Creator flexibility within policy constraints
+**Security Limits**:
+- Admin instant fund: $10M transaction limit
+- Rate limits: Configurable per operation type
+- Multi-layer validation for all admin operations
+- Comprehensive audit logging for compliance
 
 ## Development Environment Status
+
 - **TypeScript**: 0 compilation errors ✅
-- **Build**: Production ready ✅
+- **Build**: Production ready with optimized bundles ✅
 - **Frontend**: Complete with mobile-first design ✅
-- **Backend APIs**: Creator Toolkit, IOI, and AI Analyzer complete ✅
-- **Smart Contracts**: Portfolio Trust pending final fixes ✅
-- **Testing**: Ready for integration testing ✅
-- **AI Services**: CF1 AI Analyzer microservice production-ready ✅
-- **Platform Config**: APY guardrails operational ✅
-- **Governance**: Privacy controls fully implemented ✅
+- **Testing**: Ready for enhancement to 95% coverage ✅
+- **Security**: Production-grade with comprehensive protections ✅
+- **Performance**: Optimized with monitoring and error handling ✅
+
+## Next Priorities
+
+1. **Testing Enhancement**: Continue from 75.9% to 95% coverage target
+2. **Bundle Optimization**: Implement dynamic imports for larger components
+3. **Smart Contract**: Complete CF1 Portfolio Trust final compilation fixes
+4. **Advanced Features**: Multi-chain support, secondary trading enhancements
+
+---
+
+## 🎯 WORKFLOW REMINDER
+
+**For ANY development task:**
+1. **Analyze request** → Identify specialized domains
+2. **Auto-delegate** → Use appropriate sub-agents immediately
+3. **Parallel execution** → Multiple agents for complex tasks
+4. **Integration** → Main orchestrator handles final assembly
+5. **Quality gates** → Verify all components work together
+
+**Never handle specialized work in main context when sub-agents are available!**

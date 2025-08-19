@@ -292,7 +292,7 @@ const SuperAdmin: React.FC = () => {
 
   if (!currentAdmin || !checkPermission('manage_platform_config')) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="w-full h-full flex items-center justify-center">
         <div className="text-center">
           <Shield className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
@@ -307,7 +307,7 @@ const SuperAdmin: React.FC = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="w-full min-h-full space-y-6">
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between">

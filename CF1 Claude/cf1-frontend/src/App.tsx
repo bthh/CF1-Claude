@@ -34,10 +34,12 @@ import Analytics from './pages/Analytics';
 import Search from './pages/Search';
 import SecondaryTrading from './pages/SecondaryTrading';
 import ShareholderDetail from './pages/ShareholderDetail';
+import Discovery from './pages/Discovery';
 import CreatorAdmin from './pages/CreatorAdmin';
 import SuperAdmin from './pages/SuperAdmin';
 import PlatformAdmin from './pages/PlatformAdmin';
 import RoleBasedTestingPage from './pages/RoleBasedTestingPage';
+import AdminNavigation from './components/Admin/AdminNavigation';
 import { AdminAuthProvider } from './hooks/useAdminAuth';
 import { CosmJSProvider } from './providers/CosmJSProvider';
 import DemoModeIndicator from './components/DemoMode/DemoModeIndicator';
@@ -97,8 +99,10 @@ function App() {
               <Route path="/profile/verification" element={<Verification />} />
               <Route path="/secondary-trading" element={<SecondaryTrading />} />
               <Route path="/shareholder/:id" element={<ShareholderDetail />} />
+              <Route path="/discovery" element={<Discovery />} />
               
               {/* Admin Routes */}
+              <Route path="/admin" element={<AdminNavigation />} />
               <Route path="/admin/creator" element={<CreatorAdmin />} />
               <Route path="/admin/super" element={<SuperAdmin />} />
               <Route path="/admin/platform" element={<PlatformAdmin />} />

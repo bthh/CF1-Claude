@@ -13,10 +13,12 @@ import {
   Droplets,
   Lock,
   ArrowLeftRight,
-  DollarSign
+  DollarSign,
+  Shield
 } from 'lucide-react';
 import { useFeatureToggleStore } from '../../store/featureToggleStore';
 import { usePlatformConfigStore } from '../../store/platformConfigStore';
+import { useAdminAuthContext } from '../../hooks/useAdminAuth';
 
 interface NavItemProps {
   icon: React.ReactNode;
@@ -52,6 +54,7 @@ const NavItem: React.FC<NavItemProps> = ({ icon, label, to, badge }) => {
 const Sidebar: React.FC = () => {
   const { isFeatureEnabled } = useFeatureToggleStore();
   const { config } = usePlatformConfigStore();
+  const { isAdmin } = useAdminAuthContext();
   
   return (
     <aside className="w-64 bg-blue-100 border-r border-secondary-200 h-full flex flex-col">
@@ -84,6 +87,13 @@ const Sidebar: React.FC = () => {
             to="/governance"
             badge="2"
           />
+          {isAdmin && (
+            <NavItem
+              icon={<Shield className="w-5 h-5" />}
+              label="Admin"
+              to="/admin"
+            />
+          )}
         </nav>
       </div>
 

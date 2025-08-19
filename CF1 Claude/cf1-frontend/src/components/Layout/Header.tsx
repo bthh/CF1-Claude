@@ -15,6 +15,8 @@ import { HeaderSearch } from '../Search';
 import { useNotifications } from '../../hooks/useNotifications';
 import { useDataMode } from '../../store/dataModeStore';
 import { PortfolioTestingPanel } from '../Debug/PortfolioTestingPanel';
+import { AdminViewToggle } from '../Admin/AdminViewToggle';
+import { useAdminViewStore } from '../../store/adminViewStore';
 
 const Header: React.FC = () => {
   const location = useLocation();
@@ -51,6 +53,9 @@ const Header: React.FC = () => {
   
   // Data mode management
   const { currentMode } = useDataMode();
+  
+  // Admin view management
+  const { currentView, toggleView, setAdminView, exitAdminView } = useAdminViewStore();
   
   // Simple local state for theme and notifications
   const [darkMode, setDarkMode] = useState(() => {
@@ -201,24 +206,24 @@ const Header: React.FC = () => {
       to: '/portfolio',
       description: 'View your portfolio'
     },
-    {
+    ...(isFeatureEnabled('governance') ? [{
       label: 'Vote for Proposal',
       icon: <Vote className="w-4 h-4" />,
       to: '/governance',
       description: 'All voting proposals'
-    },
-    {
+    }] : []),
+    ...(isFeatureEnabled('launchpad') ? [{
       label: 'Create New Proposal',
       icon: <Plus className="w-4 h-4" />,
       to: '/launchpad',
       description: 'Submit new asset proposal'
-    },
-    {
+    }] : []),
+    ...(isFeatureEnabled('marketplace') ? [{
       label: 'Explore',
       icon: <Eye className="w-4 h-4" />,
       to: '/marketplace',
       description: 'Browse marketplace assets'
-    },
+    }] : []),
     {
       label: 'Platform Tour',
       icon: <PlayCircle className="w-4 h-4" />,
@@ -259,14 +264,10 @@ const Header: React.FC = () => {
       description: 'Test investment-to-portfolio workflow'
     }] : []),
     ...(isAdmin ? [{
-      label: `${adminRole?.replace('_', ' ')} Panel`,
-      icon: adminRole === 'creator' ? <Users className="w-4 h-4" /> : 
-            adminRole === 'super_admin' ? <Crown className="w-4 h-4" /> : 
-            <Shield className="w-4 h-4" />,
-      to: adminRole === 'creator' ? '/admin/creator' : 
-          adminRole === 'super_admin' ? '/admin/super' : 
-          '/admin/platform',
-      description: `Access ${adminRole?.replace('_', ' ')} dashboard`
+      label: 'Admin Panel',
+      icon: <Shield className="w-4 h-4" />,
+      to: '/admin',
+      description: 'Access admin functions and management tools'
     }] : [])
   ];
 
@@ -301,6 +302,23 @@ const Header: React.FC = () => {
     <>
       <header className="bg-blue-500 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 h-16 flex items-center justify-between px-4 sm:px-6">
         <div className="flex items-center space-x-4">
+          {/* Admin View Toggle - Show when admin */}
+          {isAdmin && (
+            <AdminViewToggle
+              currentView={currentView}
+              adminRole={adminRole}
+              onToggle={(view) => {
+                if (view === 'admin') {
+                  setAdminView(adminRole);
+                } else {
+                  exitAdminView();
+                }
+              }}
+              hasPermission={true}
+              className="hidden lg:block"
+            />
+          )}
+          
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMobileNavOpen(true)}
@@ -340,14 +358,16 @@ const Header: React.FC = () => {
           >
             Dashboard
           </Link>
-          <Link 
-            to="/marketplace"
-            className={`px-4 py-2 rounded-lg text-sm font-medium ${
-              isActive('/marketplace') ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white'
-            }`}
-          >
-            Marketplace
-          </Link>
+          {isFeatureEnabled('marketplace') && (
+            <Link 
+              to="/marketplace"
+              className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                isActive('/marketplace') ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white'
+              }`}
+            >
+              Marketplace
+            </Link>
+          )}
           <Link 
             to="/portfolio"
             className={`px-4 py-2 rounded-lg text-sm font-medium ${
@@ -356,68 +376,53 @@ const Header: React.FC = () => {
           >
             Portfolio
           </Link>
+          {isFeatureEnabled('launchpad') && (
+            <Link 
+              to="/launchpad"
+              className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                isActive('/launchpad') ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white'
+              }`}
+            >
+              Launchpad
+            </Link>
+          )}
           <Link 
-            to="/launchpad"
+            to="/discovery"
             className={`px-4 py-2 rounded-lg text-sm font-medium ${
-              isActive('/launchpad') ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white'
+              isActive('/discovery') ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white'
             }`}
           >
-            Launchpad
+            Discovery
           </Link>
-          <Link 
-            to="/governance"
-            className={`px-4 py-2 rounded-lg text-sm font-medium ${
-              isActive('/governance') ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white'
-            }`}
-          >
-            Voting
-          </Link>
-          <Link 
-            to="/analytics"
-            className={`px-4 py-2 rounded-lg text-sm font-medium ${
-              isActive('/analytics') ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white'
-            }`}
-          >
-            Analytics
-          </Link>
+          {isFeatureEnabled('governance') && (
+            <Link 
+              to="/governance"
+              className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                isActive('/governance') ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white'
+              }`}
+            >
+              Voting
+            </Link>
+          )}
+          {isFeatureEnabled('analytics') && (
+            <Link 
+              to="/analytics"
+              className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                isActive('/analytics') ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white'
+              }`}
+            >
+              Analytics
+            </Link>
+          )}
           {isAdmin && (
-            <>
-              {/* Creator Admin - Available to Creator, Platform Admin, Super Admin, and Owner */}
-              {hasAccessToCreatorAdmin() && (
-                <Link 
-                  to="/admin/creator"
-                  className={`px-4 py-2 rounded-lg text-sm font-medium ${
-                    isActive('/admin/creator') ? 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300' : 'text-orange-600 hover:text-orange-900 dark:text-orange-300 dark:hover:text-orange-100'
-                  }`}
-                >
-                  Creator Admin
-                </Link>
-              )}
-              
-              {/* Platform Admin - Available to Platform Admin, Super Admin, and Owner */}
-              {hasAccessToPlatformAdmin() && (
-                <Link 
-                  to="/admin/platform"
-                  className={`px-4 py-2 rounded-lg text-sm font-medium ${
-                    isActive('/admin/platform') ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'text-green-600 hover:text-green-900 dark:text-green-300 dark:hover:text-green-100'
-                  }`}
-                >
-                  Platform Admin
-                </Link>
-              )}
-              
-              {/* Super Admin - Available only to Super Admin and Owner */}
-              {(adminRole === 'super_admin' || adminRole === 'owner') && (
-                <Link 
-                  to="/admin/super"
-                  className={`px-4 py-2 rounded-lg text-sm font-medium ${
-                    isActive('/admin/super') ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300' : 'text-red-600 hover:text-red-900 dark:text-red-300 dark:hover:text-red-100'
-                  }`}
-                >
-                  Super Admin
-                </Link>
-              )}
-            </>
+            <Link 
+              to="/admin"
+              className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                location.pathname.startsWith('/admin') ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-300' : 'text-primary-600 hover:text-primary-900 dark:text-primary-300 dark:hover:text-primary-100'
+              }`}
+            >
+              Admin
+            </Link>
           )}
         </nav>
 

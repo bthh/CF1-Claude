@@ -22,6 +22,24 @@ interface FeatureToggleState {
 
 // Default feature toggles
 const defaultFeatures: Record<string, FeatureToggle> = {
+  'marketplace': {
+    id: 'marketplace',
+    name: 'Marketplace',
+    description: 'Enable marketplace tab and asset browsing',
+    enabled: true,
+    category: 'general',
+    requiredRole: 'platform_admin',
+    lastModified: new Date().toISOString()
+  },
+  'analytics': {
+    id: 'analytics',
+    name: 'Analytics',
+    description: 'Enable analytics dashboard and reports',
+    enabled: true,
+    category: 'general',
+    requiredRole: 'platform_admin',
+    lastModified: new Date().toISOString()
+  },
   'secondary_trading': {
     id: 'secondary_trading',
     name: 'Secondary Trading',
@@ -65,6 +83,15 @@ const defaultFeatures: Record<string, FeatureToggle> = {
     enabled: false,
     category: 'general',
     requiredRole: 'super_admin',
+    lastModified: new Date().toISOString()
+  },
+  'dashboard_v2': {
+    id: 'dashboard_v2',
+    name: 'Dashboard V2',
+    description: 'Enable new role-based dashboard variants',
+    enabled: true,
+    category: 'general',
+    requiredRole: 'platform_admin',
     lastModified: new Date().toISOString()
   }
 };

@@ -8,4 +8,5 @@ export { default as SearchInput } from './SearchInput';
 export { default as ProgressBar } from './ProgressBar';
 export { default as Tooltip } from './Tooltip';
 export { default as Toast } from './Toast';
+export { default as SkylineHero } from './SkylineHero';
 export { ToastProvider, useToast, useToastHelpers } from './ToastContainer';

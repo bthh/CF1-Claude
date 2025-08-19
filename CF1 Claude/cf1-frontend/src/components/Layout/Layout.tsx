@@ -7,6 +7,10 @@ import { useRealTimeUpdates } from '../../hooks/useRealTimeUpdates';
 import { useKeyboardShortcuts, useCommonShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { useAccessibility } from '../../hooks/useAccessibility';
 import { KeyboardShortcutsHelp } from '../KeyboardShortcutsHelp';
+import { AdminHeader } from '../Admin/AdminHeader';
+import { AdminSidebar } from '../Admin/AdminSidebar';
+import { useAdminAuthContext } from '../../hooks/useAdminAuth';
+import { useAdminViewStore } from '../../store/adminViewStore';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -15,6 +19,10 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
+  
+  // Admin authentication and view management
+  const { isAdmin, adminRole, logoutAdmin } = useAdminAuthContext();
+  const { currentView, toggleView, exitAdminView } = useAdminViewStore();
   
   // Initialize real-time event streaming for authenticated users
   useEventStream({
@@ -36,6 +44,25 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   
   // Initialize accessibility features
   const accessibility = useAccessibility();
+  
+  // Scroll restoration on route change
+  useEffect(() => {
+    // Scroll to top on every route change
+    const scrollToTop = () => {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+      // Fallback for older browsers or if scrollTo doesn't work
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+    
+    // Execute immediately
+    scrollToTop();
+    
+    // Also execute with small delay to handle any layout shifts
+    const timeoutId = setTimeout(scrollToTop, 50);
+    
+    return () => clearTimeout(timeoutId);
+  }, [location.pathname]);
   
   // Setup keyboard shortcuts
   const commonShortcuts = useCommonShortcuts();
@@ -101,10 +128,27 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         Skip to main content
       </a>
       <Header />
+      
+      {/* Admin Header - Show when in admin mode */}
+      {isAdmin && currentView === 'admin' && (
+        <AdminHeader
+          adminRole={adminRole}
+          currentView={currentView}
+          onToggleView={toggleView}
+          onExitAdminMode={() => {
+            exitAdminView();
+            logoutAdmin();
+          }}
+        />
+      )}
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar - Hidden on mobile, shown on desktop */}
         <div className="hidden lg:block">
-          <SimpleSidebar type={getSidebarType()} />
+          {isAdmin && currentView === 'admin' ? (
+            <AdminSidebar adminRole={adminRole} />
+          ) : (
+            <SimpleSidebar type={getSidebarType()} />
+          )}
         </div>
         
         <main 

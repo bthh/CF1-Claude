@@ -23,10 +23,10 @@ export interface DataModeState extends DataModeConfig {
   getDataMode: () => DataMode;
 }
 
-// Default configuration (set to development for testing environment)
+// Default configuration (set to demo for immediate functionality)
 const defaultConfig: DataModeConfig = {
-  currentMode: 'development', // Start in development mode for testing
-  defaultMode: 'development', // Default can be changed by super admin
+  currentMode: 'demo', // Start in demo mode for immediate functionality
+  defaultMode: 'demo', // Default can be changed by super admin
 };
 
 export const useDataModeStore = create<DataModeState>()(

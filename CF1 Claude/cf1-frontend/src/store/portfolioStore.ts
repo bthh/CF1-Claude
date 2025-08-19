@@ -64,6 +64,7 @@ export interface PortfolioState {
   fetchTransactions: (userAddress: string) => Promise<void>;
   fetchPerformance: (userAddress: string, timeframe: PortfolioState['selectedTimeframe']) => Promise<void>;
   updateAsset: (assetId: string, updates: Partial<PortfolioAsset>) => void;
+  addAsset: (asset: Omit<PortfolioAsset, 'id'>) => void;
   addTransaction: (transaction: Omit<PortfolioTransaction, 'id'>) => void;
   setSelectedTimeframe: (timeframe: PortfolioState['selectedTimeframe']) => void;
   refreshPortfolio: (userAddress: string) => Promise<void>;
@@ -149,17 +150,26 @@ export const usePortfolioStore = create<PortfolioState>()(
         try {
           await new Promise(resolve => setTimeout(resolve, 1000));
           
-          // Generate mock assets
-          const mockAssets = Array.from({ length: 5 }, (_, i) => 
-            generateMockAsset(`asset_${i + 1}`, `proposal_${i + 1}`)
-          );
+          const currentState = get();
+          let allAssets = [...currentState.assets]; // Start with existing real assets
+          
+          // Only add mock assets if we have no real assets (for demo purposes)
+          if (allAssets.length === 0) {
+            console.log('📝 Portfolio Store - No real assets found, adding mock data for demo');
+            const mockAssets = Array.from({ length: 3 }, (_, i) => 
+              generateMockAsset(`mock_asset_${i + 1}`, `mock_proposal_${i + 1}`)
+            );
+            allAssets = [...allAssets, ...mockAssets];
+          } else {
+            console.log(`📊 Portfolio Store - Found ${allAssets.length} real assets, skipping mock data`);
+          }
 
-          // Calculate summary
-          const totalValue = mockAssets.reduce((sum, asset) => sum + parseFloat(asset.currentValue), 0);
-          const totalInvested = mockAssets.reduce((sum, asset) => sum + parseFloat(asset.totalInvested), 0);
+          // Calculate summary from all assets (real + mock)
+          const totalValue = allAssets.reduce((sum, asset) => sum + parseFloat(asset.currentValue), 0);
+          const totalInvested = allAssets.reduce((sum, asset) => sum + parseFloat(asset.totalInvested), 0);
           const totalGain = totalValue - totalInvested;
-          const totalGainPercent = (totalGain / totalInvested) * 100;
-          const lockedValue = mockAssets
+          const totalGainPercent = totalInvested > 0 ? (totalGain / totalInvested) * 100 : 0;
+          const lockedValue = allAssets
             .filter(asset => asset.locked)
             .reduce((sum, asset) => sum + parseFloat(asset.currentValue), 0);
 
@@ -169,13 +179,16 @@ export const usePortfolioStore = create<PortfolioState>()(
             totalGain: totalGain.toFixed(2),
             totalGainPercent,
             averageApy: '12.3%',
-            assetCount: mockAssets.length,
+            assetCount: allAssets.length,
             lockedValue: lockedValue.toFixed(2),
             availableValue: (totalValue - lockedValue).toFixed(2)
           };
 
+          console.log(`📊 Portfolio Store - Portfolio fetched with ${allAssets.length} assets`);
+          console.log('💰 Portfolio Store - Summary:', summary);
+
           set({
-            assets: mockAssets,
+            assets: allAssets,
             summary,
             loading: false
           });
@@ -272,6 +285,80 @@ export const usePortfolioStore = create<PortfolioState>()(
             asset.id === assetId ? { ...asset, ...updates } : asset
           )
         }));
+      },
+
+      addAsset: (assetData) => {
+        console.log('🔍 Portfolio Store - Adding asset:', assetData);
+        
+        // Validate required fields
+        if (!assetData.proposalId || !assetData.name || !assetData.type) {
+          console.error('❌ Portfolio Store - Invalid asset data:', assetData);
+          return;
+        }
+
+        const asset: PortfolioAsset = {
+          ...assetData,
+          id: `asset_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          lastUpdated: new Date().toISOString()
+        };
+
+        console.log('✅ Portfolio Store - Asset created:', asset);
+
+        set(state => {
+          // Check if asset already exists (avoid duplicates)
+          const existingAssetIndex = state.assets.findIndex(a => a.proposalId === asset.proposalId);
+          
+          let newAssets;
+          if (existingAssetIndex >= 0) {
+            // Update existing asset
+            newAssets = [...state.assets];
+            newAssets[existingAssetIndex] = asset;
+            console.log('🔄 Portfolio Store - Updated existing asset');
+          } else {
+            // Add new asset
+            newAssets = [asset, ...state.assets];
+            console.log('➕ Portfolio Store - Added new asset');
+          }
+          
+          // Recalculate summary
+          const totalValue = newAssets.reduce((sum, a) => sum + parseFloat(a.currentValue), 0);
+          const totalInvested = newAssets.reduce((sum, a) => sum + parseFloat(a.totalInvested), 0);
+          const totalGain = totalValue - totalInvested;
+          const totalGainPercent = totalInvested > 0 ? (totalGain / totalInvested) * 100 : 0;
+          const lockedValue = newAssets
+            .filter(a => a.locked)
+            .reduce((sum, a) => sum + parseFloat(a.currentValue), 0);
+
+          const newSummary: PortfolioSummary = {
+            totalValue: totalValue.toFixed(2),
+            totalInvested: totalInvested.toFixed(2),
+            totalGain: totalGain.toFixed(2),
+            totalGainPercent,
+            averageApy: '12.3%', // Could be calculated from assets
+            assetCount: newAssets.length,
+            lockedValue: lockedValue.toFixed(2),
+            availableValue: (totalValue - lockedValue).toFixed(2)
+          };
+
+          console.log('📊 Portfolio Store - Updated assets count:', newAssets.length);
+          console.log('📈 Portfolio Store - Updated summary:', newSummary);
+          
+          return { 
+            assets: newAssets,
+            summary: newSummary
+          };
+        });
+
+        // Verify the asset was added
+        setTimeout(() => {
+          const currentState = get();
+          const foundAsset = currentState.assets.find(a => a.id === asset.id);
+          if (foundAsset) {
+            console.log('✅ Portfolio Store - Asset successfully persisted:', foundAsset);
+          } else {
+            console.error('❌ Portfolio Store - Asset not found after adding');
+          }
+        }, 100);
       },
 
       addTransaction: (transactionData) => {

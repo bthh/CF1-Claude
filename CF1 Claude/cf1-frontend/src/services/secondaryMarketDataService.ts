@@ -72,7 +72,7 @@ const getDevelopmentTradeHistory = (): TradeHistory[] => {
   return [];
 };
 
-// Demo data - sample secondary market listings for demonstration
+// Demo data - expanded secondary market listings for demonstration
 const getDemoListings = (): AssetListing[] => {
   return [
     {
@@ -166,6 +166,223 @@ const getDemoListings = (): AssetListing[] => {
         highestBid: 85.00,
         lowestAsk: 85.25,
         marketCap: 2130000
+      }
+    },
+    {
+      id: 'listing_4',
+      assetId: 'asset_miami_resort',
+      assetName: 'Miami Beach Resort Portfolio',
+      assetType: 'Real Estate',
+      sellerId: 'user_321',
+      sellerName: 'Coastal Properties Inc',
+      quantity: 750,
+      pricePerToken: 320.00,
+      totalValue: 240000,
+      listingDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+      expiryDate: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000).toISOString(),
+      status: 'active',
+      description: 'Luxury beachfront resort with high occupancy rates and strong seasonal demand. Prime Miami location.',
+      minimumPurchase: 50,
+      verified: true,
+      escrowStatus: 'full',
+      compliance: {
+        kycVerified: true,
+        accreditationRequired: true,
+        jurisdictionRestrictions: []
+      },
+      marketData: {
+        lastSalePrice: 315.50,
+        priceChange24h: 1.43,
+        volume24h: 18500,
+        highestBid: 318.75,
+        lowestAsk: 320.00,
+        marketCap: 4800000
+      }
+    },
+    {
+      id: 'listing_5',
+      assetId: 'asset_tech_startup_fund',
+      assetName: 'Technology Startup Fund Delta',
+      assetType: 'Private Equity',
+      sellerId: 'user_654',
+      sellerName: 'Innovation Capital',
+      quantity: 1200,
+      pricePerToken: 150.25,
+      totalValue: 180300,
+      listingDate: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(),
+      expiryDate: new Date(Date.now() + 35 * 24 * 60 * 60 * 1000).toISOString(),
+      status: 'active',
+      description: 'Diversified portfolio of Series A and B technology startups with strong growth potential.',
+      minimumPurchase: 100,
+      verified: true,
+      escrowStatus: 'partial',
+      compliance: {
+        kycVerified: true,
+        accreditationRequired: true,
+        jurisdictionRestrictions: ['CN', 'RU']
+      },
+      marketData: {
+        lastSalePrice: 148.80,
+        priceChange24h: 0.97,
+        volume24h: 12750,
+        highestBid: 149.50,
+        lowestAsk: 150.25,
+        marketCap: 1803000
+      }
+    },
+    {
+      id: 'listing_6',
+      assetId: 'asset_wine_collection',
+      assetName: 'Premium Wine Collection',
+      assetType: 'Collectibles',
+      sellerId: 'user_987',
+      sellerName: 'Vintage Assets Ltd',
+      quantity: 400,
+      pricePerToken: 425.50,
+      totalValue: 170200,
+      listingDate: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+      expiryDate: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000).toISOString(),
+      status: 'partial',
+      description: 'Rare vintage wines from premier French châteaux with excellent appreciation history.',
+      minimumPurchase: 25,
+      verified: true,
+      escrowStatus: 'full',
+      compliance: {
+        kycVerified: true,
+        accreditationRequired: false,
+        jurisdictionRestrictions: ['US-UT']
+      },
+      marketData: {
+        lastSalePrice: 420.00,
+        priceChange24h: 1.31,
+        volume24h: 8900,
+        highestBid: 423.25,
+        lowestAsk: 425.50,
+        marketCap: 1702000
+      }
+    },
+    {
+      id: 'listing_7',
+      assetId: 'asset_industrial_warehouse',
+      assetName: 'Industrial Logistics Center',
+      assetType: 'Real Estate',
+      sellerId: 'user_246',
+      sellerName: 'Logistics Real Estate REIT',
+      quantity: 800,
+      pricePerToken: 275.75,
+      totalValue: 220600,
+      listingDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+      expiryDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
+      status: 'active',
+      description: 'Modern e-commerce fulfillment center with long-term Amazon lease. Strategic location near major highways.',
+      minimumPurchase: 75,
+      verified: true,
+      escrowStatus: 'full',
+      compliance: {
+        kycVerified: true,
+        accreditationRequired: false,
+        jurisdictionRestrictions: []
+      },
+      marketData: {
+        lastSalePrice: 272.50,
+        priceChange24h: 1.19,
+        volume24h: 16200,
+        highestBid: 274.00,
+        lowestAsk: 275.75,
+        marketCap: 2206000
+      }
+    },
+    {
+      id: 'listing_8',
+      assetId: 'asset_student_housing',
+      assetName: 'University Student Housing Complex',
+      assetType: 'Real Estate',
+      sellerId: 'user_135',
+      sellerName: 'Education Properties Fund',
+      quantity: 600,
+      pricePerToken: 195.25,
+      totalValue: 117150,
+      listingDate: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(),
+      expiryDate: new Date(Date.now() + 40 * 24 * 60 * 60 * 1000).toISOString(),
+      status: 'active',
+      description: 'Modern student housing near top-tier university with guaranteed occupancy and stable cash flow.',
+      minimumPurchase: 50,
+      verified: true,
+      escrowStatus: 'partial',
+      compliance: {
+        kycVerified: true,
+        accreditationRequired: false,
+        jurisdictionRestrictions: []
+      },
+      marketData: {
+        lastSalePrice: 193.80,
+        priceChange24h: 0.75,
+        volume24h: 9500,
+        highestBid: 194.50,
+        lowestAsk: 195.25,
+        marketCap: 1171500
+      }
+    },
+    {
+      id: 'listing_9',
+      assetId: 'asset_carbon_credits',
+      assetName: 'Verified Carbon Credits Portfolio',
+      assetType: 'Environmental',
+      sellerId: 'user_468',
+      sellerName: 'Green Carbon Solutions',
+      quantity: 1500,
+      pricePerToken: 65.00,
+      totalValue: 97500,
+      listingDate: new Date(Date.now() - 9 * 24 * 60 * 60 * 1000).toISOString(),
+      expiryDate: new Date(Date.now() + 50 * 24 * 60 * 60 * 1000).toISOString(),
+      status: 'active',
+      description: 'High-quality carbon credits from verified reforestation projects. Strong ESG compliance and growing demand.',
+      minimumPurchase: 100,
+      verified: true,
+      escrowStatus: 'full',
+      compliance: {
+        kycVerified: true,
+        accreditationRequired: false,
+        jurisdictionRestrictions: []
+      },
+      marketData: {
+        lastSalePrice: 63.50,
+        priceChange24h: 2.36,
+        volume24h: 14200,
+        highestBid: 64.25,
+        lowestAsk: 65.00,
+        marketCap: 975000
+      }
+    },
+    {
+      id: 'listing_10',
+      assetId: 'asset_luxury_vehicles',
+      assetName: 'Classic Car Collection Fund',
+      assetType: 'Luxury Vehicles',
+      sellerId: 'user_579',
+      sellerName: 'Heritage Auto Investments',
+      quantity: 300,
+      pricePerToken: 850.00,
+      totalValue: 255000,
+      listingDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+      expiryDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
+      status: 'partial',
+      description: 'Portfolio of rare classic cars including Ferrari, Porsche, and Aston Martin models with strong appreciation history.',
+      minimumPurchase: 10,
+      verified: true,
+      escrowStatus: 'full',
+      compliance: {
+        kycVerified: true,
+        accreditationRequired: true,
+        jurisdictionRestrictions: ['CN', 'IR']
+      },
+      marketData: {
+        lastSalePrice: 840.00,
+        priceChange24h: 1.19,
+        volume24h: 6800,
+        highestBid: 845.00,
+        lowestAsk: 850.00,
+        marketCap: 2550000
       }
     }
   ];

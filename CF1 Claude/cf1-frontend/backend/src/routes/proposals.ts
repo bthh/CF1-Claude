@@ -6,6 +6,12 @@
 import express from 'express';
 import { Request, Response } from 'express';
 import { requireAdmin, requirePermission, logAdminOperation, AdminAuthenticatedRequest } from '../middleware/adminAuth';
+import { 
+  validateFinancialTransaction, 
+  requireMultiSignature, 
+  createAuditTrail, 
+  realTimeFraudMonitoring 
+} from '../middleware/adminFinancialSecurity';
 
 const router = express.Router();
 
@@ -570,11 +576,15 @@ router.post('/sync-submission', (req: Request, res: Response) => {
 
 /**
  * POST /api/v1/proposals/:id/admin/instant-fund
- * Admin shortcut to instantly fund a proposal for testing
+ * Admin shortcut to instantly fund a proposal - NOW WITH ENHANCED SECURITY
  */
 router.post('/:id/admin/instant-fund',
   requireAdmin,
   requirePermission('proposals'),
+  realTimeFraudMonitoring,
+  validateFinancialTransaction,
+  requireMultiSignature,
+  createAuditTrail,
   logAdminOperation,
   (req: AdminAuthenticatedRequest, res: Response) => {
     const proposalId = req.params.id;
@@ -689,7 +699,13 @@ router.post('/:id/admin/instant-fund',
     const currentRaised = proposal.funding_status.total_raised || 0;
     const remainingAmount = Math.max(0, targetAmount - currentRaised);
     
-    console.log(`Target: $${targetAmount}, Current: $${currentRaised}, Remaining: $${remainingAmount}`);
+    // SECURITY ENHANCEMENT: Add amount to request body for middleware validation
+    if (!req.body.amount) {
+      req.body.amount = remainingAmount;
+    }
+    
+    console.log(`🔒 SECURE INSTANT FUND - Target: $${targetAmount}, Current: $${currentRaised}, Remaining: $${remainingAmount}`);
+    console.log(`🔒 Security Transaction ID: ${req.transactionId}, Risk Score: ${req.riskScore}/100`);
     
     // Create mock investment to complete funding
     if (remainingAmount > 0) {

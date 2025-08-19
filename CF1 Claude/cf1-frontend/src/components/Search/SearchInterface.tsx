@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { useSearchStore, SearchResult, SearchResultType } from '../../store/searchStore';
 import { formatTimeAgo } from '../../utils/format';
+import { sanitizeSearchQuery, searchLimiter, validateInput, ValidationPatterns } from '../../utils/securityUtils';
 
 interface SearchInterfaceProps {
   embedded?: boolean; // For header search vs full page
@@ -93,25 +94,47 @@ const SearchInterface: React.FC<SearchInterfaceProps> = ({
   }, []);
 
   const handleSearch = async (query?: string) => {
-    const searchQuery = query || localQuery;
-    if (!searchQuery.trim()) return;
+    const rawQuery = query || localQuery;
+    if (!rawQuery.trim()) return;
 
-    setQuery(searchQuery);
+    // Security: Sanitize search query
+    const sanitizedQuery = sanitizeSearchQuery(rawQuery);
+    if (!sanitizedQuery) {
+      console.warn('🔒 Search blocked: Invalid query');
+      return;
+    }
+
+    // Security: Rate limiting for search
+    const userId = 'user_' + (Math.random().toString(36).substr(2, 9)); // In real app, use actual user ID
+    const rateLimitCheck = searchLimiter.checkRateLimit(userId);
+    if (!rateLimitCheck.allowed) {
+      console.warn('🔒 Search blocked: Rate limit exceeded');
+      alert('Too many search requests. Please wait a moment before searching again.');
+      return;
+    }
+
+    setQuery(sanitizedQuery);
     setShowSuggestions(false);
     
-    await search(searchQuery);
+    await search(sanitizedQuery);
 
     // If embedded, navigate to full search page
     if (embedded && !onResultClick) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+      navigate(`/search?q=${encodeURIComponent(sanitizedQuery)}`);
     }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setLocalQuery(value);
+    const rawValue = e.target.value;
     
-    if (!value.trim()) {
+    // Security: Basic input sanitization (allow reasonable search characters)
+    const sanitizedValue = rawValue
+      .replace(/[<>'"]/g, '') // Remove dangerous HTML characters
+      .slice(0, 100); // Limit length
+    
+    setLocalQuery(sanitizedValue);
+    
+    if (!sanitizedValue.trim()) {
       clearSearch();
       setShowSuggestions(false);
     }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Vote, Clock, Users, CheckCircle, XCircle, AlertCircle, TrendingUp, Eye, Calendar, Search } from 'lucide-react';
 import { useGovernanceStore, type GovernanceProposal } from '../store/governanceStore';
 import { useTokenHoldingStore } from '../store/tokenHoldingStore';
@@ -230,7 +230,7 @@ const Governance: React.FC = () => {
   // Simulate loading state for proposals
   const { isLoading, data: loadedProposals } = useSimulatedLoading(proposals, 1200);
 
-  // Set tab based on current route and sync with backend
+  // Set tab based on current route
   useEffect(() => {
     const path = location.pathname;
     if (path === '/governance/active') {
@@ -239,9 +239,9 @@ const Governance: React.FC = () => {
       setSelectedTab('passed');
     } else if (path === '/governance/rejected') {
       setSelectedTab('rejected');
-    } else if (path === '/governance/my-votes') {
+    } else if (path === '/governance' || path === '/governance/my-votes') {
+      // Treat base governance route and my-votes view as "All"
       setSelectedTab('all');
-      // Could add additional filtering for user's votes
     } else {
       setSelectedTab('active'); // default
     }
@@ -394,15 +394,15 @@ const Governance: React.FC = () => {
           <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
             <div className="border-b border-gray-200 dark:border-gray-600">
               <nav className="flex space-x-8 px-6">
-                {[
-                  { key: 'active', label: 'Active', count: tabCounts.active },
-                  { key: 'passed', label: 'Passed', count: tabCounts.passed },
-                  { key: 'rejected', label: 'Rejected', count: tabCounts.rejected },
-                  { key: 'all', label: 'All', count: tabCounts.all }
-                ].map((tab) => (
-                  <button
+                {([
+                  { key: 'active', label: 'Active', count: tabCounts.active, to: '/governance/active' },
+                  { key: 'passed', label: 'Passed', count: tabCounts.passed, to: '/governance/passed' },
+                  { key: 'rejected', label: 'Rejected', count: tabCounts.rejected, to: '/governance/rejected' },
+                  { key: 'all', label: 'All', count: tabCounts.all, to: '/governance' }
+                ] as Array<{ key: 'active' | 'passed' | 'rejected' | 'all'; label: string; count: number; to: string }>).map((tab) => (
+                  <Link
                     key={tab.key}
-                    onClick={() => setSelectedTab(tab.key as 'active' | 'passed' | 'rejected' | 'all')}
+                    to={tab.to}
                     className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                       selectedTab === tab.key
                         ? 'border-blue-500 dark:border-blue-400 text-blue-600'
@@ -410,7 +410,7 @@ const Governance: React.FC = () => {
                     }`}
                   >
                     {tab.label} ({tab.count})
-                  </button>
+                  </Link>
                 ))}
               </nav>
             </div>
