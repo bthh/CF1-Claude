@@ -32,7 +32,8 @@ export default defineConfig(({ mode }) => {
               }
               // Polyfills and crypto dependencies - must be loaded together
               if (id.includes('buffer') || id.includes('process') || id.includes('crypto-browserify') || 
-                  id.includes('stream-browserify') || id.includes('base64-js') || id.includes('ieee754')) {
+                  id.includes('stream-browserify') || id.includes('base64-js') || id.includes('ieee754') ||
+                  id.includes('bn.js') || id.includes('/bn/')) {
                 return 'vendor-cosmos'; // Include ALL crypto polyfills WITH cosmos
               }
               // Blockchain - large dependencies that need polyfills
