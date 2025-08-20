@@ -45,7 +45,10 @@ export default defineConfig(({ mode }) => {
                   id.includes('pbkdf2') || id.includes('aes') || id.includes('cipher') ||
                   id.includes('randombytes') || id.includes('safe-buffer') || id.includes('tx-') ||
                   id.includes('/tx/') || id.includes('transaction') || id.includes('signing') ||
-                  id.includes('proto') || id.includes('protobuf')) {
+                  id.includes('proto') || id.includes('protobuf') || id.includes('account') ||
+                  id.includes('decode') || id.includes('encode') || id.includes('build') ||
+                  id.includes('any-') || id.includes('util') || id.includes('address') ||
+                  id.includes('amino') || id.includes('tendermint')) {
                 return 'vendor-cosmos'; // Include ALL crypto polyfills WITH cosmos
               }
               // Blockchain - large dependencies that need polyfills
