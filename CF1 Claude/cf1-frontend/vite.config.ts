@@ -53,7 +53,18 @@ export default defineConfig(({ mode }) => {
                   id.includes('decode') || id.includes('encode') || id.includes('build') ||
                   id.includes('any-') || id.includes('address') || id.includes('long') ||
                   id.includes('amino') || id.includes('tendermint') || id.includes('cosmos') ||
-                  id.includes('stargate') || id.includes('registry') || id.includes('cosmwasm')) &&
+                  id.includes('stargate') || id.includes('registry') || id.includes('cosmwasm') ||
+                  id.includes('utils') || id.includes('math') || id.includes('encoding') ||
+                  id.includes('varint') || id.includes('minimal') || id.includes('reader') ||
+                  id.includes('writer') || id.includes('util') || id.includes('binary') ||
+                  id.includes('utf8') || id.includes('base64') || id.includes('helpers') ||
+                  id.includes('common') || id.includes('types') || id.includes('light-client') ||
+                  id.includes('client') || id.includes('query') || id.includes('rpc') ||
+                  id.includes('abci') || id.includes('version') || id.includes('crypto') ||
+                  id.includes('merkle') || id.includes('proof') || id.includes('keys') ||
+                  id.includes('validator') || id.includes('evidence') || id.includes('p2p') ||
+                  id.includes('consensus') || id.includes('state') || id.includes('store') ||
+                  id.includes('tendermint-rpc') || id.includes('tm-') || id.includes('/tm/')) &&
                   !id.includes('react') && !id.includes('lucide') && !id.includes('framer')) {
                 return 'vendor-cosmos'; // Include ALL crypto polyfills WITH cosmos, but exclude React deps
               }
