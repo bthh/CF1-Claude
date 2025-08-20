@@ -34,8 +34,12 @@ export default defineConfig(({ mode }) => {
               if (id.includes('recharts')) {
                 return 'vendor-charts';
               }
-              // Polyfills and crypto dependencies - must be loaded together
-              if (id.includes('buffer') || id.includes('process') || id.includes('crypto-browserify') || 
+              // UI components that need React (check BEFORE crypto patterns)
+              if (id.includes('lucide-react') || id.includes('framer-motion')) {
+                return 'vendor-ui';
+              }
+              // Polyfills and crypto dependencies - must be loaded together (exclude React components)
+              if ((id.includes('buffer') || id.includes('process') || id.includes('crypto-browserify') || 
                   id.includes('stream-browserify') || id.includes('base64-js') || id.includes('ieee754') ||
                   id.includes('bn.js') || id.includes('/bn/') || id.includes('elliptic') || 
                   id.includes('hash.js') || id.includes('hmac-drbg') || id.includes('brorand') ||
@@ -47,17 +51,14 @@ export default defineConfig(({ mode }) => {
                   id.includes('/tx/') || id.includes('transaction') || id.includes('signing') ||
                   id.includes('proto') || id.includes('protobuf') || id.includes('account') ||
                   id.includes('decode') || id.includes('encode') || id.includes('build') ||
-                  id.includes('any-') || id.includes('util') || id.includes('address') ||
-                  id.includes('amino') || id.includes('tendermint')) {
-                return 'vendor-cosmos'; // Include ALL crypto polyfills WITH cosmos
+                  id.includes('any-') || id.includes('address') ||
+                  id.includes('amino') || id.includes('tendermint')) &&
+                  !id.includes('react') && !id.includes('lucide') && !id.includes('framer')) {
+                return 'vendor-cosmos'; // Include ALL crypto polyfills WITH cosmos, but exclude React deps
               }
               // Blockchain - large dependencies that need polyfills
               if (id.includes('@cosmjs/') || id.includes('cosmwasm')) {
                 return 'vendor-cosmos';
-              }
-              // UI components
-              if (id.includes('lucide-react') || id.includes('framer-motion')) {
-                return 'vendor-ui';
               }
               // Monitoring
               if (id.includes('web-vitals') || id.includes('@sentry/react')) {
