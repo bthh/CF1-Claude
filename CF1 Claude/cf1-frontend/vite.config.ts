@@ -51,8 +51,9 @@ export default defineConfig(({ mode }) => {
                   id.includes('/tx/') || id.includes('transaction') || id.includes('signing') ||
                   id.includes('proto') || id.includes('protobuf') || id.includes('account') ||
                   id.includes('decode') || id.includes('encode') || id.includes('build') ||
-                  id.includes('any-') || id.includes('address') ||
-                  id.includes('amino') || id.includes('tendermint')) &&
+                  id.includes('any-') || id.includes('address') || id.includes('long') ||
+                  id.includes('amino') || id.includes('tendermint') || id.includes('cosmos') ||
+                  id.includes('stargate') || id.includes('registry') || id.includes('cosmwasm')) &&
                   !id.includes('react') && !id.includes('lucide') && !id.includes('framer')) {
                 return 'vendor-cosmos'; // Include ALL crypto polyfills WITH cosmos, but exclude React deps
               }
