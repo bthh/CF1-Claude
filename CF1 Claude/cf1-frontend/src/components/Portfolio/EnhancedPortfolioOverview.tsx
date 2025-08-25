@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, DollarSign, PieChart, BarChart3, Activity, Target, Calendar, Eye, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, BarChart, Bar } from 'recharts';
+import { useEnhancedPortfolioData } from '../../services/demoPortfolioData';
+import AllTiersModal from './AllTiersModal';
 
 interface PortfolioOverviewProps {
   className?: string;
@@ -27,6 +29,7 @@ const assetAllocation = [
   { name: 'Natural Resources', value: 9989.00, percentage: 8.0, color: '#EF4444' }
 ];
 
+// Static performance data to avoid glitching
 const performanceData = [
   { month: 'Jan', value: 85000, target: 90000 },
   { month: 'Feb', value: 88500, target: 92000 },
@@ -102,6 +105,80 @@ const formatPercent = (percent: number) => {
 
 export const EnhancedPortfolioOverview: React.FC<PortfolioOverviewProps> = ({ className = '' }) => {
   const [timeframe, setTimeframe] = useState<'1M' | '3M' | '6M' | '1Y' | 'ALL'>('6M');
+  const [selectedAssetForTiers, setSelectedAssetForTiers] = useState<{id: string, name: string, tokens: number} | null>(null);
+  
+  // Get enhanced portfolio data with tier information
+  const { assets, summary } = useEnhancedPortfolioData();
+  
+  // Parse portfolio data from the new service (memoized to prevent re-renders)
+  const portfolioData = React.useMemo(() => {
+    if (!summary || assets.length === 0) {
+      return {
+        totalValue: 0,
+        totalInvested: 0,
+        totalGains: 0,
+        totalGainsPercent: 0,
+        totalDividends: 0,
+        totalDividendsYield: 0,
+        assetsCount: 0,
+        monthlyGrowth: 0,
+        yearlyGrowth: 0
+      };
+    }
+
+    const totalValue = parseFloat(summary.totalValue.replace(/[$,]/g, '')) || 0;
+    const totalInvested = parseFloat(summary.totalInvested.replace(/[$,]/g, '')) || 0;
+    const totalGains = parseFloat(summary.totalGain.replace(/[$,+]/g, '')) || 0;
+    const totalGainsPercent = parseFloat(summary.totalGainPercent.replace(/[%+]/g, '')) || 0;
+
+    return {
+      totalValue,
+      totalInvested,
+      totalGains,
+      totalGainsPercent,
+      totalDividends: 0,
+      totalDividendsYield: 0,
+      assetsCount: assets.length,
+      monthlyGrowth: 8.34,
+      yearlyGrowth: 34.12
+    };
+  }, [summary, assets.length]);
+  
+  // Convert assets to allocation data (memoized)
+  const assetAllocation = React.useMemo(() => {
+    if (!assets.length || portfolioData.totalValue === 0) return [];
+    
+    const colors = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EF4444'];
+    return assets.reduce((acc, asset, index) => {
+      const value = parseFloat(asset.currentValue.replace(/[$,]/g, '')) || 0;
+      if (value > 0) {
+        acc.push({
+          name: asset.type,
+          value: value,
+          percentage: (value / portfolioData.totalValue * 100),
+          color: colors[index % colors.length]
+        });
+      }
+      return acc;
+    }, [] as any[]);
+  }, [assets, portfolioData.totalValue]);
+  
+  // Get top performing assets (memoized)
+  const topAssets = React.useMemo(() => {
+    if (!assets.length) return [];
+    
+    return assets
+      .map(asset => ({
+        ...asset,
+        value: parseFloat(asset.currentValue.replace(/[$,]/g, '')) || 0,
+        invested: parseFloat(asset.purchaseValue.replace(/[$,]/g, '')) || 0,
+        gain: parseFloat(asset.change.replace(/[$,+]/g, '')) || 0,
+        gainPercent: parseFloat(asset.changePercent.replace(/[%+]/g, '')) || 0,
+        performance: asset.isPositive ? (parseFloat(asset.changePercent.replace(/[%+]/g, '')) > 20 ? 'excellent' : 'good') : 'poor'
+      }))
+      .sort((a, b) => b.gainPercent - a.gainPercent)
+      .slice(0, 4);
+  }, [assets]);
 
   return (
     <div className={`space-y-6 ${className}`}>
@@ -362,6 +439,7 @@ export const EnhancedPortfolioOverview: React.FC<PortfolioOverviewProps> = ({ cl
             <div
               key={asset.id}
               className="flex items-center space-x-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors cursor-pointer"
+              onClick={() => setSelectedAssetForTiers({id: asset.id, name: asset.name, tokens: asset.tokens})}
             >
               <div className="flex-shrink-0">
                 <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold">
@@ -372,9 +450,22 @@ export const EnhancedPortfolioOverview: React.FC<PortfolioOverviewProps> = ({ cl
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium text-gray-900 dark:text-white truncate">
-                      {asset.name}
-                    </p>
+                    <div className="flex items-center space-x-2">
+                      <p className="font-medium text-gray-900 dark:text-white truncate">
+                        {asset.name}
+                      </p>
+                      {asset.userTier && (
+                        <span 
+                          className="px-2 py-1 rounded-full text-xs font-medium"
+                          style={{ 
+                            backgroundColor: asset.userTier.colorScheme?.primary || '#F3F4F6',
+                            color: asset.userTier.colorScheme?.secondary || '#6B7280'
+                          }}
+                        >
+                          {asset.userTier.name}
+                        </span>
+                      )}
+                    </div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       {asset.type} • {asset.tokens} tokens
                     </p>
@@ -382,13 +473,13 @@ export const EnhancedPortfolioOverview: React.FC<PortfolioOverviewProps> = ({ cl
 
                   <div className="text-right">
                     <p className="font-semibold text-gray-900 dark:text-white">
-                      {formatCurrency(asset.value)}
+                      {asset.currentValue}
                     </p>
                     <div className="flex items-center space-x-2">
-                      <span className={`text-sm ${asset.gain >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                        {formatPercent(asset.gainPercent)}
+                      <span className={`text-sm ${asset.isPositive ? 'text-green-500' : 'text-red-500'}`}>
+                        {asset.changePercent}
                       </span>
-                      {asset.gain >= 0 ? (
+                      {asset.isPositive ? (
                         <TrendingUp className="w-4 h-4 text-green-500" />
                       ) : (
                         <TrendingDown className="w-4 h-4 text-red-500" />
@@ -398,8 +489,12 @@ export const EnhancedPortfolioOverview: React.FC<PortfolioOverviewProps> = ({ cl
                 </div>
 
                 <div className="mt-2 flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
-                  <span>Invested: {formatCurrency(asset.invested)}</span>
-                  <span>Dividend: {formatCurrency(asset.dividend)}</span>
+                  <span>Invested: {asset.purchaseValue}</span>
+                  {asset.userTier?.rewards[0] && (
+                    <span className="text-blue-600 dark:text-blue-400">
+                      {asset.userTier.rewards[0].title}
+                    </span>
+                  )}
                 </div>
 
                 {/* Performance Bar */}
@@ -424,6 +519,18 @@ export const EnhancedPortfolioOverview: React.FC<PortfolioOverviewProps> = ({ cl
           ))}
         </div>
       </motion.div>
+
+
+      {/* All Tiers Modal */}
+      {selectedAssetForTiers && (
+        <AllTiersModal
+          isOpen={!!selectedAssetForTiers}
+          onClose={() => setSelectedAssetForTiers(null)}
+          assetId={selectedAssetForTiers.id}
+          assetName={selectedAssetForTiers.name}
+          userTokens={selectedAssetForTiers.tokens}
+        />
+      )}
     </div>
   );
 };

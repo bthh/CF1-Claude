@@ -248,35 +248,44 @@ const Governance: React.FC = () => {
     
   }, [location.pathname]);
 
-  // Calculate proposal type counts dynamically
-  const proposalTypes = [
-    { id: 'all', name: 'All Types', count: (loadedProposals || []).length },
-    { id: 'dividend', name: 'Dividend Distribution', count: (loadedProposals || []).filter(p => p.proposalType === 'dividend').length },
-    { id: 'renovation', name: 'Property Improvements', count: (loadedProposals || []).filter(p => p.proposalType === 'renovation').length },
-    { id: 'management', name: 'Management Changes', count: (loadedProposals || []).filter(p => p.proposalType === 'management').length },
-    { id: 'expansion', name: 'Business Expansion', count: (loadedProposals || []).filter(p => p.proposalType === 'expansion').length },
-    { id: 'sale', name: 'Asset Sale', count: (loadedProposals || []).filter(p => p.proposalType === 'sale').length }
-  ];
+  // Calculate proposal type counts dynamically with memoization
+  const proposalTypes = useMemo(() => {
+    const proposals = loadedProposals || [];
+    return [
+      { id: 'all', name: 'All Types', count: proposals.length },
+      { id: 'dividend', name: 'Dividend Distribution', count: proposals.filter(p => p.proposalType === 'dividend').length },
+      { id: 'renovation', name: 'Property Improvements', count: proposals.filter(p => p.proposalType === 'renovation').length },
+      { id: 'management', name: 'Management Changes', count: proposals.filter(p => p.proposalType === 'management').length },
+      { id: 'expansion', name: 'Business Expansion', count: proposals.filter(p => p.proposalType === 'expansion').length },
+      { id: 'sale', name: 'Asset Sale', count: proposals.filter(p => p.proposalType === 'sale').length }
+    ];
+  }, [loadedProposals]);
 
-  const filteredProposals = (loadedProposals || []).filter(proposal => {
-    const matchesTab = selectedTab === 'all' || proposal.status === selectedTab;
-    const matchesType = selectedType === 'all' || proposal.proposalType === selectedType;
-    const matchesSearch = searchTerm === '' || 
-      proposal.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      proposal.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      proposal.assetName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      proposal.assetType.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      proposal.proposedBy.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    return matchesTab && matchesType && matchesSearch;
-  });
+  const filteredProposals = useMemo(() => {
+    const proposals = loadedProposals || [];
+    return proposals.filter(proposal => {
+      const matchesTab = selectedTab === 'all' || proposal.status === selectedTab;
+      const matchesType = selectedType === 'all' || proposal.proposalType === selectedType;
+      const matchesSearch = searchTerm === '' || 
+        proposal.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        proposal.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        proposal.assetName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        proposal.assetType.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        proposal.proposedBy.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      return matchesTab && matchesType && matchesSearch;
+    });
+  }, [loadedProposals, selectedTab, selectedType, searchTerm]);
 
-  const tabCounts = {
-    active: (loadedProposals || []).filter(p => p.status === 'active').length,
-    passed: (loadedProposals || []).filter(p => p.status === 'passed').length,
-    rejected: (loadedProposals || []).filter(p => p.status === 'rejected').length,
-    all: (loadedProposals || []).length
-  };
+  const tabCounts = useMemo(() => {
+    const proposals = loadedProposals || [];
+    return {
+      active: proposals.filter(p => p.status === 'active').length,
+      passed: proposals.filter(p => p.status === 'passed').length,
+      rejected: proposals.filter(p => p.status === 'rejected').length,
+      all: proposals.length
+    };
+  }, [loadedProposals]);
 
   return (
     <div className="space-y-6">

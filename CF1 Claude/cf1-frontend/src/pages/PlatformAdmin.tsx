@@ -348,7 +348,11 @@ const PlatformAdmin: React.FC = () => {
   const [showPlatformAutoCommunicationsModal, setShowPlatformAutoCommunicationsModal] = useState(false);
 
   useEffect(() => {
-    loadPlatformData();
+    loadPlatformData().catch((err) => {
+      console.error('Failed to load platform admin data:', err);
+      // Note: error notification function would need to be imported/defined here
+      setLoading(false);
+    });
   }, []);
 
   const loadPlatformData = async () => {
@@ -359,6 +363,9 @@ const PlatformAdmin: React.FC = () => {
         loadComplianceCases(),
         loadSupportTickets()
       ]);
+    } catch (err) {
+      console.error('Error loading platform admin data:', err);
+      // Continue execution to allow partial loading if some requests fail
     } finally {
       setLoading(false);
     }

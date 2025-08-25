@@ -42,6 +42,16 @@ export const AsyncErrorBoundary: React.FC<Props> = ({
     // Handle unhandled promise rejections
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
       const error = event.reason instanceof Error ? event.reason : new Error(String(event.reason));
+      
+      // Handle Vite HMR WebSocket errors gracefully (common in development)
+      if (error.message.includes('WebSocket closed without opened') || 
+          error.message.includes('WebSocket connection') ||
+          error.stack?.includes('vite/client')) {
+        console.warn('⚠️ Vite HMR WebSocket error (handled by AsyncErrorBoundary):', error.message);
+        event.preventDefault();
+        return; // Don't create error state for WebSocket issues
+      }
+      
       handleAsyncError(error, 'unhandled_rejection');
       event.preventDefault(); // Prevent console error
     };

@@ -34,7 +34,8 @@ import {
   Tag,
   ExternalLink,
   Brain,
-  Vote
+  Vote,
+  Crown
 } from 'lucide-react';
 import { useAdminAuthContext } from '../hooks/useAdminAuth';
 import { useCosmJS } from '../hooks/useCosmJS';
@@ -45,6 +46,7 @@ import { CreateCampaignModal } from '../components/Creator/CreateCampaignModal';
 import { AssistantManagementModal } from '../components/Creator/AssistantManagementModal';
 import AIAssistantInterface from '../components/AIAssistant/AIAssistantInterface';
 import AutoCommunicationsModal from '../components/AutoCommunication/AutoCommunicationsModal';
+import TierManagement from '../components/CreatorAdmin/TierManagement';
 import { apiClient } from '../lib/api/client';
 
 // Creator Toolkit API Types
@@ -139,7 +141,7 @@ const CreatorAdmin: React.FC = () => {
   const [assetUpdates, setAssetUpdates] = useState<AssetUpdate[]>([]);
   const [analytics, setAnalytics] = useState<CreatorAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedTab, setSelectedTab] = useState<'overview' | 'shareholders' | 'communications' | 'engagements' | 'updates' | 'ai_assistant' | 'settings'>('overview');
+  const [selectedTab, setSelectedTab] = useState<'overview' | 'shareholders' | 'communications' | 'engagements' | 'updates' | 'tiers' | 'ai_assistant' | 'settings'>('overview');
   
   // Filters and search
   const [shareholderFilter, setShareholderFilter] = useState('');
@@ -169,7 +171,10 @@ const CreatorAdmin: React.FC = () => {
   ];
 
   useEffect(() => {
-    loadCreatorData();
+    loadCreatorData().catch((err) => {
+      console.error('Unhandled error in loadCreatorData useEffect:', err);
+      error('Failed to initialize creator data');
+    });
   }, []);
 
   const loadCreatorData = async () => {
@@ -184,6 +189,9 @@ const CreatorAdmin: React.FC = () => {
         loadAssetUpdates(),
         loadAnalytics()
       ]);
+    } catch (err) {
+      console.error('Error loading creator data:', err);
+      error('Failed to load creator data. Please try refreshing the page.');
     } finally {
       setLoading(false);
     }
@@ -253,14 +261,9 @@ const CreatorAdmin: React.FC = () => {
   const loadCommunications = async (): Promise<void> => {
     try {
       const response = await apiClient.get('/api/creator-toolkit/communications');
-      console.log('📝 Full response:', response);
       
       if (response?.success && response.data) {
-        console.log('📝 Response data:', response.data);
-        // Backend: { success: true, data: [...], total: number }
-        // API Client wraps as: { data: { success: true, data: [...], total: number }, success: true }
         const communications = response.data.data || [];
-        console.log('📝 Extracted communications:', communications);
         
         // Validate communications data
         const validCommunications = communications.filter(comm => {
@@ -272,13 +275,13 @@ const CreatorAdmin: React.FC = () => {
         });
         
         setCampaigns(validCommunications);
-        console.log('✅ Loaded communications:', validCommunications.length);
       } else {
-        console.error('Failed to load communications:', response?.error || 'No response');
+        console.warn('No communications data available, using fallback');
         setCampaigns([]);
       }
     } catch (error) {
       console.error('Error loading communications:', error);
+      // Fallback to empty array on API error
       setCampaigns([]);
     }
   };
@@ -325,30 +328,25 @@ const CreatorAdmin: React.FC = () => {
   const loadAssetUpdates = async (): Promise<void> => {
     try {
       const response = await apiClient.get('/api/creator-toolkit/asset-updates');
-      console.log('📖 Full response:', response);
       
       if (response?.success && response.data) {
-        console.log('📖 Response data:', response.data);
-        // Backend: { success: true, data: [...], total: number }
-        // API Client wraps as: { data: { success: true, data: [...], total: number }, success: true }
         const updates = response.data.data || [];
-        console.log('📖 Extracted updates:', updates);
         
         // Sort by created/published date (newest first)
         const sortedUpdates = updates.sort((a, b) => {
           const dateA = new Date(a.createdAt || a.publishedAt || 0).getTime();
           const dateB = new Date(b.createdAt || b.publishedAt || 0).getTime();
-          return dateB - dateA; // Newest first
+          return dateB - dateA;
         });
         
         setAssetUpdates(sortedUpdates);
-        console.log('✅ Loaded asset updates:', updates.length);
       } else {
-        console.error('Failed to load asset updates:', response?.error || 'No response');
+        console.warn('No asset updates data available, using fallback');
         setAssetUpdates([]);
       }
     } catch (error) {
       console.error('Error loading asset updates:', error);
+      // Fallback to empty array on API error
       setAssetUpdates([]);
     }
   };
@@ -542,7 +540,6 @@ const CreatorAdmin: React.FC = () => {
   // Enhanced API functions for modal integration
   const handlePublishUpdate = async (updateData: any) => {
     try {
-      // This will call the actual backend API
       const response = await apiClient.post('/api/creator-toolkit/asset-updates', {
         ...updateData,
         creatorId: currentAdmin?.id
@@ -563,7 +560,6 @@ const CreatorAdmin: React.FC = () => {
 
   const handleCreateCampaign = async (campaignData: any) => {
     try {
-      // This will call the actual backend API
       const response = await apiClient.post('/api/creator-toolkit/communications', {
         ...campaignData,
         creatorId: currentAdmin?.id
@@ -751,6 +747,7 @@ const CreatorAdmin: React.FC = () => {
               { id: 'communications', label: 'Communications', icon: <MessageCircle className="w-4 h-4" /> },
               { id: 'engagements', label: 'Engagements', icon: <UserPlus className="w-4 h-4" /> },
               { id: 'updates', label: 'Asset Updates', icon: <FileText className="w-4 h-4" /> },
+              { id: 'tiers', label: 'Tiers', icon: <Crown className="w-4 h-4" /> },
               { id: 'ai_assistant', label: 'AI Assistant', icon: <Brain className="w-4 h-4" /> },
               { id: 'settings', label: 'Asset Settings', icon: <Settings className="w-4 h-4" /> }
             ].map((tab) => (
@@ -1587,6 +1584,13 @@ const CreatorAdmin: React.FC = () => {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* Tiers Tab */}
+          {selectedTab === 'tiers' && (
+            <div className="space-y-6">
+              <TierManagement creatorId={currentAdmin?.id || ''} />
             </div>
           )}
 

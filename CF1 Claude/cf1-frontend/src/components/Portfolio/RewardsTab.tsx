@@ -205,32 +205,6 @@ export const RewardsTab: React.FC = () => {
         </div>
       </div>
 
-      {/* Tier System Overview */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          Tier System Overview
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {['Bronze', 'Silver', 'Gold', 'Platinum'].map((tier, index) => {
-            const multipliers = [1.0, 1.25, 1.5, 2.0];
-            const minTokens = [1, 100, 500, 1000];
-            return (
-              <div key={tier} className="text-center p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-                <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium mb-2 ${getTierBadgeColor(tier)}`}>
-                  <Trophy className="w-4 h-4 mr-1" />
-                  {tier}
-                </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {minTokens[index]}+ tokens
-                </p>
-                <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                  {multipliers[index]}x rewards
-                </p>
-              </div>
-            );
-          })}
-        </div>
-      </div>
     </div>
   );
 };

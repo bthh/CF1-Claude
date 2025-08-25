@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useDataModeStore } from '../store/dataModeStore';
 import { useDemoModeStore, DemoScenario } from '../store/demoModeStore';
 import { useGovernanceStore, type GovernanceProposal } from '../store/governanceStore';
@@ -388,13 +388,18 @@ const getProductionProposals = async (): Promise<GovernanceProposal[]> => {
 
 // Development data (from governance store - user created)
 const getDevelopmentProposals = (): GovernanceProposal[] => {
-  const allProposals = useGovernanceStore.getState().proposals || [];
-  // Return only approved proposals (not drafts)
-  return allProposals.filter(proposal => 
-    proposal.status !== 'draft' && 
-    proposal.status !== 'submitted' && 
-    proposal.status !== 'under_review'
-  );
+  try {
+    const allProposals = useGovernanceStore.getState().proposals || [];
+    // Return only approved proposals (not drafts)
+    return allProposals.filter(proposal => 
+      proposal.status !== 'draft' && 
+      proposal.status !== 'submitted' && 
+      proposal.status !== 'under_review'
+    );
+  } catch (error) {
+    console.warn('Failed to load development proposals:', error);
+    return [];
+  }
 };
 
 // Main data service
@@ -432,27 +437,44 @@ export const useGovernanceData = () => {
     }
   };
 
-  const getStats = () => {
-    const proposals = getProposals();
-    const activeCount = proposals.filter(p => p.status === 'active').length;
-    const passedCount = proposals.filter(p => p.status === 'passed').length;
-    const rejectedCount = proposals.filter(p => p.status === 'rejected').length;
+
+  // Memoize proposals to prevent creating new array references on every render
+  const proposals = useMemo(() => getProposals(), [currentMode, isDemoModeEnabled, scenario, productionProposals]);
+  
+  // Memoize stats calculation based on proposals
+  const stats = useMemo(() => {
+    // Optimize by calculating counts in a single pass
+    const counts = proposals.reduce((acc, proposal) => {
+      switch (proposal.status) {
+        case 'active':
+          acc.active++;
+          break;
+        case 'passed':
+          acc.passed++;
+          break;
+        case 'rejected':
+          acc.rejected++;
+          break;
+      }
+      return acc;
+    }, { active: 0, passed: 0, rejected: 0 });
     
     return {
       total: proposals.length,
-      active: activeCount,
-      passed: passedCount,
-      rejected: rejectedCount,
+      active: counts.active,
+      passed: counts.passed,
+      rejected: counts.rejected,
       participationRate: proposals.length > 0 ? '89%' : '0%', // Mock for demo
-      avgDuration: '7 days'
+      avgDuration: '7 days',
+      pendingVotes: counts.active // Set pending votes to active proposals count
     };
-  };
+  }, [proposals]);
 
   return {
-    proposals: getProposals(),
-    stats: getStats(),
+    proposals,
+    stats,
     currentMode,
     isLoading,
-    isEmpty: getProposals().length === 0,
+    isEmpty: proposals.length === 0,
   };
 };

@@ -13,6 +13,79 @@ import { performanceBudgetManager } from './utils/performanceBudgets'
 initializeMonitoring();
 initializePerformanceMonitoring();
 
+// Global error handlers for unhandled promise rejections
+window.addEventListener('unhandledrejection', (event) => {
+  const error = event.reason instanceof Error ? event.reason : new Error(String(event.reason));
+  
+  // Handle Vite HMR WebSocket errors gracefully (common in development)
+  if (error.message.includes('WebSocket closed without opened') || 
+      error.message.includes('WebSocket connection') ||
+      error.stack?.includes('vite/client')) {
+    console.warn('⚠️ Vite HMR WebSocket error (non-critical):', error.message);
+    event.preventDefault();
+    return; // Don't report these as user-facing errors
+  }
+  
+  console.error('🚨 Unhandled Promise Rejection:', event.reason);
+  console.error('Promise:', event.promise);
+  console.error('Stack trace:', event.reason?.stack);
+  
+  // Prevent the default browser error display
+  event.preventDefault();
+  
+  // Track the error in our monitoring system
+  import('./lib/monitoring').then(({ reportError, trackEvent }) => {
+    const error = event.reason instanceof Error ? event.reason : new Error(String(event.reason));
+    reportError(error, {
+      type: 'unhandled_promise_rejection',
+      reason: event.reason,
+      timestamp: new Date().toISOString()
+    });
+    
+    trackEvent({
+      action: 'unhandled_rejection',
+      category: 'error',
+      label: error.name || 'UnhandledRejection',
+      metadata: {
+        message: error.message,
+        stack: error.stack,
+        reason: String(event.reason)
+      }
+    });
+  }).catch(console.error);
+});
+
+// Global error handler for unhandled errors
+window.addEventListener('error', (event) => {
+  console.error('🚨 Unhandled Error:', event.error);
+  console.error('Message:', event.message);
+  console.error('Source:', event.filename, 'Line:', event.lineno, 'Column:', event.colno);
+  
+  // Track the error in our monitoring system
+  import('./lib/monitoring').then(({ reportError, trackEvent }) => {
+    const error = event.error instanceof Error ? event.error : new Error(event.message);
+    reportError(error, {
+      type: 'unhandled_error',
+      filename: event.filename,
+      lineno: event.lineno,
+      colno: event.colno,
+      timestamp: new Date().toISOString()
+    });
+    
+    trackEvent({
+      action: 'unhandled_error',
+      category: 'error',
+      label: error.name || 'UnhandledError',
+      metadata: {
+        message: event.message,
+        filename: event.filename,
+        lineno: event.lineno,
+        colno: event.colno
+      }
+    });
+  }).catch(console.error);
+});
+
 // Initialize our enhanced performance monitoring
 performanceMonitor.init();
 

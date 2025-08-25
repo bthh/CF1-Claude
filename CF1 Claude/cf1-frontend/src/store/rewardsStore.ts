@@ -129,35 +129,35 @@ const generateRewardHistory = (assetId: string): RewardHistoryEntry[] => [
   }
 ];
 
-// Mock asset reward data
+// Mock asset reward data matching portfolio assets
 const MOCK_ASSET_REWARDS: AssetReward[] = [
   {
-    assetId: '1',
-    assetName: 'Manhattan Office Complex',
+    assetId: 'port-sales-1',
+    assetName: 'Austin Tech Hub Office Complex',
     totalRewards: 1247.50,
     monthlyRewards: 125.50,
     yearlyProjection: 1506.00,
     lastDistribution: '2024-12-15',
     nextDistribution: '2025-01-15',
     tier: DEFAULT_TIERS[2], // Gold tier
-    tokensHeld: 450,
-    rewardHistory: generateRewardHistory('1')
+    tokensHeld: 425,
+    rewardHistory: generateRewardHistory('port-sales-1')
   },
   {
-    assetId: '2',
-    assetName: 'Gold Bullion Vault',
+    assetId: 'port-sales-2',
+    assetName: 'Diversified Precious Metals Fund',
     totalRewards: 892.25,
     monthlyRewards: 89.25,
     yearlyProjection: 1071.00,
     lastDistribution: '2024-12-15',
     nextDistribution: '2025-01-15',
     tier: DEFAULT_TIERS[2], // Gold tier
-    tokensHeld: 580,
-    rewardHistory: generateRewardHistory('2')
+    tokensHeld: 680,
+    rewardHistory: generateRewardHistory('port-sales-2')
   },
   {
-    assetId: '3',
-    assetName: 'Tesla Model S Collection',
+    assetId: 'port-sales-3',
+    assetName: 'Contemporary Art Investment Portfolio',
     totalRewards: 344.75,
     monthlyRewards: 34.50,
     yearlyProjection: 414.00,
@@ -165,23 +165,23 @@ const MOCK_ASSET_REWARDS: AssetReward[] = [
     nextDistribution: '2025-01-15',
     tier: DEFAULT_TIERS[1], // Silver tier
     tokensHeld: 125,
-    rewardHistory: generateRewardHistory('3')
+    rewardHistory: generateRewardHistory('port-sales-3')
   },
   {
-    assetId: '4',
-    assetName: 'Modern Art Collection',
+    assetId: 'port-sales-4',
+    assetName: 'Clean Energy Infrastructure Fund',
     totalRewards: 1125.00,
     monthlyRewards: 112.50,
     yearlyProjection: 1350.00,
     lastDistribution: '2024-12-15',
     nextDistribution: '2025-01-15',
-    tier: DEFAULT_TIERS[0], // Bronze tier
-    tokensHeld: 75,
-    rewardHistory: generateRewardHistory('4')
+    tier: DEFAULT_TIERS[1], // Silver tier
+    tokensHeld: 350,
+    rewardHistory: generateRewardHistory('port-sales-4')
   },
   {
-    assetId: '5',
-    assetName: 'Miami Beach Resort',
+    assetId: 'port-sales-5',
+    assetName: 'Luxury Vehicle Collection Fund',
     totalRewards: 2150.00,
     monthlyRewards: 215.00,
     yearlyProjection: 2580.00,
@@ -189,7 +189,7 @@ const MOCK_ASSET_REWARDS: AssetReward[] = [
     nextDistribution: '2025-01-15',
     tier: DEFAULT_TIERS[1], // Silver tier
     tokensHeld: 200,
-    rewardHistory: generateRewardHistory('5')
+    rewardHistory: generateRewardHistory('port-sales-5')
   }
 ];
 
@@ -260,6 +260,7 @@ export const useRewardsStore = create<RewardsState>()(
     }),
     {
       name: 'cf1-rewards-store',
+      version: 2, // Increment to force cache invalidation
       partialize: (state) => ({
         assetRewards: state.assetRewards,
         totalRewardsEarned: state.totalRewardsEarned,

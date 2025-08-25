@@ -87,8 +87,12 @@ const SuperAdmin: React.FC = () => {
   const [showSensitiveData, setShowSensitiveData] = useState(false);
 
   useEffect(() => {
-    loadSuperAdminData();
-  }, []);
+    loadSuperAdminData().catch((err) => {
+      console.error('Failed to load super admin data:', err);
+      error('Failed to load admin dashboard data. Please refresh the page.');
+      setLoading(false);
+    });
+  }, [error]);
 
   const loadSuperAdminData = async () => {
     setLoading(true);
@@ -99,6 +103,10 @@ const SuperAdmin: React.FC = () => {
         loadSecurityAlerts(),
         loadSystemLogs()
       ]);
+    } catch (err) {
+      console.error('Error loading super admin data:', err);
+      error('Failed to load dashboard data. Some features may not be available.');
+      // Continue execution to allow partial loading if some requests fail
     } finally {
       setLoading(false);
     }
