@@ -437,6 +437,11 @@ class TierManagementService {
   };
 
   private subscribers: Array<(state: TierManagementState) => void> = [];
+  private storageKey = 'cf1-user-created-tiers';
+
+  constructor() {
+    this.loadFromStorage();
+  }
 
   subscribe(callback: (state: TierManagementState) => void) {
     this.subscribers.push(callback);
@@ -448,12 +453,35 @@ class TierManagementService {
     };
   }
 
+  private loadFromStorage() {
+    try {
+      const stored = localStorage.getItem(this.storageKey);
+      if (stored) {
+        const tierData = JSON.parse(stored);
+        this.state.tiers = tierData;
+        console.log(`🔄 tierManagementService: Loaded user tiers from localStorage:`, Object.keys(tierData).length, 'assets');
+      }
+    } catch (error) {
+      console.warn('Failed to load user tiers from localStorage:', error);
+    }
+  }
+
+  private saveToStorage() {
+    try {
+      localStorage.setItem(this.storageKey, JSON.stringify(this.state.tiers));
+      console.log(`💾 tierManagementService: Saved user tiers to localStorage:`, Object.keys(this.state.tiers).length, 'assets');
+    } catch (error) {
+      console.warn('Failed to save user tiers to localStorage:', error);
+    }
+  }
+
   private notify() {
     this.subscribers.forEach(callback => callback(this.state));
   }
 
   private setState(newState: Partial<TierManagementState>) {
     this.state = { ...this.state, ...newState };
+    this.saveToStorage(); // Save to localStorage whenever state changes
     this.notify();
   }
 
@@ -465,13 +493,21 @@ class TierManagementService {
       return [];
     }
 
-    // Demo mode - return scenario-specific data
+    // First check if there are user-created tiers in state
+    if (this.state.tiers[assetId] && this.state.tiers[assetId].length > 0) {
+      console.log(`🎯 tierManagementService: Returning ${this.state.tiers[assetId].length} user-created tiers for ${assetId}`);
+      return this.state.tiers[assetId];
+    }
+
+    // Fallback to demo data for the current scenario
     const scenarioData = DEMO_TIER_DATA[scenario];
     if (!scenarioData) {
       return [];
     }
 
-    return scenarioData[assetId] || [];
+    const defaultTiers = scenarioData[assetId] || [];
+    console.log(`🎭 tierManagementService: Returning ${defaultTiers.length} default demo tiers for ${assetId}`);
+    return defaultTiers;
   }
 
   async getAllTiers(): Promise<Record<string, AssetTier[]>> {
@@ -482,8 +518,14 @@ class TierManagementService {
       return {};
     }
 
-    // Demo mode - return all tiers for current scenario
-    return DEMO_TIER_DATA[scenario] || {};
+    // Start with demo data as base
+    const baseTiers = { ...DEMO_TIER_DATA[scenario] } || {};
+    
+    // Override with any user-created tiers
+    const allTiers = { ...baseTiers, ...this.state.tiers };
+    
+    console.log(`🎯 tierManagementService: getAllTiers returning`, Object.keys(allTiers).length, 'assets with tiers');
+    return allTiers;
   }
 
   async createTier(assetId: string, tierData: Partial<AssetTier>): Promise<AssetTier> {
@@ -602,7 +644,19 @@ class TierManagementService {
 
   // Get user's tier for a specific asset based on their token holdings
   getUserTierForAsset(assetId: string, userTokens: number): AssetTier | null {
-    const tiers = this.state.tiers[assetId] || [];
+    // Get tiers using the same logic as getTiersForAsset
+    const { isEnabled, scenario } = useDemoModeStore.getState();
+    
+    let tiers: AssetTier[] = [];
+    
+    // First check if there are user-created tiers in state
+    if (this.state.tiers[assetId] && this.state.tiers[assetId].length > 0) {
+      tiers = this.state.tiers[assetId];
+    } else if (isEnabled) {
+      // Fallback to demo data for the current scenario
+      const scenarioData = DEMO_TIER_DATA[scenario];
+      tiers = scenarioData?.[assetId] || [];
+    }
     
     // Sort tiers by threshold descending to find highest qualifying tier
     const sortedTiers = [...tiers]
@@ -619,7 +673,20 @@ class TierManagementService {
     upgradeTiers: AssetTier[];
     tokensToNextTier: number;
   } {
-    const tiers = this.state.tiers[assetId] || [];
+    // Get tiers using the same logic as getTiersForAsset
+    const { isEnabled, scenario } = useDemoModeStore.getState();
+    
+    let tiers: AssetTier[] = [];
+    
+    // First check if there are user-created tiers in state
+    if (this.state.tiers[assetId] && this.state.tiers[assetId].length > 0) {
+      tiers = this.state.tiers[assetId];
+    } else if (isEnabled) {
+      // Fallback to demo data for the current scenario
+      const scenarioData = DEMO_TIER_DATA[scenario];
+      tiers = scenarioData?.[assetId] || [];
+    }
+    
     const activeTiers = tiers.filter(tier => tier.status === 'active');
     
     // Sort by threshold ascending for upgrade path
@@ -673,6 +740,23 @@ class TierManagementService {
   getState(): TierManagementState {
     return this.state;
   }
+
+  // Method to reset all user-created tiers (for testing)
+  clearUserTiers() {
+    this.setState({
+      tiers: {}
+    });
+    console.log(`🗑️ tierManagementService: Cleared all user-created tiers`);
+  }
+
+  // Method to reset tiers for a specific asset (for testing)
+  clearAssetTiers(assetId: string) {
+    const { [assetId]: removed, ...remainingTiers } = this.state.tiers;
+    this.setState({
+      tiers: remainingTiers
+    });
+    console.log(`🗑️ tierManagementService: Cleared user tiers for asset ${assetId}`);
+  }
 }
 
 // Export singleton instance
@@ -700,7 +784,9 @@ export const useTierManagement = () => {
     getUserTier: tierManagementService.getUserTierForAsset.bind(tierManagementService),
     getUserUpgradePath: tierManagementService.getUserUpgradePath.bind(tierManagementService),
     getUpgradeIncentive: tierManagementService.getUpgradeIncentive.bind(tierManagementService),
-    refreshTiers: tierManagementService.loadTiersForCurrentScenario.bind(tierManagementService)
+    refreshTiers: tierManagementService.loadTiersForCurrentScenario.bind(tierManagementService),
+    clearUserTiers: tierManagementService.clearUserTiers.bind(tierManagementService),
+    clearAssetTiers: tierManagementService.clearAssetTiers.bind(tierManagementService)
   };
 };
 
