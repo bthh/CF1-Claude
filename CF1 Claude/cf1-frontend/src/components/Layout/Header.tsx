@@ -15,7 +15,6 @@ import { HeaderSearch } from '../Search';
 import { useNotifications } from '../../hooks/useNotifications';
 import { useDataMode } from '../../store/dataModeStore';
 import { PortfolioTestingPanel } from '../Debug/PortfolioTestingPanel';
-import { AdminViewToggle } from '../Admin/AdminViewToggle';
 import { useAdminViewStore } from '../../store/adminViewStore';
 
 const Header: React.FC = () => {
@@ -302,22 +301,6 @@ const Header: React.FC = () => {
     <>
       <header className="bg-blue-500 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 h-16 flex items-center justify-between px-4 sm:px-6">
         <div className="flex items-center space-x-4">
-          {/* Admin View Toggle - Show when admin */}
-          {isAdmin && (
-            <AdminViewToggle
-              currentView={currentView}
-              adminRole={adminRole}
-              onToggle={(view) => {
-                if (view === 'admin') {
-                  setAdminView(adminRole);
-                } else {
-                  exitAdminView();
-                }
-              }}
-              hasPermission={true}
-              className="hidden lg:block"
-            />
-          )}
           
           {/* Mobile Menu Button */}
           <button
