@@ -1,7 +1,6 @@
 import React from 'react';
 import { LogOut, Settings, Crown, Users, Shield } from 'lucide-react';
 import { AdminRole } from '../../hooks/useAdminAuth';
-import { AdminViewToggle } from './AdminViewToggle';
 
 export interface AdminHeaderProps {
   adminRole: AdminRole;
@@ -81,13 +80,6 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
 
           {/* Right Section: Controls */}
           <div className="flex items-center space-x-3">
-            <AdminViewToggle
-              currentView={currentView}
-              adminRole={adminRole}
-              onToggle={onToggleView}
-              className="text-white"
-            />
-            
             <button
               onClick={onExitAdminMode}
               className="flex items-center space-x-2 px-3 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white rounded-lg text-sm font-medium transition-colors"
