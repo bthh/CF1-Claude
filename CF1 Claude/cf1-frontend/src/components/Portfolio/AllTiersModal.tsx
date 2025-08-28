@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Crown, Award, Medal, Star, Shield, Gem, TrendingUp, Vote, Lock, DollarSign } from 'lucide-react';
 import { AssetTier, TierReward } from '../../types/tiers';
 import { useTierManagement } from '../../services/tierManagementService';
 import TierBadge from './TierBadge';
+import LoadingSpinner from '../UI/LoadingSpinner';
 
 interface AllTiersModalProps {
   isOpen: boolean;
@@ -35,13 +36,46 @@ const AllTiersModal: React.FC<AllTiersModalProps> = ({
   assetName,
   userTokens
 }) => {
-  const { getTiersForAsset, getUserTierForAsset } = useTierManagement();
+  const { getUserTier, tiers } = useTierManagement();
+  const [allTiers, setAllTiers] = useState<AssetTier[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    if (!isOpen || !assetId) return;
+
+    const loadTiers = async () => {
+      setLoading(true);
+      console.log('🎯 AllTiersModal: Loading tiers for asset:', assetId);
+      try {
+        // Check if tiers are already loaded in the hook
+        if (tiers && tiers[assetId]) {
+          console.log('✅ AllTiersModal: Found tiers in hook:', tiers[assetId].length);
+          setAllTiers(tiers[assetId].filter(tier => tier.status === 'active'));
+          setLoading(false);
+          return;
+        }
+        
+        // Fallback to service call
+        console.log('🔄 AllTiersModal: Falling back to service call');
+        const { tierManagementService } = await import('../../services/tierManagementService');
+        const tiersList = await tierManagementService.getTiersForAsset(assetId);
+        console.log('📦 AllTiersModal: Service returned:', tiersList.length, 'tiers');
+        setAllTiers(tiersList.filter(tier => tier.status === 'active'));
+      } catch (error) {
+        console.error('❌ AllTiersModal: Error loading tiers:', error);
+        setAllTiers([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadTiers();
+  }, [isOpen, assetId, tiers]);
   
   if (!isOpen) return null;
 
-  const allTiers = getTiersForAsset(assetId).filter(tier => tier.status === 'active');
   const sortedTiers = [...allTiers].sort((a, b) => b.threshold - a.threshold); // Highest to lowest
-  const userCurrentTier = getUserTierForAsset(assetId, userTokens);
+  const userCurrentTier = getUserTier(assetId, userTokens);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -66,7 +100,11 @@ const AllTiersModal: React.FC<AllTiersModalProps> = ({
 
         {/* Content */}
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
-          {sortedTiers.length === 0 ? (
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <LoadingSpinner size="large" />
+            </div>
+          ) : sortedTiers.length === 0 ? (
             <div className="text-center py-12">
               <Crown className="w-16 h-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
@@ -164,33 +202,42 @@ const AllTiersModal: React.FC<AllTiersModalProps> = ({
                         <h4 className="font-semibold text-gray-900 dark:text-white mb-4">
                           Rewards & Benefits
                         </h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {tier.rewards.map((reward) => {
-                            const RewardIcon = REWARD_TYPE_ICONS[reward.type];
-                            return (
-                              <div key={reward.id} className="flex items-start space-x-3 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                                <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                                  <RewardIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                                </div>
-                                <div className="flex-1">
-                                  <div className="flex items-center space-x-2 mb-1">
-                                    <p className="font-medium text-gray-900 dark:text-white">
-                                      {reward.title}
-                                    </p>
-                                    {reward.value && (
-                                      <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-full text-xs font-medium">
-                                        {reward.value}
-                                      </span>
-                                    )}
+                        {tier.rewards && tier.rewards.length > 0 ? (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {tier.rewards.map((reward) => {
+                              const RewardIcon = REWARD_TYPE_ICONS[reward.type] || Star;
+                              return (
+                                <div key={reward.id || Math.random()} className="flex items-start space-x-3 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                                  <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <RewardIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                                   </div>
-                                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                                    {reward.description}
-                                  </p>
+                                  <div className="flex-1">
+                                    <div className="flex items-center space-x-2 mb-1">
+                                      <p className="font-medium text-gray-900 dark:text-white">
+                                        {reward.title || 'Tier Reward'}
+                                      </p>
+                                      {reward.value && (
+                                        <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-full text-xs font-medium">
+                                          {reward.value}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                                      {reward.description || 'Exclusive tier benefit'}
+                                    </p>
+                                  </div>
                                 </div>
-                              </div>
-                            );
-                          })}
-                        </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div className="text-center py-8 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <Star className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                            <p className="text-gray-600 dark:text-gray-400">
+                              This tier provides basic membership benefits
+                            </p>
+                          </div>
+                        )}
                       </div>
 
                       {/* Additional Benefits */}

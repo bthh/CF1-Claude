@@ -12,6 +12,141 @@ CF1 is an enterprise-grade blockchain platform for Real-World Asset (RWA) tokeni
 - Frictionless onboarding - wallet connection only required for first investment
 - No direct on-chain transfers outside platform rules
 
+## CF1 Development Sub-Agent Team - ACTIVE
+
+**Team Status**: ✅ **9 SPECIALIZED AGENTS CREATED AND ACTIVE**
+**Team Architecture**: Independent Sonnet 4 agents with separate context windows for optimal parallel development workflow.
+
+**ACTIVE AGENTS:**
+- ✅ `cf1-frontend-specialist` - React/UI components and state management
+- ✅ `cf1-ux-designer` - User experience design and accessibility
+- ✅ `cf1-testing-engineer` - Test coverage improvement (75.9% → 95%)
+- ✅ `cf1-smart-contract-dev` - CosmWasm/Rust blockchain development
+- ✅ `cf1-data-integration-specialist` - Store architecture and API integration
+- ✅ `cf1-performance-optimizer` - Bundle optimization and Web Vitals
+- ✅ `cf1-security-auditor` - Security reviews and compliance
+- ✅ `cf1-devops-engineer` - CI/CD and deployment optimization
+- ✅ `cf1-documentation-architect` - Technical documentation and guides
+
+### **Main Orchestrator (Claude Code)**
+**Role**: Strategic architecture, user requirement analysis, cross-system integration, quality gates
+**Context**: Full platform knowledge, user needs, business requirements, system architecture
+**Responsibilities**:
+- High-level feature planning and user requirement interpretation
+- Cross-component integration and architectural decisions  
+- Final quality review and deployment coordination
+- Strategic roadmap and priority management
+- Complex debugging that spans multiple system components
+
+### **Core Development Team**
+
+#### 1. **`cf1-frontend-specialist`**
+**Expertise**: React components, Zustand stores, UI implementation, responsive design
+**Context**: Frontend patterns, component architecture, state management, user flows
+**Delegates**: Component creation, store updates, styling fixes, responsive design implementation
+
+#### 2. **`cf1-ux-designer`** 
+**Expertise**: User experience design, accessibility, interface optimization, user journey flows
+**Context**: Design systems, accessibility standards (WCAG 2.1 AA), user psychology, conversion optimization
+**Delegates**: UI/UX improvements, accessibility enhancements, user flow optimization, design system updates
+
+#### 3. **`cf1-testing-engineer`**
+**Expertise**: Test automation, coverage improvement, mock strategies, integration testing
+**Context**: Testing patterns, Vitest/RTL best practices, mock data architecture, CI/CD integration
+**Delegates**: Test suite creation, coverage improvement (75.9% → 95% target), test debugging, performance testing
+
+#### 4. **`cf1-smart-contract-dev`**
+**Expertise**: CosmWasm/Rust development, blockchain integration, contract optimization
+**Context**: Rust patterns, CosmWasm architecture, gas optimization, blockchain state management
+**Delegates**: Smart contract development, blockchain integration, CosmJS connection fixes, contract deployment
+
+#### 5. **`cf1-data-integration-specialist`**
+**Expertise**: Store architecture, API integration, data flow optimization, real-time synchronization
+**Context**: Zustand patterns, data transformation, API design, cross-store synchronization
+**Delegates**: Store management, API endpoint creation, data flow fixes, real-time update implementation
+
+#### 6. **`cf1-performance-optimizer`**
+**Expertise**: Bundle optimization, performance monitoring, build process optimization, Web Vitals
+**Context**: Vite configuration, performance budgets, code splitting strategies, monitoring systems
+**Delegates**: Bundle analysis, code splitting, performance regression fixes, build optimization
+
+### **Specialized Support Team**
+
+#### 7. **`cf1-security-auditor`**
+**Expertise**: Security reviews, vulnerability assessment, DeFi security patterns, regulatory compliance
+**Context**: OWASP standards, DeFi attack vectors, regulatory frameworks, security best practices
+
+#### 8. **`cf1-devops-engineer`** 
+**Expertise**: CI/CD pipelines, deployment automation, infrastructure optimization, monitoring
+**Context**: Netlify deployment, build processes, environment management, system monitoring
+
+#### 9. **`cf1-documentation-architect`**
+**Expertise**: Technical documentation, API documentation, system architecture documentation
+**Context**: Documentation standards, technical writing, system architecture, developer experience
+
+### **Workflow Orchestration Strategy**
+
+#### **Context Window Optimization Benefits**:
+- **Specialized agents** maintain deep domain expertise without requiring full platform context
+- **Main orchestrator** retains architectural overview and user requirement context
+- **Parallel development** on different system components with coordinated integration
+- **Quality assurance** through specialized review and main orchestrator oversight
+- **Faster iteration** with domain-specific knowledge and focused problem-solving
+
+### **MANDATORY WORKFLOW PROTOCOL - ACTIVE SUB-AGENT DELEGATION**:
+
+**🚨 ACTIVE AGENTS AVAILABLE - ALWAYS DELEGATE SPECIALIZED TASKS 🚨**
+
+**CRITICAL RULE: With 9 specialized agents now ACTIVE, you must:**
+- **IMMEDIATELY delegate to appropriate specialist agents**
+- **NEVER attempt specialized tasks in your main context**  
+- **OPTIMIZE FOR PARALLEL EXECUTION** across multiple agents simultaneously
+- **Keep your context streamlined for big-picture orchestration only**
+
+**PARALLEL EXECUTION STRATEGY:**
+```typescript
+// EXAMPLE: Complex feature request
+User: "Add portfolio performance analytics with mobile optimization"
+
+IMMEDIATE DELEGATION (PARALLEL):
+→ cf1-ux-designer: Design analytics dashboard user flows
+→ cf1-frontend-specialist: Build analytics components  
+→ cf1-data-integration-specialist: Create performance data stores
+→ cf1-performance-optimizer: Optimize for mobile performance
+→ cf1-testing-engineer: Build comprehensive test coverage
+
+Main Orchestrator: Coordinate integration + quality gates + deployment
+```
+
+**MANDATORY DELEGATION TRIGGERS:**
+- ANY component building or UI implementation → `cf1-frontend-specialist`
+- ANY design or UX work → `cf1-ux-designer`  
+- ANY testing work → `cf1-testing-engineer`
+- ANY smart contract work → `cf1-smart-contract-dev`
+- ANY store/API work → `cf1-data-integration-specialist`
+- ANY performance work → `cf1-performance-optimizer`
+- ANY security work → `cf1-security-auditor`
+- ANY deployment/CI work → `cf1-devops-engineer`
+- ANY documentation work → `cf1-documentation-architect`
+
+**CONTEXT OPTIMIZATION:**
+- **Main Orchestrator Focus**: User requirements, architecture decisions, integration, quality gates
+- **Agent Focus**: Specialized domain expertise and implementation
+- **Maximum Parallel Execution**: Multiple agents working simultaneously on independent tasks
+
+#### **Current Team Priorities**:
+1. **cf1-testing-engineer**: Improve test coverage from 75.9% to 95%
+2. **cf1-performance-optimizer**: Bundle optimization and Web Vitals improvement
+3. **cf1-smart-contract-dev**: Complete CF1 Portfolio Trust compilation fixes
+4. **cf1-ux-designer**: Optimize admin workflows and accessibility compliance
+
+### **Success Metrics**:
+- **Development velocity**: Faster feature delivery through parallel specialized work
+- **Code quality**: Higher quality through domain expertise and focused review
+- **Maintainability**: Better architecture through specialized design patterns
+- **User satisfaction**: Improved UX through dedicated design focus
+- **System reliability**: Better testing and security through specialized focus
+
 ## Current Platform Status (July 2025)
 
 **Platform**: Production-Ready Enterprise Platform with Complete Feature Set + WCAG 2.1 AA Accessibility

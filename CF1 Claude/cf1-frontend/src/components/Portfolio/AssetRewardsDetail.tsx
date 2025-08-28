@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   ArrowLeft, Trophy, Calendar, DollarSign, TrendingUp, 
-  Clock, CheckCircle, AlertCircle, Gift, Info, Star
+  Clock, CheckCircle, AlertCircle, Gift, Info, Star, Eye
 } from 'lucide-react';
 import { useRewardsStore } from '../../store/rewardsStore';
+import { useTierManagement } from '../../services/tierManagementService';
 import LoadingSpinner from '../UI/LoadingSpinner';
+import AllTiersModal from './AllTiersModal';
 
 interface AssetRewardsDetailProps {
   assetId: string;
@@ -13,7 +15,11 @@ interface AssetRewardsDetailProps {
 
 export const AssetRewardsDetail: React.FC<AssetRewardsDetailProps> = ({ assetId, onBack }) => {
   const { getAssetReward } = useRewardsStore();
+  const { getUserTier } = useTierManagement();
+  const [showAllTiersModal, setShowAllTiersModal] = useState(false);
+  
   const assetReward = getAssetReward(assetId);
+  const actualUserTier = assetReward ? getUserTier(assetId, assetReward.tokensHeld) : null;
 
   if (!assetReward) {
     return (
@@ -95,10 +101,25 @@ export const AssetRewardsDetail: React.FC<AssetRewardsDetailProps> = ({ assetId,
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Your Tier Status</h2>
-          <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getTierBadgeColor(assetReward.tier.name)}`}>
-            <Trophy className="w-4 h-4 inline mr-1" />
-            {assetReward.tier.name}
-          </span>
+          <div className="flex items-center space-x-3">
+            {actualUserTier ? (
+              <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getTierBadgeColor(actualUserTier.name)}`}>
+                <Trophy className="w-4 h-4 inline mr-1" />
+                {actualUserTier.name}
+              </span>
+            ) : (
+              <span className="px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600">
+                No Tier
+              </span>
+            )}
+            <button
+              onClick={() => setShowAllTiersModal(true)}
+              className="flex items-center space-x-2 px-3 py-1 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-lg font-medium transition-colors text-sm"
+            >
+              <Eye className="w-4 h-4" />
+              <span>View All Tiers</span>
+            </button>
+          </div>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -110,7 +131,7 @@ export const AssetRewardsDetail: React.FC<AssetRewardsDetailProps> = ({ assetId,
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-              {assetReward.tier.multiplier}x
+              {actualUserTier?.votingMultiplier || 1}x
             </p>
             <p className="text-sm text-gray-600 dark:text-gray-400">Reward Multiplier</p>
           </div>
@@ -126,12 +147,20 @@ export const AssetRewardsDetail: React.FC<AssetRewardsDetailProps> = ({ assetId,
         <div>
           <h3 className="font-medium text-gray-900 dark:text-white mb-2">Your Tier Benefits</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            {assetReward.tier.benefits.map((benefit, index) => (
-              <div key={index} className="flex items-center space-x-2">
-                <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
-                <span className="text-sm text-gray-600 dark:text-gray-400">{benefit}</span>
+            {actualUserTier?.benefits ? (
+              actualUserTier.benefits.map((benefit, index) => (
+                <div key={index} className="flex items-center space-x-2">
+                  <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+                  <span className="text-sm text-gray-600 dark:text-gray-400">{benefit}</span>
+                </div>
+              ))
+            ) : (
+              <div className="col-span-2 text-center py-4">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  No tier benefits available. Hold more tokens to unlock tiers.
+                </p>
               </div>
-            ))}
+            )}
           </div>
         </div>
       </div>
@@ -234,32 +263,22 @@ export const AssetRewardsDetail: React.FC<AssetRewardsDetailProps> = ({ assetId,
               Tier Progression
             </h3>
             <p className="text-sm text-blue-800 dark:text-blue-200 mb-3">
-              Increase your token holdings to unlock higher tier benefits and reward multipliers.
+              Increase your token holdings to unlock higher tier benefits and reward multipliers. Click "View All Tiers" above to see all available tiers for this asset.
             </p>
-            <div className="space-y-2">
-              {['Bronze (1+ tokens)', 'Silver (100+ tokens)', 'Gold (500+ tokens)', 'Platinum (1000+ tokens)'].map((tier, index) => {
-                const isCurrentOrPassed = assetReward.tokensHeld >= [1, 100, 500, 1000][index];
-                return (
-                  <div key={tier} className="flex items-center space-x-2">
-                    <div className={`w-2 h-2 rounded-full ${
-                      isCurrentOrPassed 
-                        ? 'bg-blue-600 dark:bg-blue-400' 
-                        : 'bg-gray-300 dark:bg-gray-600'
-                    }`} />
-                    <span className={`text-sm ${
-                      isCurrentOrPassed 
-                        ? 'text-blue-900 dark:text-blue-100 font-medium' 
-                        : 'text-blue-700 dark:text-blue-300'
-                    }`}>
-                      {tier}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
           </div>
         </div>
       </div>
+
+      {/* All Tiers Modal */}
+      {showAllTiersModal && assetReward && (
+        <AllTiersModal
+          isOpen={true}
+          onClose={() => setShowAllTiersModal(false)}
+          assetId={assetId}
+          assetName={assetReward.assetName}
+          userTokens={assetReward.tokensHeld}
+        />
+      )}
     </div>
   );
 };
