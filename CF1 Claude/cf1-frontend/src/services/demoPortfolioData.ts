@@ -418,22 +418,51 @@ export const getRealPortfolioData = (): { assets: PortfolioAsset[], summary: Por
   };
 };
 
-// Function to enhance portfolio data with tier information
+// Cache to prevent repeated tier data loading
+const tierDataCache = new Map<string, any>();
+
+// Function to enhance portfolio data with tier information  
 const enhanceWithTierData = async (assets: PortfolioAsset[]): Promise<PortfolioAsset[]> => {
   try {
+    // Skip tier enhancement if no assets to avoid unnecessary processing
+    if (!assets.length) return assets;
+    
     // Dynamic import to avoid circular dependencies
     const { tierManagementService } = await import('./tierManagementService');
     
     const enhancedAssets = await Promise.all(assets.map(async (asset) => {
-      const tiers = await tierManagementService.getTiersForAsset(asset.id);
-      const userTier = tierManagementService.getUserTierForAsset(asset.id, asset.tokens);
+      const cacheKey = `${asset.id}_${asset.tokens}`;
       
-      return {
-        ...asset,
-        availableTiers: tiers,
-        userTier: userTier || undefined,
-        tierBenefits: userTier?.benefits || []
-      };
+      if (tierDataCache.has(cacheKey)) {
+        const cachedData = tierDataCache.get(cacheKey);
+        return {
+          ...asset,
+          ...cachedData
+        };
+      }
+
+      try {
+        const tiers = await tierManagementService.getTiersForAsset(asset.id);
+        const userTier = tierManagementService.getUserTierForAsset(asset.id, asset.tokens);
+        
+        const tierData = {
+          availableTiers: tiers,
+          userTier: userTier || undefined,
+          tierBenefits: userTier?.benefits || []
+        };
+
+        // Cache the tier data for 30 seconds to prevent repeated calls
+        tierDataCache.set(cacheKey, tierData);
+        setTimeout(() => tierDataCache.delete(cacheKey), 30000);
+        
+        return {
+          ...asset,
+          ...tierData
+        };
+      } catch (error) {
+        // Return asset without tier data if there's an error
+        return asset;
+      }
     }));
 
     return enhancedAssets;
@@ -489,11 +518,21 @@ export const usePortfolioData = () => {
 // Enhanced portfolio data hook with tier information
 export const useEnhancedPortfolioData = () => {
   const portfolioData = usePortfolioData();
-  const [enhancedAssets, setEnhancedAssets] = React.useState<PortfolioAsset[]>(portfolioData.assets);
+  const [enhancedAssets, setEnhancedAssets] = React.useState<PortfolioAsset[]>([]);
   const [loading, setLoading] = React.useState(false);
+
+  // Memoize the assets array to prevent unnecessary re-renders
+  const assetsKey = React.useMemo(() => 
+    portfolioData.assets.map(a => a.id).join(',') + '_' + portfolioData.isDemoMode + '_' + portfolioData.scenario
+  , [portfolioData.assets, portfolioData.isDemoMode, portfolioData.scenario]);
 
   React.useEffect(() => {
     const loadTierData = async () => {
+      if (portfolioData.assets.length === 0) {
+        setEnhancedAssets([]);
+        return;
+      }
+
       setLoading(true);
       try {
         const enhanced = await enhanceWithTierData(portfolioData.assets);
@@ -507,7 +546,7 @@ export const useEnhancedPortfolioData = () => {
     };
 
     loadTierData();
-  }, [portfolioData.assets, portfolioData.isDemoMode, portfolioData.scenario]);
+  }, [assetsKey]);
 
   return {
     ...portfolioData,

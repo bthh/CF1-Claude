@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useDataModeStore } from '../store/dataModeStore';
 import { usePortfolioStore } from '../store/portfolioStore';
 
@@ -46,21 +47,14 @@ const getProductionSummary = (): PortfolioSummary => {
 };
 
 // Development data - based on user investments
-const getDevelopmentAssets = (): PortfolioAsset[] => {
-  // Get actual investments from portfolio store
+const getDevelopmentAssets = (transactions: any[] = []): PortfolioAsset[] => {
+  // Get actual investments from provided transactions
   try {
-    const portfolioState = usePortfolioStore.getState();
-    const transactions = portfolioState.transactions || [];
-    
-    console.log('🔍 Portfolio Debug - All transactions:', transactions);
-    console.log('🔍 Portfolio Debug - Transactions count:', transactions.length);
     
     // Convert investment transactions to portfolio assets
     const investmentTransactions = transactions.filter(tx => tx.type === 'investment' && tx.status === 'completed');
-    console.log('🔍 Portfolio Debug - Investment transactions:', investmentTransactions);
     
     if (investmentTransactions.length === 0) {
-      console.log('📊 Portfolio Debug - No investment transactions found in development mode');
       return [];
     }
     
@@ -68,8 +62,6 @@ const getDevelopmentAssets = (): PortfolioAsset[] => {
     const assetMap = new Map();
     
     investmentTransactions.forEach(tx => {
-      console.log('🔍 Processing transaction:', tx);
-      
       const existing = assetMap.get(tx.assetId) || {
         id: tx.assetId,
         name: tx.assetName,
@@ -87,11 +79,8 @@ const getDevelopmentAssets = (): PortfolioAsset[] => {
       existing.purchaseValue += amount;
       existing.currentValue += amount * 1.1; // Assume 10% growth
       
-      console.log('🔍 Updated asset data:', existing);
       assetMap.set(tx.assetId, existing);
     });
-    
-    console.log('📈 Portfolio Debug - Asset map:', assetMap);
     
     // Convert map to portfolio asset format
     const assets = Array.from(assetMap.values()).map(asset => {
@@ -121,9 +110,9 @@ const getDevelopmentAssets = (): PortfolioAsset[] => {
   }
 };
 
-const getDevelopmentSummary = (): PortfolioSummary => {
+const getDevelopmentSummary = (transactions: any[] = []): PortfolioSummary => {
   try {
-    const assets = getDevelopmentAssets();
+    const assets = getDevelopmentAssets(transactions);
     
     if (assets.length === 0) {
       return {
@@ -244,13 +233,14 @@ const getDemoSummary = (): PortfolioSummary => {
 
 export const usePortfolioData = () => {
   const { currentMode } = useDataModeStore();
+  const { transactions } = usePortfolioStore();
 
   const getAssets = (): PortfolioAsset[] => {
     switch (currentMode) {
       case 'production':
         return getProductionAssets();
       case 'development':
-        return getDevelopmentAssets();
+        return getDevelopmentAssets(transactions);
       case 'demo':
         return getDemoAssets();
       default:
@@ -263,7 +253,7 @@ export const usePortfolioData = () => {
       case 'production':
         return getProductionSummary();
       case 'development':
-        return getDevelopmentSummary();
+        return getDevelopmentSummary(transactions);
       case 'demo':
         return getDemoSummary();
       default:
@@ -298,10 +288,11 @@ export const usePortfolioData = () => {
     };
   };
 
-  const assets = getAssets();
-  const summary = getSummary();
-  const stats = getStats();
-  const isEmpty = assets.length === 0;
+  // Memoize expensive calculations to prevent re-computation on every render
+  const assets = useMemo(() => getAssets(), [currentMode, transactions]);
+  const summary = useMemo(() => getSummary(), [currentMode, transactions]);
+  const stats = useMemo(() => getStats(), [assets, summary]);
+  const isEmpty = useMemo(() => assets.length === 0, [assets.length]);
 
   return {
     assets,
