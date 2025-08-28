@@ -200,6 +200,15 @@ const Header: React.FC = () => {
 
   // Helper to check if user is platform or super admin
   const isPlatformOrSuperAdmin = adminRole === 'platform_admin' || adminRole === 'super_admin';
+  
+  // Debug logging for production troubleshooting
+  console.log('🔍 Header Debug Info:', {
+    isAdmin,
+    adminRole,
+    isPlatformOrSuperAdmin,
+    currentMode: currentMode,
+    location: location.pathname
+  });
 
   const quickActions = [
     {

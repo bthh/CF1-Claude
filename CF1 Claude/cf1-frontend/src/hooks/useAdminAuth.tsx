@@ -5,8 +5,17 @@ import { SecureSessionStorage, SecurityUtils } from '../utils/secureStorage';
 
 // Production security configuration
 const IS_PRODUCTION = import.meta.env.MODE === 'production';
-const BACKEND_URL = process.env.VITE_BACKEND_URL || 'http://localhost:3001';
-const DEMO_MODE_ENABLED = process.env.VITE_DEMO_MODE === 'true' && !IS_PRODUCTION;
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+const DEMO_MODE_ENABLED = import.meta.env.VITE_DEMO_MODE === 'true';
+
+// Debug logging for production troubleshooting
+console.log('🔍 Admin Auth Environment Debug:', {
+  'import.meta.env.MODE': import.meta.env.MODE,
+  'IS_PRODUCTION': IS_PRODUCTION,
+  'import.meta.env.VITE_DEMO_MODE': import.meta.env.VITE_DEMO_MODE,
+  'DEMO_MODE_ENABLED': DEMO_MODE_ENABLED,
+  'BACKEND_URL': BACKEND_URL
+});
 
 // Secure session storage functions
 const storeSecureSession = async (adminUser: AdminUser, token: string): Promise<void> => {
