@@ -119,14 +119,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   return (
     <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
-      {/* Skip Link for Accessibility */}
-      <a 
-        href="#main-content" 
-        className="skip-link"
-        onFocus={(e) => e.target.scrollIntoView()}
-      >
-        Skip to main content
-      </a>
       <Header />
       
       {/* Admin Header - Show when in admin mode */}

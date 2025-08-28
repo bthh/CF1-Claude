@@ -113,18 +113,6 @@ const DashboardV2: React.FC<DashboardV2Props> = memo(({ className = '' }) => {
 
   return (
     <div className={`space-y-6 ${className}`}>
-      {/* Development indicator */}
-      {import.meta.env.MODE === 'development' && (
-        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800/50 rounded-lg p-3">
-          <p className="text-sm text-yellow-800 dark:text-yellow-200">
-            <strong>Dashboard V2</strong> - Currently showing Variant {selectedVariant}
-            {selectedVariant === 'A' && ' (Not logged in / No assets)'}
-            {selectedVariant === 'B' && ' (Active investor)'}
-            {selectedVariant === 'C' && ' (Creator)'}
-          </p>
-        </div>
-      )}
-      
       {renderVariant()}
     </div>
   );
