@@ -229,44 +229,67 @@ const DashboardVariantA: React.FC = memo(() => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
-          {memoizedFeaturedProposals.map((proposal) => (
-            <Card key={proposal.id} className="p-0 overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" onClick={() => handleProposalClick(proposal.id)}>
-              <div className="aspect-[3/2] relative overflow-hidden">
-                <AssetImage
-                  src={getCategoryImage(proposal.category)}
-                  alt={`${proposal.category} - ${proposal.title}`}
-                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                  fallbackClassName="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent">
-                  <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-full px-2 py-1">
-                    <span className="text-xs font-medium text-gray-800">
-                      {proposal.category}
-                    </span>
+          {memoizedFeaturedProposals.length > 0 ? (
+            memoizedFeaturedProposals.map((proposal) => (
+              <div 
+                key={proposal.id} 
+                className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-0 overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+                onClick={() => handleProposalClick(proposal.id)}
+              >
+                <div className="aspect-[3/2] relative overflow-hidden">
+                  <AssetImage
+                    src={getCategoryImage(proposal.category)}
+                    alt={`${proposal.category} - ${proposal.title}`}
+                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                    fallbackClassName="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent">
+                    <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-full px-2 py-1">
+                      <span className="text-xs font-medium text-gray-800">
+                        {proposal.category}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-              
-              <div className="p-3">
-                <h3 className="font-semibold text-gray-900 dark:text-white mb-1 line-clamp-1 text-sm">
-                  {proposal.title}
-                </h3>
-                <p className="text-xs text-gray-600 dark:text-gray-300 mb-2 line-clamp-2">
-                  {proposal.description}
-                </p>
                 
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
-                    <Clock className="w-3 h-3 mr-1" />
-                    {proposal.timeLeft}
+                <div className="p-3 bg-white dark:bg-gray-800">
+                  <h3 className="font-semibold text-gray-900 dark:text-white mb-1 line-clamp-1 text-sm">
+                    {proposal.title}
+                  </h3>
+                  <p className="text-xs text-gray-600 dark:text-gray-300 mb-2 line-clamp-2">
+                    {proposal.description}
+                  </p>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                      <Clock className="w-3 h-3 mr-1" />
+                      {proposal.timeLeft}
+                    </div>
+                    <div className="h-6 w-6 p-0 border border-gray-300 dark:border-gray-600 rounded flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700">
+                      <ArrowRight className="w-3 h-3" />
+                    </div>
                   </div>
-                  <Button size="sm" variant="outline" className="h-6 w-6 p-0">
-                    <ArrowRight className="w-3 h-3" />
-                  </Button>
                 </div>
               </div>
-            </Card>
-          ))}
+            ))
+          ) : (
+            // Fallback content when no proposals are loaded
+            Array.from({ length: 6 }).map((_, index) => (
+              <div key={index} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                <div className="aspect-[3/2] bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 flex items-center justify-center">
+                  <Rocket className="w-8 h-8 text-gray-400" />
+                </div>
+                <div className="p-3">
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mb-2"></div>
+                  <div className="h-3 bg-gray-100 dark:bg-gray-600 rounded mb-2"></div>
+                  <div className="flex justify-between items-center">
+                    <div className="h-3 w-16 bg-gray-100 dark:bg-gray-600 rounded"></div>
+                    <div className="h-6 w-6 bg-gray-100 dark:bg-gray-600 rounded"></div>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </section>
 
@@ -283,19 +306,41 @@ const DashboardVariantA: React.FC = memo(() => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {memoizedPlatformHighlights.map((highlight, index) => (
-            <Card key={index} className="text-center p-6 bg-gradient-to-br from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 border-green-200 dark:border-green-800">
-              <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">
-                {highlight.value}
+          {memoizedPlatformHighlights.length > 0 ? (
+            memoizedPlatformHighlights.map((highlight, index) => (
+              <div key={index} className="text-center p-6 bg-gradient-to-br from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 border-2 border-green-200 dark:border-green-800 rounded-lg">
+                <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">
+                  {highlight.value}
+                </div>
+                <div className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+                  {highlight.label}
+                </div>
+                <div className="text-sm text-gray-600 dark:text-gray-300">
+                  {highlight.description}
+                </div>
               </div>
-              <div className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
-                {highlight.label}
+            ))
+          ) : (
+            // Fallback content for platform highlights
+            [
+              { icon: DollarSign, value: "$12.5M+", label: "Assets Under Management", desc: "Total value managed on platform" },
+              { icon: Users, value: "5,000+", label: "Active Investors", desc: "Growing community of investors" },
+              { icon: TrendingUp, value: "8.5%", label: "Average Returns", desc: "Historical portfolio performance" }
+            ].map((fallback, index) => (
+              <div key={index} className="text-center p-6 bg-gradient-to-br from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 border-2 border-green-200 dark:border-green-800 rounded-lg">
+                <fallback.icon className="w-12 h-12 mx-auto text-green-600 dark:text-green-400 mb-3" />
+                <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">
+                  {fallback.value}
+                </div>
+                <div className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+                  {fallback.label}
+                </div>
+                <div className="text-sm text-gray-600 dark:text-gray-300">
+                  {fallback.desc}
+                </div>
               </div>
-              <div className="text-sm text-gray-600 dark:text-gray-300">
-                {highlight.description}
-              </div>
-            </Card>
-          ))}
+            ))
+          )}
         </div>
       </section>
 
@@ -321,42 +366,51 @@ const DashboardVariantA: React.FC = memo(() => {
 
       {/* Getting Started CTA */}
       <section>
-        <Card className="p-8 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-          <div className="text-center">
+        <div className="relative overflow-hidden rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 p-8">
+          <div className="text-center relative z-10">
             <Star className="w-12 h-12 mx-auto mb-4 text-yellow-300" />
-            <h2 className="text-3xl font-bold mb-4">Get Started Today</h2>
+            <h2 className="text-3xl font-bold mb-4 text-white">Get Started Today</h2>
             <p className="text-blue-100 mb-6 max-w-2xl mx-auto">
               Join thousands of investors who are building wealth through our platform. 
               Connect your wallet, browse opportunities, and start investing in minutes.
             </p>
-            <div className="flex flex-wrap justify-center gap-4">
-              <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100" onClick={handleConnectWallet}>
+            <div className="flex flex-col sm:flex-row justify-center gap-4 max-w-2xl mx-auto">
+              <button 
+                className="bg-white text-blue-600 hover:bg-gray-100 font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center"
+                onClick={handleConnectWallet}
+              >
                 <Users className="w-5 h-5 mr-2" />
                 Connect Wallet
-              </Button>
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600" onClick={handleBrowseAssets}>
+              </button>
+              <button 
+                className="border-2 border-white text-white hover:bg-white hover:text-blue-600 font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center"
+                onClick={handleBrowseAssets}
+              >
                 <Search className="w-5 h-5 mr-2" />
                 Browse Assets
-              </Button>
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600" onClick={handleLearnMore}>
+              </button>
+              <button 
+                className="border-2 border-white text-white hover:bg-white hover:text-blue-600 font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center"
+                onClick={handleLearnMore}
+              >
                 <BookOpen className="w-5 h-5 mr-2" />
                 Learn More
-              </Button>
+              </button>
             </div>
           </div>
-        </Card>
+        </div>
       </section>
 
       {/* Latest News & Updates */}
       <section>
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
-              <BookOpen className="w-7 h-7 mr-3 text-purple-600" />
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center">
+              <BookOpen className="w-6 h-6 mr-2 text-purple-600" />
               Latest News & Updates
             </h2>
-            <p className="text-gray-600 dark:text-gray-300">
-              Stay informed about platform developments and market insights
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              Stay informed about platform developments
             </p>
           </div>
           <Link 
@@ -368,11 +422,11 @@ const DashboardVariantA: React.FC = memo(() => {
           </Link>
         </div>
 
-        <div className="space-y-4">
-          {memoizedLatestNews.map((news) => (
-            <Card key={news.id} className="p-4 hover:shadow-lg transition-shadow cursor-pointer">
-              <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0 w-2 h-2 rounded-full bg-purple-600 mt-2"></div>
+        <div className="space-y-3">
+          {memoizedLatestNews.slice(0, 3).map((news) => (
+            <Card key={news.id} className="p-3 hover:shadow-md transition-shadow cursor-pointer">
+              <div className="flex items-start space-x-3">
+                <div className="flex-shrink-0 w-2 h-2 rounded-full bg-purple-600 mt-1.5"></div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
                     {news.title}

@@ -1,12 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, memo, useCallback, useMemo } from 'react';
 import { TrendingUp, TrendingDown, MoreHorizontal, Download, Eye, Settings, PieChart, BarChart3, Receipt, Gift } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { EnhancedPortfolioOverview } from '../components/Portfolio/EnhancedPortfolioOverview';
-import { EnhancedPortfolioPerformance } from '../components/Portfolio/EnhancedPortfolioPerformance';
-import { EnhancedPortfolioTransactions } from '../components/Portfolio/EnhancedPortfolioTransactions';
-import { RewardsTab } from '../components/Portfolio/RewardsTab';
 import { usePortfolioData, PortfolioAsset } from '../services/portfolioDataService';
 import { useDataMode } from '../store/dataModeStore';
+
+// Lazy load components to prevent blocking
+const EnhancedPortfolioOverview = React.lazy(() => 
+  import('../components/Portfolio/EnhancedPortfolioOverview').then(module => ({
+    default: module.EnhancedPortfolioOverview
+  }))
+);
+const EnhancedPortfolioPerformance = React.lazy(() => 
+  import('../components/Portfolio/EnhancedPortfolioPerformance').then(module => ({
+    default: module.EnhancedPortfolioPerformance
+  }))
+);
+const EnhancedPortfolioTransactions = React.lazy(() => 
+  import('../components/Portfolio/EnhancedPortfolioTransactions').then(module => ({
+    default: module.EnhancedPortfolioTransactions
+  }))
+);
+const RewardsTab = React.lazy(() => 
+  import('../components/Portfolio/RewardsTab').then(module => ({
+    default: module.RewardsTab
+  }))
+);
 
 // Use PortfolioAsset type from demo service
 type PortfolioAssetProps = PortfolioAsset;
@@ -79,27 +97,33 @@ const PortfolioAssetRow: React.FC<PortfolioAssetProps> = ({
   );
 };
 
-const Portfolio: React.FC = () => {
+const Portfolio: React.FC = memo(() => {
   const navigate = useNavigate();
   const [timeframe, setTimeframe] = useState('30d');
   
-  // Data mode integration
-  const { assets: portfolioAssets, summary, stats, currentMode, isEmpty } = usePortfolioData();
+  // Data mode integration - memoized to prevent unnecessary re-renders
+  const portfolioData = usePortfolioData();
   const { isDemo } = useDataMode();
+  
+  // Memoize expensive calculations
+  const { assets: portfolioAssets, summary, stats, currentMode, isEmpty } = useMemo(() => portfolioData, [portfolioData]);
 
-  const totalPortfolioValue = summary.totalValue;
-  const totalInvested = summary.totalInvested;
-  const totalGain = summary.totalGain;
-  const totalGainPercent = summary.totalGainPercent;
+  const { totalValue: totalPortfolioValue, totalInvested, totalGain, totalGainPercent } = useMemo(() => summary, [summary]);
 
   const [activeTab, setActiveTab] = useState<'overview' | 'performance' | 'transactions' | 'rewards'>('overview');
 
-  const tabs = [
+  // Memoize tab change handler to prevent re-renders
+  const handleTabChange = useCallback((tab: typeof activeTab) => {
+    setActiveTab(tab);
+  }, []);
+
+  // Memoize tabs array to prevent re-creation on each render
+  const tabs = useMemo(() => [
     { id: 'overview' as const, label: 'Overview', icon: PieChart },
     { id: 'performance' as const, label: 'Performance', icon: BarChart3 },
     { id: 'transactions' as const, label: 'Transactions', icon: Receipt },
     { id: 'rewards' as const, label: 'Rewards', icon: Gift }
-  ];
+  ], []);
 
   return (
     <div className="space-y-6">
@@ -142,7 +166,7 @@ const Portfolio: React.FC = () => {
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleTabChange(tab.id)}
                 className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                   isActive
                     ? 'border-blue-500 text-blue-600 dark:text-blue-400'
@@ -193,16 +217,22 @@ const Portfolio: React.FC = () => {
             </div>
           </div>
         ) : (
-          <>
+          <React.Suspense fallback={
+            <div className="flex items-center justify-center min-h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            </div>
+          }>
             {activeTab === 'overview' && <EnhancedPortfolioOverview />}
             {activeTab === 'performance' && <EnhancedPortfolioPerformance />}
             {activeTab === 'transactions' && <EnhancedPortfolioTransactions />}
             {activeTab === 'rewards' && <RewardsTab />}
-          </>
+          </React.Suspense>
         )}
       </div>
     </div>
   );
-};
+});
+
+Portfolio.displayName = 'Portfolio';
 
 export default Portfolio;
