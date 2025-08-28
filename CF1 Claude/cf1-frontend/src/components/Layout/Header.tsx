@@ -203,6 +203,12 @@ const Header: React.FC = () => {
 
   const quickActions = [
     {
+      label: 'Platform Tour',
+      icon: <PlayCircle className="w-4 h-4" />,
+      action: () => startTour('welcome-tour'),
+      description: 'Take a guided tour of the platform'
+    },
+    {
       label: 'Help & Tours',
       icon: <HelpCircle className="w-4 h-4" />,
       action: () => startTour('marketplace-tour'),
