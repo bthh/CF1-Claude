@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ChevronDown, Zap, Plus, Vote, Eye, User, Settings, LogOut, Moon, Sun, Bell, Wallet, HelpCircle, PlayCircle, Menu, Shield, Crown, Users } from 'lucide-react';
+import { ChevronDown, Zap, Plus, Vote, Eye, User, Settings, LogOut, Moon, Sun, Bell, Wallet, HelpCircle, PlayCircle, Menu, Shield, Crown, Users, Info } from 'lucide-react';
 import { MobileNavigation } from './MobileNavigation';
 import { useCosmJS } from '../../hooks/useCosmJS';
 import { useOnboardingContext } from '../Onboarding/OnboardingProvider';
@@ -198,62 +198,15 @@ const Header: React.FC = () => {
     return location.pathname === path || (path === '/dashboard' && location.pathname === '/');
   };
 
+  // Helper to check if user is platform or super admin
+  const isPlatformOrSuperAdmin = adminRole === 'platform_admin' || adminRole === 'super_admin';
+
   const quickActions = [
-    {
-      label: 'Investments',
-      icon: <Plus className="w-4 h-4" />,
-      to: '/portfolio',
-      description: 'View your portfolio'
-    },
-    ...(isFeatureEnabled('governance') ? [{
-      label: 'Vote for Proposal',
-      icon: <Vote className="w-4 h-4" />,
-      to: '/governance',
-      description: 'All voting proposals'
-    }] : []),
-    ...(isFeatureEnabled('launchpad') ? [{
-      label: 'Create New Proposal',
-      icon: <Plus className="w-4 h-4" />,
-      to: '/launchpad',
-      description: 'Submit new asset proposal'
-    }] : []),
-    ...(isFeatureEnabled('marketplace') ? [{
-      label: 'Explore',
-      icon: <Eye className="w-4 h-4" />,
-      to: '/marketplace',
-      description: 'Browse marketplace assets'
-    }] : []),
-    {
-      label: 'Platform Tour',
-      icon: <PlayCircle className="w-4 h-4" />,
-      action: () => startTour('welcome-tour'),
-      description: 'Take a guided tour'
-    },
     {
       label: 'Help & Tours',
       icon: <HelpCircle className="w-4 h-4" />,
       action: () => startTour('marketplace-tour'),
       description: 'Get help and tutorials'
-    },
-    ...(isConnected && !isAdmin ? [{
-      label: 'Admin Access',
-      icon: <Shield className="w-4 h-4" />,
-      action: () => setShowAdminLogin(true),
-      description: 'Access admin functions'
-    }] : []),
-    // Add role selector for testing
-    {
-      label: 'Change Role',
-      icon: <Users className="w-4 h-4" />,
-      action: () => setShowRoleSelector(true),
-      description: 'Select different role for testing'
-    },
-    // Add test user creation for easier testing
-    {
-      label: 'Create Test User',
-      icon: <Shield className="w-4 h-4" />,
-      action: createTestUser,
-      description: 'Create fully verified test user for easier testing'
     },
     // Add portfolio testing panel for development
     ...(currentMode === 'development' ? [{
@@ -262,11 +215,18 @@ const Header: React.FC = () => {
       action: () => setShowTestingPanel(true),
       description: 'Test investment-to-portfolio workflow'
     }] : []),
-    ...(isAdmin ? [{
-      label: 'Admin Panel',
+    // Admin-only actions - only show for platform and super admins
+    ...(isPlatformOrSuperAdmin ? [{
+      label: 'Change Role',
+      icon: <Users className="w-4 h-4" />,
+      action: () => setShowRoleSelector(true),
+      description: 'Select different role for testing'
+    }] : []),
+    ...(isPlatformOrSuperAdmin ? [{
+      label: 'Create Test User',
       icon: <Shield className="w-4 h-4" />,
-      to: '/admin',
-      description: 'Access admin functions and management tools'
+      action: createTestUser,
+      description: 'Create fully verified test user for easier testing'
     }] : [])
   ];
 
@@ -419,13 +379,10 @@ const Header: React.FC = () => {
         <div className="relative" ref={dropdownRef} data-tour="quick-actions">
           <button 
             onClick={() => setIsQuickActionsOpen(!isQuickActionsOpen)}
-            className="px-4 py-2 border border-gray-300 bg-white text-gray-700 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 rounded-lg text-sm flex items-center space-x-2"
+            className="p-2 border border-gray-300 bg-white text-gray-700 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+            title="Information and Actions"
           >
-            <Zap className="w-4 h-4" />
-            <span>Quick Actions</span>
-            <ChevronDown className={`w-4 h-4 transition-transform ${
-              isQuickActionsOpen ? 'rotate-180' : ''
-            }`} />
+            <Info className="w-4 h-4" />
           </button>
           
           {isQuickActionsOpen && (
