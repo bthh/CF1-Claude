@@ -151,8 +151,9 @@ const DashboardVariantA: React.FC = memo(() => {
               {/* Professional CTA Buttons */}
               <div className="flex flex-wrap justify-center gap-4 mb-8">
                 <Button 
+                  variant="secondary"
                   size="lg" 
-                  className="bg-white text-blue-900 hover:bg-blue-50 font-semibold px-8 py-3 text-lg shadow-lg border-0" 
+                  className="bg-white !text-blue-900 hover:bg-blue-50 font-semibold px-8 py-3 text-lg shadow-lg border-0" 
                   onClick={handleConnectWallet}
                 >
                   <Users className="w-5 h-5 mr-2" />
