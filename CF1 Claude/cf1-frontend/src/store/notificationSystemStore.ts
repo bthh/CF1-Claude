@@ -1,23 +1,26 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export type NotificationType = 
-  | 'proposal_approved' 
-  | 'proposal_rejected' 
-  | 'proposal_changes_requested'
-  | 'governance_voting_started'
-  | 'governance_voting_ended'
-  | 'investment_confirmed'
-  | 'investment_failed'
+// Investor-level notifications
+export type InvestorNotificationType = 
+  | 'proposal_new'
+  | 'proposal_ending'
+  | 'proposal_invested_alert'
+  | 'voting_asset_owned'
   | 'dividend_received'
   | 'token_unlock'
-  | 'kyc_approved'
-  | 'kyc_rejected'
-  | 'system_maintenance'
-  | 'security_alert'
-  | 'general';
+  | 'system_alert';
 
-export type NotificationPriority = 'low' | 'medium' | 'high' | 'urgent';
+// Creator-level notifications  
+export type CreatorNotificationType = 
+  | 'proposal_approved' 
+  | 'proposal_rejected' 
+  | 'proposal_changes_requested';
+
+export type NotificationType = InvestorNotificationType | CreatorNotificationType;
+
+// Simplified - no priority system
+export type NotificationPriority = 'normal' | 'urgent';
 
 export interface InAppNotification {
   id: string;
@@ -44,14 +47,13 @@ export interface InAppNotification {
 export interface NotificationPreferences {
   enableInApp: boolean;
   enableEmail: boolean;
-  enablePush: boolean;
+  // Removed enablePush - no mobile push notifications
   categories: {
     [K in NotificationType]: {
       enabled: boolean;
-      priority: NotificationPriority;
       inApp: boolean;
       email: boolean;
-      push: boolean;
+      // Removed priority and push
     };
   };
   quietHours: {
@@ -98,22 +100,20 @@ interface NotificationSystemState {
 const defaultPreferences: NotificationPreferences = {
   enableInApp: true,
   enableEmail: true,
-  enablePush: false,
   categories: {
-    proposal_approved: { enabled: true, priority: 'high', inApp: true, email: true, push: false },
-    proposal_rejected: { enabled: true, priority: 'high', inApp: true, email: true, push: false },
-    proposal_changes_requested: { enabled: true, priority: 'medium', inApp: true, email: true, push: false },
-    governance_voting_started: { enabled: true, priority: 'medium', inApp: true, email: false, push: false },
-    governance_voting_ended: { enabled: true, priority: 'medium', inApp: true, email: false, push: false },
-    investment_confirmed: { enabled: true, priority: 'high', inApp: true, email: true, push: false },
-    investment_failed: { enabled: true, priority: 'high', inApp: true, email: true, push: false },
-    dividend_received: { enabled: true, priority: 'high', inApp: true, email: true, push: false },
-    token_unlock: { enabled: true, priority: 'high', inApp: true, email: true, push: false },
-    kyc_approved: { enabled: true, priority: 'high', inApp: true, email: true, push: false },
-    kyc_rejected: { enabled: true, priority: 'high', inApp: true, email: true, push: false },
-    system_maintenance: { enabled: true, priority: 'medium', inApp: true, email: false, push: false },
-    security_alert: { enabled: true, priority: 'urgent', inApp: true, email: true, push: true },
-    general: { enabled: true, priority: 'low', inApp: true, email: false, push: false }
+    // Investor notifications
+    proposal_new: { enabled: true, inApp: true, email: false },
+    proposal_ending: { enabled: true, inApp: true, email: true },
+    proposal_invested_alert: { enabled: true, inApp: true, email: true },
+    voting_asset_owned: { enabled: true, inApp: true, email: false },
+    dividend_received: { enabled: true, inApp: true, email: true },
+    token_unlock: { enabled: true, inApp: true, email: true },
+    system_alert: { enabled: true, inApp: true, email: true },
+    
+    // Creator notifications
+    proposal_approved: { enabled: true, inApp: true, email: true },
+    proposal_rejected: { enabled: true, inApp: true, email: true },
+    proposal_changes_requested: { enabled: true, inApp: true, email: true }
   },
   quietHours: {
     enabled: false,
@@ -128,7 +128,7 @@ const mockNotifications: InAppNotification[] = [
   {
     id: 'notif_1',
     type: 'proposal_approved',
-    priority: 'high',
+    priority: 'normal',
     title: 'Proposal Approved!',
     message: 'Your "Manhattan Office Complex" proposal has been approved and is now live for funding.',
     timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
@@ -144,8 +144,8 @@ const mockNotifications: InAppNotification[] = [
   },
   {
     id: 'notif_2',
-    type: 'governance_voting_started',
-    priority: 'medium',
+    type: 'voting_asset_owned',
+    priority: 'normal',
     title: 'New Governance Vote',
     message: 'Voting has started for "Q4 Dividend Distribution" - Manhattan Office Complex.',
     timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(), // 4 hours ago
@@ -161,8 +161,8 @@ const mockNotifications: InAppNotification[] = [
   },
   {
     id: 'notif_3',
-    type: 'investment_confirmed',
-    priority: 'high',
+    type: 'proposal_invested_alert',
+    priority: 'normal',
     title: 'Investment Confirmed',
     message: 'Your $5,000 investment in Gold Bullion Vault has been confirmed.',
     timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
@@ -178,19 +178,25 @@ const mockNotifications: InAppNotification[] = [
   },
   {
     id: 'notif_4',
-    type: 'kyc_approved',
-    priority: 'high',
-    title: 'KYC Verification Complete',
-    message: 'Your identity verification has been approved. You can now make investments up to $50,000.',
+    type: 'dividend_received',
+    priority: 'normal',
+    title: 'Dividend Payment Received',
+    message: 'You received $125.50 in dividends from Manhattan Office Complex.',
     timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
     read: true,
-    actionable: false,
+    actionable: true,
+    actionUrl: '/portfolio',
+    actionText: 'View Portfolio',
+    metadata: {
+      assetId: 'manhattan-office',
+      amount: '$125.50'
+    },
     persistent: false
   },
   {
     id: 'notif_5',
-    type: 'system_maintenance',
-    priority: 'medium',
+    type: 'system_alert',
+    priority: 'urgent',
     title: 'Scheduled Maintenance',
     message: 'Platform maintenance scheduled for Sunday 2:00 AM - 4:00 AM EST. Limited functionality expected.',
     timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(), // 6 hours ago
@@ -428,7 +434,7 @@ export const createNotification = (
   type,
   title,
   message,
-  priority: options.priority || 'medium',
+  priority: options.priority || 'normal',
   actionable: options.actionable || false,
   actionUrl: options.actionUrl,
   actionText: options.actionText,
@@ -441,29 +447,27 @@ export const createNotification = (
 export const getPriorityColor = (priority: NotificationPriority): string => {
   switch (priority) {
     case 'urgent': return 'red';
-    case 'high': return 'orange';
-    case 'medium': return 'blue';
-    case 'low': return 'gray';
-    default: return 'gray';
+    case 'normal': return 'blue';
+    default: return 'blue';
   }
 };
 
 export const getPriorityIcon = (type: NotificationType): string => {
   switch (type) {
+    // Creator notifications
     case 'proposal_approved': return '✅';
     case 'proposal_rejected': return '❌';
     case 'proposal_changes_requested': return '✏️';
-    case 'governance_voting_started': return '🗳️';
-    case 'governance_voting_ended': return '📊';
-    case 'investment_confirmed': return '💰';
-    case 'investment_failed': return '⚠️';
+    
+    // Investor notifications  
+    case 'proposal_new': return '📢';
+    case 'proposal_ending': return '⏰';
+    case 'proposal_invested_alert': return '💰';
+    case 'voting_asset_owned': return '🗳️';
     case 'dividend_received': return '💵';
     case 'token_unlock': return '🔓';
-    case 'kyc_approved': return '✅';
-    case 'kyc_rejected': return '❌';
-    case 'system_maintenance': return '🔧';
-    case 'security_alert': return '🚨';
-    case 'general': return 'ℹ️';
+    case 'system_alert': return '🚨';
+    
     default: return 'ℹ️';
   }
 };

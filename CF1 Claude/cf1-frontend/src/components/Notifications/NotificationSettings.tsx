@@ -1,19 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   X,
   Settings,
   Bell,
   BellOff,
   Mail,
-  Smartphone,
   Clock,
   Save,
   RotateCcw,
-  Volume2,
-  VolumeX
+  AlertTriangle
 } from 'lucide-react';
-import { useNotificationSystemStore, NotificationType, NotificationPriority } from '../../store/notificationSystemStore';
+import { useNotificationSystemStore, NotificationType, InvestorNotificationType, CreatorNotificationType } from '../../store/notificationSystemStore';
 import { useNotifications } from '../../hooks/useNotifications';
+import { useSessionStore, SessionRole } from '../../store/sessionStore';
+import { useVerificationStore } from '../../store/verificationStore';
 
 interface NotificationSettingsProps {
   isOpen: boolean;
@@ -34,11 +34,52 @@ const NotificationSettings: React.FC<NotificationSettingsProps> = ({
   } = useNotificationSystemStore();
 
   const { success, error } = useNotifications();
+  const { selectedRole } = useSessionStore();
+  const { profile } = useVerificationStore();
   const [localPreferences, setLocalPreferences] = useState(preferences);
   const [localEnabled, setLocalEnabled] = useState(isEnabled);
   const [hasChanges, setHasChanges] = useState(false);
 
-  const notificationTypes: { type: NotificationType; label: string; description: string }[] = [
+  // Role-based notification types
+  const investorNotificationTypes: { type: InvestorNotificationType; label: string; description: string }[] = [
+    {
+      type: 'proposal_new',
+      label: 'New Proposals',
+      description: 'Notifies for all new proposals and proposals ending in 1 day'
+    },
+    {
+      type: 'proposal_ending',
+      label: 'Proposals Ending Soon',
+      description: 'Alerts when proposals you might be interested in are ending soon'
+    },
+    {
+      type: 'proposal_invested_alert',
+      label: 'Investment Alerts',
+      description: 'All proposal alerts for proposals you have already invested in'
+    },
+    {
+      type: 'voting_asset_owned',
+      label: 'Voting Opportunities',
+      description: 'Voting notifications only for assets that you own'
+    },
+    {
+      type: 'dividend_received',
+      label: 'Dividend Received',
+      description: 'Shows all dividends received for all assets you own'
+    },
+    {
+      type: 'token_unlock',
+      label: 'Token Unlock',
+      description: 'When your tokens become available for trading'
+    },
+    {
+      type: 'system_alert',
+      label: 'System Alerts',
+      description: 'Platform maintenance, security alerts, and general notifications'
+    }
+  ];
+
+  const creatorNotificationTypes: { type: CreatorNotificationType; label: string; description: string }[] = [
     {
       type: 'proposal_approved',
       label: 'Proposal Approved',
@@ -53,70 +94,23 @@ const NotificationSettings: React.FC<NotificationSettingsProps> = ({
       type: 'proposal_changes_requested',
       label: 'Changes Requested',
       description: 'When admins request changes to your proposals'
-    },
-    {
-      type: 'governance_voting_started',
-      label: 'Voting Started',
-      description: 'When governance voting begins'
-    },
-    {
-      type: 'governance_voting_ended',
-      label: 'Voting Ended',
-      description: 'When governance voting ends'
-    },
-    {
-      type: 'investment_confirmed',
-      label: 'Investment Confirmed',
-      description: 'When your investments are processed'
-    },
-    {
-      type: 'investment_failed',
-      label: 'Investment Failed',
-      description: 'When your investments fail to process'
-    },
-    {
-      type: 'dividend_received',
-      label: 'Dividend Received',
-      description: 'When you receive dividend payments'
-    },
-    {
-      type: 'token_unlock',
-      label: 'Token Unlock',
-      description: 'When your tokens become available'
-    },
-    {
-      type: 'kyc_approved',
-      label: 'KYC Approved',
-      description: 'When your identity verification is approved'
-    },
-    {
-      type: 'kyc_rejected',
-      label: 'KYC Rejected',
-      description: 'When your identity verification is rejected'
-    },
-    {
-      type: 'system_maintenance',
-      label: 'System Maintenance',
-      description: 'Platform maintenance notifications'
-    },
-    {
-      type: 'security_alert',
-      label: 'Security Alerts',
-      description: 'Important security notifications'
-    },
-    {
-      type: 'general',
-      label: 'General',
-      description: 'General platform notifications'
     }
   ];
 
-  const priorityOptions: { value: NotificationPriority; label: string }[] = [
-    { value: 'low', label: 'Low' },
-    { value: 'medium', label: 'Medium' },
-    { value: 'high', label: 'High' },
-    { value: 'urgent', label: 'Urgent' }
-  ];
+  // Get notification types based on user role
+  const notificationTypes = useMemo(() => {
+    const baseTypes = [...investorNotificationTypes];
+    
+    // Add creator notifications if user is a creator, super_admin, or owner
+    if (selectedRole === 'creator' || selectedRole === 'super_admin' || selectedRole === 'owner') {
+      baseTypes.push(...creatorNotificationTypes);
+    }
+    
+    return baseTypes;
+  }, [selectedRole]);
+
+  // Check if user has email set up for email notifications
+  const hasEmail = profile?.email && profile.email.trim() !== '';
 
   const handleGlobalEnabledChange = (enabled: boolean) => {
     setLocalEnabled(enabled);
@@ -158,6 +152,12 @@ const NotificationSettings: React.FC<NotificationSettingsProps> = ({
 
   const handleSave = () => {
     try {
+      // Validate email if email notifications are enabled
+      if (localPreferences.enableEmail && !hasEmail) {
+        error('Please add an email address to your profile to enable email notifications');
+        return;
+      }
+      
       updatePreferences(localPreferences);
       if (localEnabled !== isEnabled) {
         localEnabled ? enableNotifications() : disableNotifications();
@@ -240,7 +240,7 @@ const NotificationSettings: React.FC<NotificationSettingsProps> = ({
               <div className="space-y-4">
                 <h4 className="font-medium text-gray-900 dark:text-white">Notification Channels</h4>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* In-App Notifications */}
                   <div className="flex items-center space-x-3 p-3 border border-gray-200 dark:border-gray-600 rounded-lg">
                     <Bell className="w-5 h-5 text-blue-600" />
@@ -252,7 +252,7 @@ const NotificationSettings: React.FC<NotificationSettingsProps> = ({
                           onChange={(e) => handleGlobalPreferenceChange('enableInApp', e.target.checked)}
                           className="mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                         />
-                        <span className="text-sm font-medium text-gray-900 dark:text-white">In-App</span>
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">In-App Notifications</span>
                       </label>
                     </div>
                   </div>
@@ -266,26 +266,17 @@ const NotificationSettings: React.FC<NotificationSettingsProps> = ({
                           type="checkbox"
                           checked={localPreferences.enableEmail}
                           onChange={(e) => handleGlobalPreferenceChange('enableEmail', e.target.checked)}
-                          className="mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          disabled={!hasEmail}
+                          className="mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
                         />
-                        <span className="text-sm font-medium text-gray-900 dark:text-white">Email</span>
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">Email Notifications</span>
                       </label>
-                    </div>
-                  </div>
-
-                  {/* Push Notifications */}
-                  <div className="flex items-center space-x-3 p-3 border border-gray-200 dark:border-gray-600 rounded-lg">
-                    <Smartphone className="w-5 h-5 text-purple-600" />
-                    <div className="flex-1">
-                      <label className="flex items-center cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={localPreferences.enablePush}
-                          onChange={(e) => handleGlobalPreferenceChange('enablePush', e.target.checked)}
-                          className="mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                        />
-                        <span className="text-sm font-medium text-gray-900 dark:text-white">Push</span>
-                      </label>
+                      {!hasEmail && (
+                        <div className="flex items-center mt-1 text-xs text-amber-600">
+                          <AlertTriangle className="w-3 h-3 mr-1" />
+                          <span>Add email to profile first</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -367,87 +358,137 @@ const NotificationSettings: React.FC<NotificationSettingsProps> = ({
           {/* Category Settings */}
           {localEnabled && (
             <div className="space-y-6">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                Notification Categories
-              </h3>
+              <div>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                  Notification Categories
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  Choose which types of notifications to receive and how you'd like to receive them.
+                </p>
+              </div>
               
               <div className="space-y-4">
-                {notificationTypes.map(({ type, label, description }) => {
-                  const categoryPref = localPreferences.categories[type];
-                  
-                  return (
-                    <div key={type} className="p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-3 mb-1">
-                            <label className="flex items-center cursor-pointer">
-                              <input
-                                type="checkbox"
-                                checked={categoryPref.enabled}
-                                onChange={(e) => handleCategoryChange(type, 'enabled', e.target.checked)}
-                                className="mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                              />
-                              <span className="font-medium text-gray-900 dark:text-white">
-                                {label}
-                              </span>
-                            </label>
+                {/* Investor notifications - show for all users */}
+                <div className="space-y-4">
+                  <h4 className="font-medium text-gray-900 dark:text-white text-sm">Investor Notifications</h4>
+                    {investorNotificationTypes.map(({ type, label, description }) => {
+                      const categoryPref = localPreferences.categories[type];
+                      
+                      return (
+                        <div key={type} className="p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-3 mb-1">
+                                <label className="flex items-center cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={categoryPref?.enabled || false}
+                                    onChange={(e) => handleCategoryChange(type, 'enabled', e.target.checked)}
+                                    className="mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                  />
+                                  <span className="font-medium text-gray-900 dark:text-white">
+                                    {label}
+                                  </span>
+                                </label>
+                              </div>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">
+                                {description}
+                              </p>
+                            </div>
                           </div>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                            {description}
-                          </p>
+
+                          {categoryPref?.enabled && (
+                            <div className="flex items-center space-x-6 text-sm">
+                              <label className="flex items-center cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={categoryPref.inApp}
+                                  onChange={(e) => handleCategoryChange(type, 'inApp', e.target.checked)}
+                                  className="mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                />
+                                <Bell className="w-4 h-4 mr-1 text-blue-600" />
+                                <span className="text-gray-700 dark:text-gray-300">In-App</span>
+                              </label>
+
+                              <label className="flex items-center cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={categoryPref.email}
+                                  onChange={(e) => handleCategoryChange(type, 'email', e.target.checked)}
+                                  disabled={!hasEmail}
+                                  className="mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
+                                />
+                                <Mail className="w-4 h-4 mr-1 text-green-600" />
+                                <span className="text-gray-700 dark:text-gray-300">Email</span>
+                              </label>
+                            </div>
+                          )}
                         </div>
-                        
-                        <select
-                          value={categoryPref.priority}
-                          onChange={(e) => handleCategoryChange(type, 'priority', e.target.value)}
-                          disabled={!categoryPref.enabled}
-                          className="ml-4 text-xs border border-gray-300 dark:border-gray-600 rounded px-2 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50"
-                        >
-                          {priorityOptions.map(({ value, label }) => (
-                            <option key={value} value={value}>{label}</option>
-                          ))}
-                        </select>
-                      </div>
+                      );
+                    })}
+                </div>
 
-                      {categoryPref.enabled && (
-                        <div className="flex items-center space-x-4 text-sm">
-                          <label className="flex items-center cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={categoryPref.inApp}
-                              onChange={(e) => handleCategoryChange(type, 'inApp', e.target.checked)}
-                              className="mr-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                            />
-                            <Bell className="w-3 h-3 mr-1 text-blue-600" />
-                            <span className="text-gray-700 dark:text-gray-300">In-App</span>
-                          </label>
+                {/* Creator notifications for creators, super_admin, and owner */}
+                {(selectedRole === 'creator' || selectedRole === 'super_admin' || selectedRole === 'owner') && (
+                  <div className="space-y-4">
+                    <h4 className="font-medium text-gray-900 dark:text-white text-sm">Creator Notifications</h4>
+                    {creatorNotificationTypes.map(({ type, label, description }) => {
+                      const categoryPref = localPreferences.categories[type];
+                      
+                      return (
+                        <div key={type} className="p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-3 mb-1">
+                                <label className="flex items-center cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={categoryPref?.enabled || false}
+                                    onChange={(e) => handleCategoryChange(type, 'enabled', e.target.checked)}
+                                    className="mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                  />
+                                  <span className="font-medium text-gray-900 dark:text-white">
+                                    {label}
+                                  </span>
+                                </label>
+                              </div>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">
+                                {description}
+                              </p>
+                            </div>
+                          </div>
 
-                          <label className="flex items-center cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={categoryPref.email}
-                              onChange={(e) => handleCategoryChange(type, 'email', e.target.checked)}
-                              className="mr-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                            />
-                            <Mail className="w-3 h-3 mr-1 text-green-600" />
-                            <span className="text-gray-700 dark:text-gray-300">Email</span>
-                          </label>
+                          {categoryPref?.enabled && (
+                            <div className="flex items-center space-x-6 text-sm">
+                              <label className="flex items-center cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={categoryPref.inApp}
+                                  onChange={(e) => handleCategoryChange(type, 'inApp', e.target.checked)}
+                                  className="mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                />
+                                <Bell className="w-4 h-4 mr-1 text-blue-600" />
+                                <span className="text-gray-700 dark:text-gray-300">In-App</span>
+                              </label>
 
-                          <label className="flex items-center cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={categoryPref.push}
-                              onChange={(e) => handleCategoryChange(type, 'push', e.target.checked)}
-                              className="mr-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                            />
-                            <Smartphone className="w-3 h-3 mr-1 text-purple-600" />
-                            <span className="text-gray-700 dark:text-gray-300">Push</span>
-                          </label>
+                              <label className="flex items-center cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={categoryPref.email}
+                                  onChange={(e) => handleCategoryChange(type, 'email', e.target.checked)}
+                                  disabled={!hasEmail}
+                                  className="mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
+                                />
+                                <Mail className="w-4 h-4 mr-1 text-green-600" />
+                                <span className="text-gray-700 dark:text-gray-300">Email</span>
+                              </label>
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
           )}
