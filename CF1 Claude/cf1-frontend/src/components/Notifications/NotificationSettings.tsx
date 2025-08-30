@@ -14,6 +14,7 @@ import { useNotificationSystemStore, NotificationType, InvestorNotificationType,
 import { useNotifications } from '../../hooks/useNotifications';
 import { useSessionStore, SessionRole } from '../../store/sessionStore';
 import { useVerificationStore } from '../../store/verificationStore';
+import { useAuthStore } from '../../store/authStore';
 
 interface NotificationSettingsProps {
   isOpen: boolean;
@@ -35,7 +36,8 @@ const NotificationSettings: React.FC<NotificationSettingsProps> = ({
 
   const { success, error } = useNotifications();
   const { selectedRole } = useSessionStore();
-  const { profile } = useVerificationStore();
+  const { profile, basicVerification } = useVerificationStore();
+  const { user } = useAuthStore();
   const [localPreferences, setLocalPreferences] = useState(preferences);
   const [localEnabled, setLocalEnabled] = useState(isEnabled);
   const [hasChanges, setHasChanges] = useState(false);
@@ -110,7 +112,24 @@ const NotificationSettings: React.FC<NotificationSettingsProps> = ({
   }, [selectedRole]);
 
   // Check if user has email set up for email notifications
-  const hasEmail = profile?.email && profile.email.trim() !== '';
+  // Try multiple sources: user.email, profile.email, basicVerification.email
+  const hasEmail = useMemo(() => {
+    const userEmail = user?.email && user.email.trim() !== '';
+    const profileEmail = profile?.email && profile.email.trim() !== '';
+    const basicEmail = basicVerification?.email && basicVerification.email.trim() !== '';
+    
+    console.log('🔍 Email Check Debug:', {
+      userEmail: user?.email,
+      profileEmail: profile?.email,
+      basicEmail: basicVerification?.email,
+      hasUserEmail: userEmail,
+      hasProfileEmail: profileEmail,
+      hasBasicEmail: basicEmail,
+      finalResult: userEmail || profileEmail || basicEmail
+    });
+    
+    return userEmail || profileEmail || basicEmail;
+  }, [user?.email, profile?.email, basicVerification?.email]);
 
   const handleGlobalEnabledChange = (enabled: boolean) => {
     setLocalEnabled(enabled);
@@ -277,6 +296,10 @@ const NotificationSettings: React.FC<NotificationSettingsProps> = ({
                           <span>Add email to profile first</span>
                         </div>
                       )}
+                      {/* Debug info - remove in production */}
+                      <div className="text-xs text-gray-500 mt-1">
+                        Debug: user={user?.email || 'none'}, profile={profile?.email || 'none'}, basic={basicVerification?.email || 'none'}
+                      </div>
                     </div>
                   </div>
                 </div>
