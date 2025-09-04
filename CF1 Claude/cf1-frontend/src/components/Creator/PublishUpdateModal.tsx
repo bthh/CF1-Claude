@@ -196,7 +196,7 @@ export const PublishUpdateModal: React.FC<PublishUpdateModalProps> = ({
                 Visibility
               </label>
               <div className="flex items-center space-x-4">
-                <label className="flex items-center">
+                <label className="flex items-center text-gray-900 dark:text-white">
                   <input
                     type="radio"
                     name="visibility"
@@ -208,7 +208,7 @@ export const PublishUpdateModal: React.FC<PublishUpdateModalProps> = ({
                   <Eye className="w-4 h-4 mr-1" />
                   Public
                 </label>
-                <label className="flex items-center">
+                <label className="flex items-center text-gray-900 dark:text-white">
                   <input
                     type="radio"
                     name="visibility"

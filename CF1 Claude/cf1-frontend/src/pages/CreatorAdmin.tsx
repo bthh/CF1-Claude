@@ -40,6 +40,7 @@ import {
 import { useAdminAuthContext } from '../hooks/useAdminAuth';
 import { useCosmJS } from '../hooks/useCosmJS';
 import { useNotifications } from '../hooks/useNotifications';
+import { useFeatureToggleStore } from '../store/featureToggleStore';
 import { formatAmount, formatPercentage, formatTimeAgo } from '../utils/format';
 import { PublishUpdateModal } from '../components/Creator/PublishUpdateModal';
 import { CreateCampaignModal } from '../components/Creator/CreateCampaignModal';
@@ -133,6 +134,7 @@ const CreatorAdmin: React.FC = () => {
   const { currentAdmin, checkPermission } = useAdminAuthContext();
   const { isConnected } = useCosmJS();
   const { success, error } = useNotifications();
+  const { isFeatureEnabled } = useFeatureToggleStore();
   
   // State management
   const [shareholders, setShareholders] = useState<ShareholderProfile[]>([]);
@@ -748,7 +750,7 @@ const CreatorAdmin: React.FC = () => {
               { id: 'engagements', label: 'Engagements', icon: <UserPlus className="w-4 h-4" /> },
               { id: 'updates', label: 'Asset Updates', icon: <FileText className="w-4 h-4" /> },
               { id: 'tiers', label: 'Tiers', icon: <Crown className="w-4 h-4" /> },
-              { id: 'ai_assistant', label: 'AI Assistant', icon: <Brain className="w-4 h-4" /> },
+              ...(isFeatureEnabled('creator_ai_assistant') ? [{ id: 'ai_assistant', label: 'AI Assistant', icon: <Brain className="w-4 h-4" /> }] : []),
               { id: 'settings', label: 'Asset Settings', icon: <Settings className="w-4 h-4" /> }
             ].map((tab) => (
               <button
@@ -1046,17 +1048,7 @@ const CreatorAdmin: React.FC = () => {
                       <span>Auto Communications</span>
                     </button>
                     <button
-                      onClick={() => createCommunicationCampaign({
-                        title: 'New Campaign',
-                        type: campaignType,
-                        status: 'DRAFT',
-                        targetAudience: 'All Shareholders',
-                        recipientCount: shareholders.length,
-                        content: {
-                          subject: 'Important Update',
-                          body: 'Dear shareholders, we have an important update to share...'
-                        }
-                      })}
+                      onClick={() => setShowCampaignModal(true)}
                       className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                     >
                       <Plus className="w-4 h-4" />
@@ -1517,13 +1509,7 @@ const CreatorAdmin: React.FC = () => {
                     Publish Asset Update
                   </h3>
                   <button
-                    onClick={() => publishAssetUpdate({
-                      assetId: 'asset_solar_1',
-                      title: 'New Asset Update',
-                      content: 'We have an important update about the asset performance...',
-                      type: 'OPERATIONAL',
-                      visibility: 'PUBLIC'
-                    })}
+                    onClick={() => setShowPublishModal(true)}
                     className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     <Plus className="w-4 h-4" />
@@ -1595,7 +1581,7 @@ const CreatorAdmin: React.FC = () => {
           )}
 
           {/* AI Assistant Tab */}
-          {selectedTab === 'ai_assistant' && (
+          {selectedTab === 'ai_assistant' && isFeatureEnabled('creator_ai_assistant') && (
             <div className="space-y-6">
               <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-lg h-[800px]">
                 <AIAssistantInterface 

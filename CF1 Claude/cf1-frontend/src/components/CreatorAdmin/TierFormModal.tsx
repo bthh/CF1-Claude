@@ -173,7 +173,7 @@ const TierFormModal: React.FC<TierFormModalProps> = ({
 
   const handleTemplateSelect = (templateKey: string) => {
     const template = DEFAULT_TIER_TEMPLATES[templateKey];
-    if (template) {
+    if (template && !isTemplateUsed(templateKey)) {
       setSelectedTemplate(templateKey);
       setFormData(prev => ({
         ...prev,
@@ -187,6 +187,11 @@ const TierFormModal: React.FC<TierFormModalProps> = ({
         badge: template.badge
       }));
     }
+  };
+
+  const isTemplateUsed = (templateKey: string): boolean => {
+    const templateName = DEFAULT_TIER_TEMPLATES[templateKey]?.name;
+    return existingTiers.some(tier => tier.name === templateName && tier.id !== formData.id);
   };
 
   const handleAddReward = () => {
@@ -243,8 +248,8 @@ const TierFormModal: React.FC<TierFormModalProps> = ({
   };
 
   const validateForm = (): boolean => {
-    if (!formData.name?.trim()) {
-      error('Tier name is required');
+    if (!selectedTemplate && !tier) {
+      error('Please select a tier template');
       return false;
     }
     
@@ -307,65 +312,87 @@ const TierFormModal: React.FC<TierFormModalProps> = ({
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
-          <div className="space-y-6">
+        <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
+          <div className="space-y-6 pb-4">
             {/* Templates Section */}
             {!tier && (
               <div>
                 <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Quick Templates</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Choose a tier template. Each tier can only be used once per asset.
+                </p>
                 <div className="grid grid-cols-5 gap-3">
-                  {Object.entries(DEFAULT_TIER_TEMPLATES).map(([key, template]) => (
-                    <button
-                      key={key}
-                      onClick={() => handleTemplateSelect(key)}
-                      className={`p-3 rounded-lg border-2 transition-all text-center ${
-                        selectedTemplate === key
-                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                          : 'border-gray-200 dark:border-gray-600 hover:border-gray-300'
-                      }`}
-                    >
-                      <div className="w-8 h-8 mx-auto mb-2 rounded-full flex items-center justify-center"
-                           style={{ backgroundColor: template.colorScheme.primary }}>
-                        {key === 'diamond' && <Gem className="w-4 h-4" style={{ color: template.colorScheme.secondary }} />}
-                        {key === 'platinum' && <Award className="w-4 h-4" style={{ color: template.colorScheme.secondary }} />}
-                        {key === 'gold' && <Medal className="w-4 h-4" style={{ color: template.colorScheme.secondary }} />}
-                        {key === 'silver' && <Star className="w-4 h-4" style={{ color: template.colorScheme.secondary }} />}
-                        {key === 'bronze' && <Shield className="w-4 h-4" style={{ color: template.colorScheme.secondary }} />}
-                      </div>
-                      <p className="text-xs font-medium text-gray-900 dark:text-white">{template.name}</p>
-                    </button>
-                  ))}
+                  {Object.entries(DEFAULT_TIER_TEMPLATES)
+                    .sort(([a], [b]) => {
+                      const order = ['bronze', 'silver', 'gold', 'platinum', 'diamond'];
+                      return order.indexOf(a) - order.indexOf(b);
+                    })
+                    .map(([key, template]) => {
+                      const isUsed = isTemplateUsed(key);
+                      return (
+                        <button
+                          key={key}
+                          onClick={() => !isUsed && handleTemplateSelect(key)}
+                          disabled={isUsed}
+                          className={`p-3 rounded-lg border-2 transition-all text-center relative ${
+                            selectedTemplate === key
+                              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                              : isUsed
+                              ? 'border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 opacity-50 cursor-not-allowed'
+                              : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                          }`}
+                        >
+                          <div className="w-8 h-8 mx-auto mb-2 rounded-full flex items-center justify-center"
+                               style={{ backgroundColor: template.colorScheme.primary }}>
+                            {key === 'diamond' && <Gem className="w-4 h-4" style={{ color: template.colorScheme.secondary }} />}
+                            {key === 'platinum' && <Award className="w-4 h-4" style={{ color: template.colorScheme.secondary }} />}
+                            {key === 'gold' && <Medal className="w-4 h-4" style={{ color: template.colorScheme.secondary }} />}
+                            {key === 'silver' && <Star className="w-4 h-4" style={{ color: template.colorScheme.secondary }} />}
+                            {key === 'bronze' && <Shield className="w-4 h-4" style={{ color: template.colorScheme.secondary }} />}
+                          </div>
+                          <p className="text-xs font-medium text-gray-900 dark:text-white">{template.name}</p>
+                          {isUsed && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-lg">
+                              <span className="text-xs font-bold text-white bg-red-600 px-2 py-1 rounded">USED</span>
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
                 </div>
               </div>
             )}
 
             {/* Basic Information */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Tier Name *
-                </label>
-                <input
-                  type="text"
-                  value={formData.name || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="e.g., Diamond, Platinum, Gold"
-                />
+            {selectedTemplate && (
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
+                <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">Selected Tier: {DEFAULT_TIER_TEMPLATES[selectedTemplate]?.name}</h4>
+                <p className="text-sm text-blue-700 dark:text-blue-300">{DEFAULT_TIER_TEMPLATES[selectedTemplate]?.description}</p>
               </div>
+            )}
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Token Threshold *
-                </label>
-                <input
-                  type="number"
-                  value={formData.threshold || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, threshold: parseInt(e.target.value) || 0 }))}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Minimum tokens required"
-                />
+            {/* Show tier name when editing */}
+            {tier && (
+              <div className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4">
+                <h4 className="font-medium text-gray-900 dark:text-white mb-2">Editing Tier: {formData.name}</h4>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Tier name cannot be changed after creation</p>
               </div>
+            )}
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Token Threshold *
+              </label>
+              <input
+                type="number"
+                value={formData.threshold || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, threshold: parseInt(e.target.value) || 0 }))}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Minimum tokens required"
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Enter the minimum number of tokens required to qualify for this tier
+              </p>
             </div>
 
             <div>
@@ -381,38 +408,6 @@ const TierFormModal: React.FC<TierFormModalProps> = ({
               />
             </div>
 
-            {/* Color Scheme */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                Color Scheme
-              </label>
-              <div className="grid grid-cols-6 gap-3">
-                {COLOR_SCHEMES.map((scheme) => (
-                  <button
-                    key={scheme.name}
-                    onClick={() => setFormData(prev => ({ 
-                      ...prev, 
-                      colorScheme: {
-                        primary: scheme.primary,
-                        secondary: scheme.secondary,
-                        background: scheme.background
-                      }
-                    }))}
-                    className={`p-3 rounded-lg border-2 transition-all ${
-                      formData.colorScheme?.primary === scheme.primary
-                        ? 'border-blue-500'
-                        : 'border-gray-200 dark:border-gray-600 hover:border-gray-300'
-                    }`}
-                  >
-                    <div 
-                      className="w-full h-8 rounded-md mb-2"
-                      style={{ background: scheme.background }}
-                    />
-                    <p className="text-xs text-gray-600 dark:text-gray-400">{scheme.name}</p>
-                  </button>
-                ))}
-              </div>
-            </div>
 
             {/* Rewards Section */}
             <div>

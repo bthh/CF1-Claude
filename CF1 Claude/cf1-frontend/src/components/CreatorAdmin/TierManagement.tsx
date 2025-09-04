@@ -81,7 +81,7 @@ const TierCard: React.FC<{
               />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white">{tier.name}</h3>
+              <h3 className="text-xl font-bold text-gray-900" style={{ color: tier.colorScheme?.text || '#111827' }}>{tier.name}</h3>
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 {tier.threshold.toLocaleString()} tokens minimum
               </p>
