@@ -199,7 +199,19 @@ export const useFeatureToggleStore = create<FeatureToggleState>()(
           const response = await fetch('/feature-toggles');
           if (response.ok) {
             const data = await response.json();
-            set({ features: data.features });
+            // Always merge backend data with latest defaults to ensure new features are included
+            const mergedFeatures = { ...defaultFeatures };
+            
+            // Override with backend data where available
+            if (data.features) {
+              Object.keys(data.features).forEach(key => {
+                if (mergedFeatures[key]) {
+                  mergedFeatures[key] = { ...mergedFeatures[key], ...data.features[key] };
+                }
+              });
+            }
+            
+            set({ features: mergedFeatures });
           } else {
             console.warn('Failed to load feature toggles from backend, using defaults');
             // Fall back to local defaults if backend is unavailable
