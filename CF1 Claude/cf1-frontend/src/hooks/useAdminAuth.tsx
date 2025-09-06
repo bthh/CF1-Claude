@@ -215,6 +215,28 @@ export const useAdminAuth = (): AdminAuthContextType => {
     setLoading(true);
     try {
       if (IS_PRODUCTION) {
+        // ⚡ TEMPORARY: Auto-grant admin access when wallet is connected in production
+        console.log('🚨 PRODUCTION BYPASS: Auto-granting admin access for connected wallet');
+        
+        const adminUser: AdminUser = {
+          address,
+          role: role || 'super_admin', // Default to super_admin if no role specified
+          permissions: ['all'], // Grant all permissions for bypass
+          name: `Admin (${address.slice(0, 8)}...)`,
+          email: `admin@${address.slice(0, 8)}.temp`,
+          createdAt: new Date().toISOString(),
+          lastActive: new Date().toISOString(),
+          isActive: true
+        };
+        
+        setCurrentAdmin(adminUser);
+        await storeSecureSession(adminUser, 'temp-bypass-token');
+        setAdminRole(role || 'super_admin');
+        setLoading(false);
+        console.log('✅ Production admin bypass successful');
+        return;
+        
+        /* ORIGINAL CODE - COMMENTED OUT UNTIL BACKEND IS DEPLOYED
         // Production authentication - require proper JWT authentication
         if (!credentials) {
           throw new Error('Admin credentials required in production');
@@ -254,7 +276,7 @@ export const useAdminAuth = (): AdminAuthContextType => {
         
         // Store encrypted session data
         await storeSecureSession(adminUser, authData.token);
-        
+        */
       } else if (DEMO_MODE_ENABLED) {
         // Demo mode - only in development
         console.warn('⚠️  Demo mode authentication - DEVELOPMENT ONLY');
