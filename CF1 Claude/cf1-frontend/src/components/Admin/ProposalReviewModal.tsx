@@ -70,7 +70,14 @@ const ProposalReviewModal: React.FC<ProposalReviewModalProps> = ({
     if (onSaveComments) {
       onSaveComments(proposal.id, reviewComments);
       // Show success feedback but don't close modal
-      alert('Comments saved successfully!');
+      // Using a more subtle notification instead of alert
+      const notification = document.createElement('div');
+      notification.className = 'fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+      notification.textContent = 'Comments saved successfully!';
+      document.body.appendChild(notification);
+      setTimeout(() => {
+        document.body.removeChild(notification);
+      }, 3000);
     }
   };
 
@@ -111,7 +118,7 @@ const ProposalReviewModal: React.FC<ProposalReviewModalProps> = ({
       />
       
       {/* Modal */}
-      <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+      <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 px-6 py-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
@@ -133,7 +140,7 @@ const ProposalReviewModal: React.FC<ProposalReviewModalProps> = ({
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div className="flex-1 overflow-y-auto p-6 space-y-6 min-h-0 pb-4">
           {/* Basic Information */}
           <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
@@ -353,9 +360,9 @@ const ProposalReviewModal: React.FC<ProposalReviewModalProps> = ({
           </div>
         </div>
 
-        {/* Action Buttons */}
+        {/* Action Buttons - Fixed at bottom */}
         {!showConfirmation ? (
-          <div className="bg-gray-50 dark:bg-gray-700 px-6 py-4 border-t border-gray-200 dark:border-gray-600">
+          <div className="flex-shrink-0 bg-gray-50 dark:bg-gray-700 px-6 py-4 border-t border-gray-200 dark:border-gray-600 shadow-lg">
             <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3">
               <button
                 onClick={onClose}
@@ -374,40 +381,37 @@ const ProposalReviewModal: React.FC<ProposalReviewModalProps> = ({
                 <span>Save Comments</span>
               </button>
               
-              {(proposal.status === 'submitted' || proposal.status === 'under_review' || proposal.status === 'changes_requested') && (
-                <>
-                  <button
-                    onClick={() => handleActionClick('request_changes')}
-                    disabled={!reviewComments.trim()}
-                    className={`flex items-center space-x-2 px-4 py-2 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${getActionColor('request_changes')}`}
-                  >
-                    {getActionIcon('request_changes')}
-                    <span>Request Changes</span>
-                  </button>
-                  
-                  <button
-                    onClick={() => handleActionClick('reject')}
-                    disabled={!reviewComments.trim()}
-                    className={`flex items-center space-x-2 px-4 py-2 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${getActionColor('reject')}`}
-                  >
-                    {getActionIcon('reject')}
-                    <span>Reject</span>
-                  </button>
-                  
-                  <button
-                    onClick={() => handleActionClick('approve')}
-                    disabled={!reviewComments.trim()}
-                    className={`flex items-center space-x-2 px-4 py-2 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${getActionColor('approve')}`}
-                  >
-                    {getActionIcon('approve')}
-                    <span>Approve</span>
-                  </button>
-                </>
-              )}
+              {/* Admin Action Buttons - Show for all proposals */}
+              <button
+                onClick={() => handleActionClick('request_changes')}
+                disabled={!reviewComments.trim()}
+                className={`flex items-center space-x-2 px-4 py-2 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${getActionColor('request_changes')}`}
+              >
+                {getActionIcon('request_changes')}
+                <span>Request Changes</span>
+              </button>
+              
+              <button
+                onClick={() => handleActionClick('reject')}
+                disabled={!reviewComments.trim()}
+                className={`flex items-center space-x-2 px-4 py-2 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${getActionColor('reject')}`}
+              >
+                {getActionIcon('reject')}
+                <span>Reject</span>
+              </button>
+              
+              <button
+                onClick={() => handleActionClick('approve')}
+                disabled={!reviewComments.trim()}
+                className={`flex items-center space-x-2 px-4 py-2 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${getActionColor('approve')}`}
+              >
+                {getActionIcon('approve')}
+                <span>Approve</span>
+              </button>
             </div>
           </div>
         ) : (
-          <div className="bg-yellow-50 dark:bg-yellow-900/20 px-6 py-4 border-t border-yellow-200 dark:border-yellow-800">
+          <div className="flex-shrink-0 bg-yellow-50 dark:bg-yellow-900/20 px-6 py-4 border-t border-yellow-200 dark:border-yellow-800 shadow-lg">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <AlertTriangle className="w-5 h-5 text-yellow-600" />

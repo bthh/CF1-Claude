@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { notificationService } from '../services/notificationService';
 import { useDemoModeStore } from './demoModeStore';
+import { cleanupDraftFiles } from '../utils/draftFileStorage';
 
 export interface SubmittedProposal {
   id: string;
@@ -141,7 +142,14 @@ const mockSubmissions: SubmittedProposal[] = [
     riskFactors: 'NYC real estate market fluctuations, rent control regulations, high maintenance costs.',
     useOfFunds: 'Property acquisition, luxury renovations, amenity upgrades, and reserve funds.',
     reviewDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-    reviewComments: 'Excellent proposal with strong financials and market positioning. Approved for launch.'
+    reviewComments: 'Excellent proposal with strong financials and market positioning. Approved for launch.',
+    fundingStatus: {
+      raisedAmount: 6250000, // 50% funded
+      raisedPercentage: 50,
+      investorCount: 42,
+      isFunded: false,
+      status: 'active'
+    }
   },
   {
     id: 'proposal_1701234567890_ghi789',
@@ -165,6 +173,36 @@ const mockSubmissions: SubmittedProposal[] = [
     useOfFunds: 'Portfolio acquisition, facility improvements, working capital, and debt service.',
     reviewDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
     reviewComments: 'Please provide additional environmental impact assessments and updated tenant agreements for properties 3 and 4.'
+  },
+  {
+    id: 'proposal_1701234567890_jkl012',
+    submissionDate: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString(), // 21 days ago
+    status: 'approved',
+    assetName: 'Miami Beach Luxury Hotel',
+    assetType: 'Hospitality Real Estate',
+    category: 'Hospitality Real Estate',
+    location: 'Miami Beach, FL',
+    description: 'Oceanfront luxury boutique hotel with 150 rooms, spa, and multiple dining venues.',
+    targetAmount: '25,000,000',
+    tokenPrice: '5000',
+    minimumInvestment: '2500',
+    expectedAPY: '9.8',
+    fundingDeadline: '2024-12-15',
+    businessPlan: 'business_plan_miami_hotel.pdf',
+    financialProjections: 'financial_projections_miami.pdf',
+    legalDocuments: 'legal_docs_miami.pdf',
+    assetValuation: 'valuation_report_miami.pdf',
+    riskFactors: 'Tourism market volatility, seasonal occupancy fluctuations, hurricane risk.',
+    useOfFunds: 'Hotel acquisition, luxury renovations, marketing campaign, and operational reserves.',
+    reviewDate: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+    reviewComments: 'Outstanding hospitality investment opportunity with strong market fundamentals. Fully approved.',
+    fundingStatus: {
+      raisedAmount: 25000000, // 100% funded
+      raisedPercentage: 100,
+      investorCount: 156,
+      isFunded: true,
+      status: 'funded'
+    }
   }
 ];
 
@@ -315,6 +353,13 @@ export const useSubmissionStore = create<SubmissionState>()(
       },
 
       deleteDraft: (draftId) => {
+        // Clean up stored files for this draft
+        try {
+          cleanupDraftFiles(draftId);
+        } catch (error) {
+          console.error('Error cleaning up draft files:', error);
+        }
+        
         set((state) => ({
           submissions: state.submissions.filter(s => s.id !== draftId)
         }));

@@ -5,6 +5,7 @@ import { PriceChart } from '../components/PriceChart';
 import { InvestmentModal } from '../components/InvestmentModal';
 import { SellModal } from '../components/SellModal';
 import { AIAnalysisTab } from '../components/AIAnalysis/AIAnalysisTab';
+import { useFeatureToggleStore } from '../store/featureToggleStore';
 import { fetchAssetById, Asset } from '../services/assetService';
 import { useNotifications } from '../hooks/useNotifications';
 
@@ -35,6 +36,7 @@ const AssetDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { error } = useNotifications();
+  const { isFeatureEnabled } = useFeatureToggleStore();
   
   const [asset, setAsset] = useState<Asset | null>(null);
   const [loading, setLoading] = useState(true);
@@ -400,11 +402,13 @@ const AssetDetail: React.FC = () => {
         </div>
       </div>
 
-      {/* AI Analysis Section */}
-      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">AI Analysis</h2>
-        <AIAnalysisTab proposalId={asset.id} />
-      </div>
+      {/* AI Analysis Section - Conditionally rendered based on feature toggle */}
+      {isFeatureEnabled('launchpad_ai_analysis') && (
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">AI Analysis</h2>
+          <AIAnalysisTab proposalId={asset.id} />
+        </div>
+      )}
 
       {/* Investment Modal with Limit Buy */}
       <InvestmentModal 

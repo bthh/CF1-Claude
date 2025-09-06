@@ -1,8 +1,10 @@
-import React, { useState, memo, useCallback, useMemo } from 'react';
+import React, { useState, memo, useCallback, useMemo, useEffect } from 'react';
 import { TrendingUp, TrendingDown, MoreHorizontal, Download, Eye, Settings, PieChart, BarChart3, Receipt, Gift } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { usePortfolioData, PortfolioAsset } from '../services/portfolioDataService';
 import { useDataMode } from '../store/dataModeStore';
+import { useFeatureToggleStore } from '../store/featureToggleStore';
+import { getAssetImage } from '../utils/assetImageUtils';
 
 // Lazy load components to prevent blocking
 const EnhancedPortfolioOverview = React.lazy(() => 
@@ -52,11 +54,19 @@ const PortfolioAssetRow: React.FC<PortfolioAssetProps> = ({
       <td className="px-6 py-4">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center overflow-hidden">
-            {imageUrl ? (
-              <img src={imageUrl} alt={name} className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-gray-600 dark:text-gray-400 font-semibold text-sm">{name.charAt(0)}</span>
-            )}
+            <img 
+              src={imageUrl || getAssetImage(id || name, type)} 
+              alt={name} 
+              className="w-full h-full object-cover" 
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+                const parent = target.parentElement;
+                if (parent) {
+                  parent.innerHTML = `<span class="text-gray-600 dark:text-gray-400 font-semibold text-sm">${name.charAt(0)}</span>`;
+                }
+              }}
+            />
           </div>
           <div>
             <p className="font-semibold text-gray-900 dark:text-white">{name}</p>
@@ -105,6 +115,10 @@ const Portfolio: React.FC = memo(() => {
   const portfolioData = usePortfolioData();
   const { isDemo } = useDataMode();
   
+  // Feature toggle integration
+  const { isFeatureEnabled } = useFeatureToggleStore();
+  const showPerformanceTab = isFeatureEnabled('portfolio_performance');
+  
   // Memoize expensive calculations
   const { assets: portfolioAssets, summary, stats, currentMode, isEmpty } = useMemo(() => portfolioData, [portfolioData]);
 
@@ -112,18 +126,36 @@ const Portfolio: React.FC = memo(() => {
 
   const [activeTab, setActiveTab] = useState<'overview' | 'performance' | 'transactions' | 'rewards'>('overview');
 
+  // Listen for custom events to set tab from GlobalSidebar
+  useEffect(() => {
+    const handleSetTab = (event: CustomEvent) => {
+      setActiveTab(event.detail.tab);
+    };
+    
+    window.addEventListener('setPortfolioTab', handleSetTab as EventListener);
+    return () => window.removeEventListener('setPortfolioTab', handleSetTab as EventListener);
+  }, []);
+
   // Memoize tab change handler to prevent re-renders
   const handleTabChange = useCallback((tab: typeof activeTab) => {
     setActiveTab(tab);
   }, []);
 
   // Memoize tabs array to prevent re-creation on each render
-  const tabs = useMemo(() => [
-    { id: 'overview' as const, label: 'Overview', icon: PieChart },
-    { id: 'performance' as const, label: 'Performance', icon: BarChart3 },
-    { id: 'transactions' as const, label: 'Transactions', icon: Receipt },
-    { id: 'rewards' as const, label: 'Rewards', icon: Gift }
-  ], []);
+  const tabs = useMemo(() => {
+    const baseTabs = [
+      { id: 'overview' as const, label: 'Overview', icon: PieChart },
+      { id: 'transactions' as const, label: 'Transactions', icon: Receipt },
+      { id: 'rewards' as const, label: 'Rewards', icon: Gift }
+    ];
+    
+    // Only include Performance tab if feature is enabled
+    if (showPerformanceTab) {
+      baseTabs.splice(1, 0, { id: 'performance' as const, label: 'Performance', icon: BarChart3 });
+    }
+    
+    return baseTabs;
+  }, [showPerformanceTab]);
 
   return (
     <div className="space-y-6">
@@ -223,7 +255,7 @@ const Portfolio: React.FC = memo(() => {
             </div>
           }>
             {activeTab === 'overview' && <EnhancedPortfolioOverview />}
-            {activeTab === 'performance' && <EnhancedPortfolioPerformance />}
+            {activeTab === 'performance' && showPerformanceTab && <EnhancedPortfolioPerformance />}
             {activeTab === 'transactions' && <EnhancedPortfolioTransactions />}
             {activeTab === 'rewards' && <RewardsTab />}
           </React.Suspense>

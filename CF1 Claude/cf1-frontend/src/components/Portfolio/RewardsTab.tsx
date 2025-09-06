@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Gift, TrendingUp, Calendar, Trophy, DollarSign, Eye, ChevronRight, Crown, Star, ArrowRight } from 'lucide-react';
 import { useRewardsStore } from '../../store/rewardsStore';
 import { useTierManagement } from '../../services/tierManagementService';
+import { getAssetImage } from '../../utils/assetImageUtils';
 import LoadingSpinner from '../UI/LoadingSpinner';
 import { AssetRewardsDetail } from './AssetRewardsDetail';
 import AllTiersModal from './AllTiersModal';
@@ -144,10 +145,21 @@ export const RewardsTab: React.FC = () => {
                     className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 transition-all hover:shadow-lg hover:border-blue-300 dark:hover:border-blue-600"
                   >
                     <div className="flex items-center space-x-3 mb-4">
-                      <div className="w-12 h-12 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 rounded-xl flex items-center justify-center shadow-sm">
-                        <span className="text-gray-700 dark:text-gray-300 font-bold">
-                          {reward.assetName.charAt(0)}
-                        </span>
+                      <div className="w-12 h-12 rounded-xl overflow-hidden shadow-sm">
+                        <img 
+                          src={getAssetImage(reward.assetId || reward.assetName, reward.assetType)} 
+                          alt={reward.assetName} 
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            const parent = target.parentElement;
+                            if (parent) {
+                              parent.className = "w-12 h-12 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 rounded-xl flex items-center justify-center shadow-sm";
+                              parent.innerHTML = `<span class="text-gray-700 dark:text-gray-300 font-bold">${reward.assetName.charAt(0)}</span>`;
+                            }
+                          }}
+                        />
                       </div>
                       
                       <div className="flex-1">
@@ -233,10 +245,21 @@ export const RewardsTab: React.FC = () => {
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
-                      <span className="text-gray-600 dark:text-gray-400 font-semibold">
-                        {reward.assetName.charAt(0)}
-                      </span>
+                    <div className="w-12 h-12 rounded-lg overflow-hidden">
+                      <img 
+                        src={getAssetImage(reward.assetId || reward.assetName, reward.assetType)} 
+                        alt={reward.assetName} 
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          const parent = target.parentElement;
+                          if (parent) {
+                            parent.className = "w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center";
+                            parent.innerHTML = `<span class="text-gray-600 dark:text-gray-400 font-semibold">${reward.assetName.charAt(0)}</span>`;
+                          }
+                        }}
+                      />
                     </div>
                     
                     <div className="flex-1">

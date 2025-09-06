@@ -14,6 +14,7 @@ import {
   DollarSign
 } from 'lucide-react';
 import { useGovernanceStore, type GovernanceProposal } from '../store/governanceStore';
+import { useGovernanceData } from '../services/governanceDataService';
 
 const DraftCard: React.FC<GovernanceProposal & { onEdit: () => void; onDelete: () => void; onSubmit: () => void; }> = ({
   id,
@@ -144,6 +145,7 @@ const DraftCard: React.FC<GovernanceProposal & { onEdit: () => void; onDelete: (
 const GovernanceDrafts: React.FC = () => {
   const navigate = useNavigate();
   const { getDrafts, deleteDraft, submitDraft } = useGovernanceStore();
+  const { proposals } = useGovernanceData();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   
   const drafts = getDrafts();
@@ -188,6 +190,37 @@ const GovernanceDrafts: React.FC = () => {
         <div className="text-right">
           <p className="text-2xl font-bold text-blue-600">{drafts.length}</p>
           <p className="text-sm text-gray-600 dark:text-gray-400">Saved Drafts</p>
+        </div>
+      </div>
+
+      {/* Main Tabs Navigation */}
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm mb-6">
+        <div className="border-b border-gray-200 dark:border-gray-600">
+          <nav className="flex space-x-8 px-6">
+            {[
+              { key: 'all', label: 'All Proposals', route: '/governance' },
+              { key: 'my-proposals', label: 'My Proposals', route: '/governance?tab=my-proposals' },
+              { key: 'my-votes', label: 'My Votes', route: '/governance?tab=my-votes' },
+              { key: 'drafts', label: 'Drafts', route: '/governance/drafts' }
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => navigate(tab.route)}
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  tab.key === 'drafts'
+                    ? 'border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-400'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                }`}
+              >
+                {tab.label} ({
+                  tab.key === 'all' ? proposals.length :
+                  tab.key === 'my-proposals' ? proposals.filter(p => p.proposedBy === 'You' || p.proposedBy === 'Current User').length :
+                  tab.key === 'my-votes' ? proposals.filter(p => p.userVoted).length :
+                  drafts.length
+                })
+              </button>
+            ))}
+          </nav>
         </div>
       </div>
 

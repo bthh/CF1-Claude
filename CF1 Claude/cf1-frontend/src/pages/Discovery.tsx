@@ -1,8 +1,8 @@
 import React from 'react';
-import DiscoveryHub from '../components/Discovery/DiscoveryHub';
+import SimpleDiscoveryHub from '../components/Discovery/SimpleDiscoveryHub';
 
 const Discovery: React.FC = () => {
-  return <DiscoveryHub />;
+  return <SimpleDiscoveryHub />;
 };
 
 export default Discovery;

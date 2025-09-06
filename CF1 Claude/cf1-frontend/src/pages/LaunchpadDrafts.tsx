@@ -25,6 +25,7 @@ import {
   Percent
 } from 'lucide-react';
 import { useSubmissionStore, type SubmittedProposal } from '../store/submissionStore';
+import { useLaunchpadData } from '../services/launchpadDataService';
 
 const DraftCard: React.FC<SubmittedProposal & { 
   onEdit: () => void; 
@@ -204,7 +205,8 @@ const DraftCard: React.FC<SubmittedProposal & {
 
 const LaunchpadDrafts: React.FC = () => {
   const navigate = useNavigate();
-  const { getDrafts, deleteDraft, submitDraft } = useSubmissionStore();
+  const { getDrafts, deleteDraft, submitDraft, submissions } = useSubmissionStore();
+  const { proposals } = useLaunchpadData();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'date' | 'name' | 'amount' | 'apy'>('date');
@@ -331,6 +333,31 @@ const LaunchpadDrafts: React.FC = () => {
         <div className="text-right">
           <p className="text-2xl font-bold text-blue-600">{allDrafts.length}</p>
           <p className="text-sm text-gray-600 dark:text-gray-400">Saved Drafts</p>
+        </div>
+      </div>
+
+      {/* Main Tabs Navigation */}
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm mb-6">
+        <div className="border-b border-gray-200 dark:border-gray-600">
+          <nav className="flex space-x-8 px-6">
+            {[
+              { key: 'all', label: 'All Proposals', route: '/launchpad' },
+              { key: 'submissions', label: 'My Submissions', route: '/my-submissions' },
+              { key: 'drafts', label: 'Drafts', route: '/launchpad/drafts' }
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => navigate(tab.route)}
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  tab.key === 'drafts'
+                    ? 'border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-400'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                }`}
+              >
+                {tab.label} ({tab.key === 'submissions' ? submissions.filter(s => s.status !== 'draft').length : tab.key === 'drafts' ? allDrafts.length : proposals.length})
+              </button>
+            ))}
+          </nav>
         </div>
       </div>
 

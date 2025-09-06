@@ -76,6 +76,48 @@ export const validateWebhook = (req: Request, res: Response, next: NextFunction)
 };
 
 /**
+ * Generic request validation middleware
+ */
+export const validateRequest = (schema: { body?: Joi.ObjectSchema, params?: Joi.ObjectSchema, query?: Joi.ObjectSchema }) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    // Validate request body
+    if (schema.body) {
+      const { error } = schema.body.validate(req.body);
+      if (error) {
+        return res.status(400).json({
+          error: error.details[0].message,
+          code: 'INVALID_REQUEST_BODY'
+        });
+      }
+    }
+
+    // Validate request params
+    if (schema.params) {
+      const { error } = schema.params.validate(req.params);
+      if (error) {
+        return res.status(400).json({
+          error: error.details[0].message,
+          code: 'INVALID_REQUEST_PARAMS'
+        });
+      }
+    }
+
+    // Validate query parameters
+    if (schema.query) {
+      const { error } = schema.query.validate(req.query);
+      if (error) {
+        return res.status(400).json({
+          error: error.details[0].message,
+          code: 'INVALID_QUERY_PARAMS'
+        });
+      }
+    }
+
+    next();
+  };
+};
+
+/**
  * General error handler for validation
  */
 export const handleValidationError = (error: Error, req: Request, res: Response, next: NextFunction) => {

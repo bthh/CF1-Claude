@@ -129,6 +129,15 @@ const defaultFeatures: Record<string, FeatureToggle> = {
     category: 'general',
     requiredRole: 'platform_admin',
     lastModified: new Date().toISOString()
+  },
+  'launchpad_ai_analysis': {
+    id: 'launchpad_ai_analysis',
+    name: 'AI Analysis',
+    description: 'Show AI analysis section on launchpad proposal details pages',
+    enabled: true,
+    category: 'launchpad',
+    requiredRole: 'platform_admin',
+    lastModified: new Date().toISOString()
   }
 };
 
@@ -249,7 +258,7 @@ export const useFeatureToggleStore = create<FeatureToggleState>()(
     }),
     {
       name: 'cf1-feature-toggles',
-      version: 4,
+      version: 5,
       migrate: (persistedState: any, version: number) => {
         // Always merge with latest default features to ensure new features are included
         const mergedFeatures = { ...defaultFeatures };

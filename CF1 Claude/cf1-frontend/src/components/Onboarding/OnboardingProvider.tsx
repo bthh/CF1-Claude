@@ -1,7 +1,7 @@
 import React, { createContext, useContext } from 'react';
 import { useOnboarding } from '../../hooks/useOnboarding';
 import { OnboardingTourComponent } from './OnboardingTour';
-import { OnboardingWelcome } from './OnboardingWelcome';
+import { UserPathController } from './UserPathController';
 
 interface OnboardingContextType {
   startTour: (tourId: string) => void;
@@ -55,7 +55,7 @@ export const OnboardingProvider: React.FC<OnboardingProviderProps> = ({ children
 
   const handleCloseWelcome = () => {
     // Close welcome modal by updating state directly
-    // updatePreferences({ showWelcome: false });
+    updatePreferences({ skipIntros: true });
   };
 
   const handleTourComplete = () => {
@@ -80,14 +80,10 @@ export const OnboardingProvider: React.FC<OnboardingProviderProps> = ({ children
     <OnboardingContext.Provider value={contextValue}>
       {children}
       
-      {/* Welcome Modal */}
-      <OnboardingWelcome
+      {/* User Path Modal */}
+      <UserPathController
         isOpen={showWelcome && !userPreferences.skipIntros}
         onClose={handleCloseWelcome}
-        onStartTour={startTour}
-        completedTours={completedTours}
-        userPreferences={userPreferences}
-        onUpdatePreferences={updatePreferences}
       />
       
       {/* Tour Component */}

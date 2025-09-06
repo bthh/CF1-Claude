@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Search, Filter, Download, Calendar, ArrowUpRight, ArrowDownLeft, Eye, CheckCircle, Clock, AlertTriangle, ExternalLink } from 'lucide-react';
+import TransactionDetailsModal from './TransactionDetailsModal';
 
 interface TransactionsTabProps {
   className?: string;
@@ -204,6 +205,18 @@ export const EnhancedPortfolioTransactions: React.FC<TransactionsTabProps> = ({ 
   const [selectedType, setSelectedType] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [dateRange, setDateRange] = useState<string>('30d');
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleViewDetails = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedTransaction(null);
+  };
 
   const filteredTransactions = mockTransactions.filter(transaction => {
     const matchesSearch = transaction.assetName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -488,6 +501,7 @@ export const EnhancedPortfolioTransactions: React.FC<TransactionsTabProps> = ({ 
                         </button>
                       )}
                       <button
+                        onClick={() => handleViewDetails(transaction)}
                         className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
                         title="View details"
                       >
@@ -513,6 +527,13 @@ export const EnhancedPortfolioTransactions: React.FC<TransactionsTabProps> = ({ 
           </div>
         )}
       </motion.div>
+
+      {/* Transaction Details Modal */}
+      <TransactionDetailsModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        transaction={selectedTransaction}
+      />
     </div>
   );
 };

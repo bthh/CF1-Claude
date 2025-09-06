@@ -14,10 +14,12 @@ import {
   Calendar
 } from 'lucide-react';
 import { useSubmissionStore, type SubmittedProposal } from '../store/submissionStore';
+import { useLaunchpadData } from '../services/launchpadDataService';
 
 const MySubmissions: React.FC = () => {
   const navigate = useNavigate();
-  const { submissions, getLocalSubmissions, getBackendReferences } = useSubmissionStore();
+  const { submissions, getLocalSubmissions, getBackendReferences, getDrafts } = useSubmissionStore();
+  const { proposals } = useLaunchpadData();
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'date' | 'status'>('date');
   const [viewMode, setViewMode] = useState<'all' | 'local' | 'backend'>('all');
@@ -35,10 +37,27 @@ const MySubmissions: React.FC = () => {
     }
   };
 
-  // Filter submissions based on status and view mode
-  const filteredSubmissions = getSubmissionsByMode().filter(submission => 
-    statusFilter === 'all' || submission.status === statusFilter
-  );
+  // Filter submissions based on status and view mode (exclude drafts from My Submissions)
+  const filteredSubmissions = getSubmissionsByMode().filter(submission => {
+    // Exclude drafts from My Submissions since they have their own tab
+    if (submission.status === 'draft') return false;
+    
+    if (statusFilter === 'all') return true;
+    
+    // Map filter values to actual status combinations
+    switch (statusFilter) {
+      case 'in_review':
+        return submission.status === 'submitted' || submission.status === 'under_review' || submission.status === 'changes_requested';
+      case 'active':
+        return submission.status === 'approved' && submission.fundingStatus?.status === 'active';
+      case 'passed': 
+        return submission.status === 'approved' && submission.fundingStatus?.isFunded;
+      case 'rejected':
+        return submission.status === 'rejected';
+      default:
+        return submission.status === statusFilter;
+    }
+  });
 
   // Sort submissions
   const sortedSubmissions = [...filteredSubmissions].sort((a, b) => {
@@ -145,6 +164,31 @@ const MySubmissions: React.FC = () => {
         </button>
       </div>
 
+      {/* Main Tabs Navigation */}
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm mb-6">
+        <div className="border-b border-gray-200 dark:border-gray-600">
+          <nav className="flex space-x-8 px-6">
+            {[
+              { key: 'all', label: 'All Proposals', route: '/launchpad' },
+              { key: 'submissions', label: 'My Submissions', route: '/my-submissions' },
+              { key: 'drafts', label: 'Drafts', route: '/launchpad/drafts' }
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => navigate(tab.route)}
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  tab.key === 'submissions'
+                    ? 'border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-400'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                }`}
+              >
+                {tab.label} ({tab.key === 'submissions' ? submissions.filter(s => s.status !== 'draft').length : tab.key === 'drafts' ? getDrafts().length : proposals.length})
+              </button>
+            ))}
+          </nav>
+        </div>
+      </div>
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
@@ -152,7 +196,7 @@ const MySubmissions: React.FC = () => {
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">Total Submissions</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {submissions.length}
+                {submissions.filter(s => s.status !== 'draft').length}
               </p>
             </div>
             <Building2 className="w-8 h-8 text-blue-600" />
@@ -196,13 +240,40 @@ const MySubmissions: React.FC = () => {
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+      {/* Status Filter Tabs */}
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm mb-6">
+        <div className="border-b border-gray-200 dark:border-gray-600">
+          <nav className="flex space-x-8 px-6">
+            {[
+              { key: 'all', label: 'All Status', count: getSubmissionsByMode().filter(s => s.status !== 'draft').length },
+              { key: 'in_review', label: 'In Review', count: getSubmissionsByMode().filter(s => s.status === 'submitted' || s.status === 'under_review' || s.status === 'changes_requested').length },
+              { key: 'active', label: 'Active', count: getSubmissionsByMode().filter(s => s.status === 'approved' && s.fundingStatus?.status === 'active').length },
+              { key: 'passed', label: 'Passed', count: getSubmissionsByMode().filter(s => s.status === 'approved' && s.fundingStatus?.isFunded).length },
+              { key: 'rejected', label: 'Rejected', count: getSubmissionsByMode().filter(s => s.status === 'rejected').length }
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setStatusFilter(tab.key)}
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  statusFilter === tab.key
+                    ? 'border-blue-500 dark:border-blue-400 text-blue-600 dark:text-blue-400'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                }`}
+              >
+                {tab.label} ({tab.count})
+              </button>
+            ))}
+          </nav>
+        </div>
+      </div>
+
+      {/* Additional Filters */}
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               <Filter className="w-4 h-4 text-gray-500" />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Filter:</span>
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">View:</span>
             </div>
             <select
               value={viewMode}
@@ -212,19 +283,6 @@ const MySubmissions: React.FC = () => {
               <option value="all">All Submissions</option>
               <option value="local">Local Only (Drafts & Fallbacks)</option>
               <option value="backend">Backend Only (Submitted for Review)</option>
-            </select>
-            
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            >
-              <option value="all">All Status</option>
-              <option value="submitted">Submitted</option>
-              <option value="under_review">Under Review</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
-              <option value="changes_requested">Changes Requested</option>
             </select>
             
             <span className="text-sm text-gray-500 dark:text-gray-400">Sort by:</span>

@@ -57,6 +57,19 @@ const LaunchpadAdmin: React.FC<LaunchpadAdminProps> = ({ selectedSubTab, setSele
     }
   };
 
+  // Get full proposal details for the selected proposal
+  const getProposalDetails = (proposalId: string) => {
+    const submission = [
+      ...submittedProposals,
+      ...underReviewProposals,
+      ...approvedProposals,
+      ...rejectedProposals,
+      ...changesRequestedProposals
+    ].find(s => s.id === proposalId);
+    
+    return submission;
+  };
+
   const handleStatusChange = (proposalId: string, newStatus: ProposalQueueItem['status'], comments?: string) => {
     updateSubmissionStatus(proposalId, newStatus, comments);
     setIsReviewModalOpen(false);
@@ -186,6 +199,7 @@ const LaunchpadAdmin: React.FC<LaunchpadAdminProps> = ({ selectedSubTab, setSele
           setSelectedProposal(null);
         }}
         proposal={selectedProposal}
+        proposalDetails={selectedProposal ? getProposalDetails(selectedProposal.id) : undefined}
         onStatusChange={handleStatusChange}
         onSaveComments={handleSaveComments}
       />

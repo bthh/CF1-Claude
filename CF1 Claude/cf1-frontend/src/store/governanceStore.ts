@@ -64,7 +64,7 @@ interface GovernanceState {
   proposals: GovernanceProposal[];
   
   // Actions
-  addProposal: (proposalData: Omit<GovernanceProposal, 'id' | 'createdDate' | 'submissionDate' | 'status' | 'votesFor' | 'votesAgainst' | 'totalVotes' | 'endDate' | 'timeLeft' | 'proposedByAddress' | 'proposedBy' | 'quorumRequired'>) => { success: boolean; proposalId?: string; error?: string };
+  addProposal: (proposalData: Omit<GovernanceProposal, 'id' | 'createdDate' | 'submissionDate' | 'status' | 'votesFor' | 'votesAgainst' | 'totalVotes' | 'endDate' | 'timeLeft' | 'proposedByAddress' | 'proposedBy' | 'quorumRequired'>, userAddress?: string) => { success: boolean; proposalId?: string; error?: string };
   saveDraft: (proposalData: Omit<GovernanceProposal, 'id' | 'createdDate' | 'submissionDate' | 'status' | 'votesFor' | 'votesAgainst' | 'totalVotes' | 'endDate' | 'timeLeft' | 'proposedByAddress' | 'proposedBy' | 'quorumRequired'>) => string;
   submitDraft: (draftId: string) => { success: boolean; proposalId?: string; error?: string };
   updateDraft: (draftId: string, proposalData: Partial<GovernanceProposal>) => void;
@@ -81,6 +81,7 @@ interface GovernanceState {
   rejectProposal: (proposalId: string, comments?: string) => void;
   requestChanges: (proposalId: string, comments?: string) => void;
   saveReviewComments: (proposalId: string, comments: string) => void;
+  resubmitProposal: (proposalId: string, updatedData: Partial<GovernanceProposal>) => { success: boolean; error?: string };
   updateProposalFromSimulate: (proposalId: string, updatedData: { status: GovernanceProposal['status']; votesFor?: number; votesAgainst?: number; totalVotes?: number }) => void;
   syncWithBackend: () => Promise<void>;
   refreshDataForDemoMode: () => void;
@@ -321,7 +322,7 @@ export const useGovernanceStore = create<GovernanceState>()(
         ? mockGovernanceProposals.map(proposal => validateProposalData(proposal))
         : [], // Empty array in development mode
 
-      addProposal: (proposalData) => {
+      addProposal: (proposalData, userAddress) => {
         try {
           // Validate required fields
           if (!proposalData.title || !proposalData.description) {
@@ -350,7 +351,7 @@ export const useGovernanceStore = create<GovernanceState>()(
             totalVotes: 0,
             quorumRequired,
             proposedBy: 'You',
-            proposedByAddress: '0x123...456',
+            proposedByAddress: userAddress || '0x123...456',
             userVotingPower: proposalData.userVotingPower || 0,
             userTokens: proposalData.userTokens || 0,
             userEstimatedDistribution: proposalData.userEstimatedDistribution || 0,
@@ -426,11 +427,17 @@ export const useGovernanceStore = create<GovernanceState>()(
           const submittedBase = {
             ...draft,
             id: newId,
-            status: 'active' as const,
+            status: 'submitted' as const,
             endDate: timing.endDate,
             timeLeft: timing.timeLeft,
             submissionDate: new Date().toISOString(),
-            createdDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+            createdDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+            votesFor: 0,
+            votesAgainst: 0,
+            totalVotes: 0,
+            quorumRequired: 1000,
+            proposedBy: 'You',
+            proposedByAddress: window.localStorage.getItem('connectedWalletAddress') || '0x123...456'
           };
           
           const submittedProposal = validateProposalData(submittedBase);
@@ -635,6 +642,42 @@ export const useGovernanceStore = create<GovernanceState>()(
               : proposal
           )
         }));
+      },
+
+      resubmitProposal: (proposalId, updatedData) => {
+        const state = get();
+        const existingProposal = state.proposals.find(p => p.id === proposalId);
+        
+        if (!existingProposal) {
+          return { success: false, error: 'Proposal not found' };
+        }
+        
+        if (existingProposal.status !== 'changes_requested') {
+          return { success: false, error: 'Only proposals with requested changes can be resubmitted' };
+        }
+        
+        try {
+          set((state) => ({
+            proposals: state.proposals.map((proposal) =>
+              proposal.id === proposalId
+                ? { 
+                    ...proposal,
+                    ...updatedData,
+                    status: 'submitted' as GovernanceProposal['status'],
+                    reviewComments: undefined, // Clear previous admin comments
+                    updatedAt: new Date().toISOString(),
+                    submissionDate: new Date().toISOString()
+                  }
+                : proposal
+            )
+          }));
+          
+          console.log(`🔄 Proposal ${proposalId} resubmitted for review`);
+          return { success: true };
+        } catch (error) {
+          console.error('❌ Failed to resubmit proposal:', error);
+          return { success: false, error: 'Failed to resubmit proposal' };
+        }
       },
 
       updateProposalFromSimulate: (proposalId, updatedData) => {

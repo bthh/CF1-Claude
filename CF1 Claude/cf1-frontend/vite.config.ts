@@ -145,7 +145,20 @@ export default defineConfig(({ mode }) => {
       },
       strictPort: false,
       // Fix for React Router - serve index.html for all routes
-      historyApiFallback: true
+      historyApiFallback: true,
+      // Proxy API calls to backend
+      proxy: {
+        '/api': {
+          target: 'http://localhost:3001',
+          changeOrigin: true,
+          secure: false
+        },
+        '/feature-toggles': {
+          target: 'http://localhost:3001',
+          changeOrigin: true,
+          secure: false
+        }
+      }
     },
     
     // Preview server configuration

@@ -316,9 +316,31 @@ const GovernanceProposalDetail: React.FC = () => {
             </div>
           </div>
           <div className="flex justify-end">
-            <span className="bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 text-sm px-3 py-1 rounded-full">
-              Active Voting
-            </span>
+            {proposal.status === 'changes_requested' ? (
+              <span className="bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 text-sm px-3 py-1 rounded-full">
+                Changes Requested
+              </span>
+            ) : proposal.status === 'submitted' ? (
+              <span className="bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 text-sm px-3 py-1 rounded-full">
+                Under Review
+              </span>
+            ) : proposal.status === 'active' ? (
+              <span className="bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200 text-sm px-3 py-1 rounded-full">
+                Active Voting
+              </span>
+            ) : proposal.status === 'passed' ? (
+              <span className="bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200 text-sm px-3 py-1 rounded-full">
+                Passed
+              </span>
+            ) : proposal.status === 'rejected' ? (
+              <span className="bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-200 text-sm px-3 py-1 rounded-full">
+                Rejected
+              </span>
+            ) : (
+              <span className="bg-gray-100 dark:bg-gray-900/20 text-gray-800 dark:text-gray-200 text-sm px-3 py-1 rounded-full">
+                {proposal.status}
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -380,6 +402,37 @@ const GovernanceProposalDetail: React.FC = () => {
                   </li>
                 ))}
               </ul>
+            </div>
+          )}
+
+          {/* Admin Review Comments */}
+          {proposal.reviewComments && proposal.status === 'changes_requested' && (
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6">
+              <div className="flex items-start space-x-3">
+                <AlertTriangle className="w-6 h-6 text-yellow-600 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <h2 className="text-xl font-semibold text-yellow-800 dark:text-yellow-200 mb-3">
+                    Admin Review - Changes Requested
+                  </h2>
+                  <div className="bg-white dark:bg-gray-800 rounded-md p-4 border border-yellow-200 dark:border-yellow-700">
+                    <p className="text-gray-800 dark:text-gray-200 leading-relaxed whitespace-pre-wrap">
+                      {proposal.reviewComments}
+                    </p>
+                  </div>
+                  <div className="mt-4 flex items-center space-x-4">
+                    <button
+                      onClick={() => navigate(`/governance/create?edit=${proposal.id}`)}
+                      className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center space-x-2"
+                    >
+                      <User className="w-4 h-4" />
+                      <span>Edit Proposal</span>
+                    </button>
+                    <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                      Please address the comments above and resubmit your proposal.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 

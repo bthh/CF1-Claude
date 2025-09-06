@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, AlertTriangle, CheckCircle, Users, TrendingUp, Eye, DollarSign, Save } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, CheckCircle, Users, TrendingUp, Eye, DollarSign, Save, Wallet } from 'lucide-react';
 import { useGovernanceStore } from '../store/governanceStore';
+import { useCosmJS } from '../hooks/useCosmJS';
+import { useDataModeStore } from '../store/dataModeStore';
 
 interface ProposalFormData {
   proposalType: 'dividend' | 'renovation' | 'sale' | 'management' | 'expansion';
@@ -19,7 +21,11 @@ interface ProposalFormData {
 const CreateGovernanceProposal: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { addProposal, saveDraft, updateDraft, getProposalById } = useGovernanceStore();
+  const { addProposal, saveDraft, updateDraft, getProposalById, resubmitProposal } = useGovernanceStore();
+  
+  // Authentication and data mode
+  const { isConnected, address, connect } = useCosmJS();
+  const { setDataMode, isDemo } = useDataModeStore();
   const [currentStep, setCurrentStep] = useState(1);
   const [isEditingDraft, setIsEditingDraft] = useState(false);
   const [draftId, setDraftId] = useState<string | null>(null);
@@ -79,9 +85,11 @@ const CreateGovernanceProposal: React.FC = () => {
     }
   ];
 
-  // Load draft if editing
+  // Load draft or proposal for editing
   useEffect(() => {
     const draftParam = searchParams.get('draft');
+    const editParam = searchParams.get('edit');
+    
     if (draftParam) {
       const draft = getProposalById(draftParam);
       if (draft && draft.status === 'draft') {
@@ -100,8 +108,29 @@ const CreateGovernanceProposal: React.FC = () => {
           isPrivate: draft.isPrivate || false
         });
       }
+    } else if (editParam) {
+      const proposal = getProposalById(editParam);
+      if (proposal && proposal.status === 'changes_requested') {
+        setIsEditingDraft(true);
+        setDraftId(editParam);
+        setFormData({
+          proposalType: proposal.proposalType,
+          assetId: proposal.assetId,
+          title: proposal.title,
+          description: proposal.description,
+          rationale: proposal.rationale,
+          requiredAmount: proposal.requiredAmount || '',
+          expectedImpact: proposal.impact,
+          votingDuration: proposal.votingDuration.toString(),
+          additionalDetails: proposal.additionalDetails || '',
+          isPrivate: proposal.isPrivate || false
+        });
+      }
     }
-  }, [searchParams, getProposalById]);
+    
+    // Switch to development mode for user-created governance proposals
+    setDataMode('development', 'User governance proposal creation');
+  }, [searchParams, getProposalById, setDataMode]);
 
   // Mock user assets data
   const userAssets = [
@@ -181,10 +210,19 @@ const CreateGovernanceProposal: React.FC = () => {
       visibilityPolicy: 'creator_decides' as const // For now, assume creator decides policy
     };
 
-    const result = addProposal(proposalData);
+    // Check if we're resubmitting a proposal that had changes requested
+    const editParam = searchParams.get('edit');
+    const isResubmission = editParam && draftId;
     
-    if (result.success && result.proposalId) {
-      alert('Governance proposal submitted successfully! Your proposal will be reviewed by platform administrators before being made available for voting. You will be notified of the review decision.');
+    const result = isResubmission 
+      ? resubmitProposal(draftId, proposalData)
+      : addProposal(proposalData, address);
+    
+    if (result.success) {
+      const message = isResubmission 
+        ? 'Proposal resubmitted successfully! Your updated proposal will be reviewed by platform administrators.'
+        : 'Governance proposal submitted successfully! Your proposal will be reviewed by platform administrators before being made available for voting. You will be notified of the review decision.';
+      alert(message);
       navigate('/governance'); // Redirect to main governance page since proposal won't be immediately visible
     } else {
       // Save as draft if submission fails
@@ -232,6 +270,51 @@ const CreateGovernanceProposal: React.FC = () => {
 
   const selectedProposalType = proposalTypes.find(type => type.id === formData.proposalType);
 
+  // Authentication gate
+  if (!isConnected) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <button 
+              onClick={() => navigate('/governance')}
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            </button>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                Create Voting Proposal
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400 mt-1">
+                Connect your wallet to create governance proposals
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-12 text-center">
+          <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center mx-auto mb-6">
+            <Wallet className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+          </div>
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+            Wallet Connection Required
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
+            To create governance proposals, you need to connect your wallet to verify your token holdings and identity.
+          </p>
+          <button
+            onClick={connect}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center space-x-2 mx-auto"
+          >
+            <Wallet className="w-4 h-4" />
+            <span>Connect Wallet</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -245,10 +328,16 @@ const CreateGovernanceProposal: React.FC = () => {
           </button>
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              {isEditingDraft ? 'Edit Draft Proposal' : 'Create Voting Proposal'}
+              {isEditingDraft 
+                ? (searchParams.get('edit') ? 'Edit & Resubmit Proposal' : 'Edit Draft Proposal')
+                : 'Create Voting Proposal'}
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-1">
-              {isEditingDraft ? 'Edit and submit your saved draft' : 'Submit a proposal for asset voting decisions'}
+              {isEditingDraft 
+                ? (searchParams.get('edit') 
+                  ? 'Address admin feedback and resubmit your proposal' 
+                  : 'Edit and submit your saved draft')
+                : 'Submit a proposal for asset voting decisions'}
             </p>
           </div>
         </div>

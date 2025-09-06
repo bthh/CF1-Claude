@@ -15,6 +15,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { useAdminAuthContext } from '../../hooks/useAdminAuth';
+import { useUnifiedAuthStore } from '../../store/unifiedAuthStore';
 import { useNotifications } from '../../hooks/useNotifications';
 
 interface Permission {
@@ -37,7 +38,33 @@ interface Role {
 
 const RolePermissionsManager: React.FC = () => {
   const { checkPermission } = useAdminAuthContext();
+  const { user: unifiedUser, isAuthenticated: isUnifiedAuthenticated } = useUnifiedAuthStore();
   const { success, error, warning } = useNotifications();
+
+  // Combined permission checking for both admin systems
+  const combinedCheckPermission = (permission: string): boolean => {
+    // Check old admin system
+    if (checkPermission(permission)) {
+      return true;
+    }
+    
+    // Check unified auth system
+    if (unifiedUser && isUnifiedAuthenticated) {
+      if (permission === 'emergency_controls') {
+        return ['super_admin', 'owner'].includes(unifiedUser.role);
+      }
+      if (permission === 'manage_platform_config') {
+        return ['platform_admin', 'super_admin', 'owner'].includes(unifiedUser.role);
+      }
+    }
+    
+    return false;
+  };
+
+  // Check if user is super admin level or higher
+  const isSuperAdminOrHigher = (): boolean => {
+    return combinedCheckPermission('emergency_controls');
+  };
   
   const [selectedRole, setSelectedRole] = useState<string>('user');
   const [isEditing, setIsEditing] = useState(false);
@@ -79,7 +106,7 @@ const RolePermissionsManager: React.FC = () => {
   ];
 
   // Default roles with their permissions
-  const [roles, setRoles] = useState<Role[]>([
+  const allRoles: Role[] = [
     {
       id: 'user',
       name: 'Regular User',
@@ -152,9 +179,20 @@ const RolePermissionsManager: React.FC = () => {
       userCount: 2,
       permissions: availablePermissions.map(p => p.id) // All permissions
     }
-  ]);
+  ];
 
-  const selectedRoleData = roles.find(r => r.id === selectedRole);
+  // Store all roles including custom ones
+  const [allStoredRoles, setAllStoredRoles] = useState<Role[]>(allRoles);
+
+  // Filter roles based on user permissions - hide super_admin from platform admins
+  const visibleRoles = allStoredRoles.filter(role => {
+    if (role.id === 'super_admin' && !isSuperAdminOrHigher()) {
+      return false; // Hide super_admin role from platform admins
+    }
+    return true;
+  });
+
+  const selectedRoleData = visibleRoles.find(r => r.id === selectedRole);
   const [editedPermissions, setEditedPermissions] = useState<string[]>(selectedRoleData?.permissions || []);
 
   const handleRoleSelect = (roleId: string) => {
@@ -163,7 +201,7 @@ const RolePermissionsManager: React.FC = () => {
       return;
     }
     setSelectedRole(roleId);
-    const role = roles.find(r => r.id === roleId);
+    const role = visibleRoles.find(r => r.id === roleId);
     setEditedPermissions(role?.permissions || []);
   };
 
@@ -181,12 +219,12 @@ const RolePermissionsManager: React.FC = () => {
     if (!selectedRoleData) return;
 
     // Check if user has permission to modify this role
-    if (selectedRoleData.isSystem && !checkPermission('emergency_controls')) {
+    if (selectedRoleData.isSystem && !combinedCheckPermission('emergency_controls')) {
       error('You need Super Admin permissions to modify system roles');
       return;
     }
 
-    setRoles(prev => prev.map(role => 
+    setAllStoredRoles(prev => prev.map(role => 
       role.id === selectedRole 
         ? { ...role, permissions: editedPermissions }
         : role
@@ -217,7 +255,7 @@ const RolePermissionsManager: React.FC = () => {
       permissions: []
     };
 
-    setRoles(prev => [...prev, newRole]);
+    setAllStoredRoles(prev => [...prev, newRole]);
     setSelectedRole(newRole.id);
     setEditedPermissions([]);
     setNewRoleName('');
@@ -227,7 +265,7 @@ const RolePermissionsManager: React.FC = () => {
   };
 
   const handleDeleteRole = (roleId: string) => {
-    const role = roles.find(r => r.id === roleId);
+    const role = visibleRoles.find(r => r.id === roleId);
     if (!role) return;
 
     if (role.isSystem) {
@@ -235,16 +273,16 @@ const RolePermissionsManager: React.FC = () => {
       return;
     }
 
-    if (!checkPermission('emergency_controls')) {
+    if (!combinedCheckPermission('emergency_controls')) {
       error('You need Super Admin permissions to delete roles');
       return;
     }
 
     if (confirm(`Are you sure you want to delete the role "${role.name}"? This action cannot be undone.`)) {
-      setRoles(prev => prev.filter(r => r.id !== roleId));
+      setAllStoredRoles(prev => prev.filter(r => r.id !== roleId));
       if (selectedRole === roleId) {
         setSelectedRole('user');
-        setEditedPermissions(roles.find(r => r.id === 'user')?.permissions || []);
+        setEditedPermissions(visibleRoles.find(r => r.id === 'user')?.permissions || []);
       }
       success(`Role "${role.name}" deleted successfully`);
     }
@@ -330,7 +368,7 @@ const RolePermissionsManager: React.FC = () => {
           </h3>
           
           <div className="space-y-3">
-            {roles.map((role) => (
+            {visibleRoles.map((role) => (
               <div
                 key={role.id}
                 onClick={() => handleRoleSelect(role.id)}
@@ -350,7 +388,7 @@ const RolePermissionsManager: React.FC = () => {
                     )}
                   </div>
                   
-                  {!role.isSystem && checkPermission('emergency_controls') && (
+                  {!role.isSystem && combinedCheckPermission('emergency_controls') && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -411,7 +449,7 @@ const RolePermissionsManager: React.FC = () => {
                 ) : (
                   <button
                     onClick={() => setIsEditing(true)}
-                    disabled={selectedRoleData?.isSystem && !checkPermission('emergency_controls')}
+                    disabled={selectedRoleData?.isSystem && !combinedCheckPermission('emergency_controls')}
                     className="flex items-center space-x-2 px-4 py-2 bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Edit className="w-4 h-4" />

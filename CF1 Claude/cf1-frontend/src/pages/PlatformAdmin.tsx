@@ -30,9 +30,10 @@ import {
   TrendingUp
 } from 'lucide-react';
 import { useAdminAuthContext } from '../hooks/useAdminAuth';
+import { useUnifiedAuthStore } from '../store/unifiedAuthStore';
 import { useNotifications } from '../hooks/useNotifications';
 import { formatTimeAgo } from '../utils/format';
-import UserManagement from '../components/AdminEnhancements/UserManagement';
+import { adminAPI, type AdminUser, type KycSubmission, type SupportTicketData } from '../lib/api/admin';
 import FeatureToggleManager from '../components/AdminEnhancements/FeatureToggleManager';
 import RolePermissionsManager from '../components/AdminEnhancements/RolePermissionsManager';
 import LaunchpadAdmin from '../components/Admin/LaunchpadAdmin';
@@ -331,9 +332,35 @@ const PlatformAdmin: React.FC = () => {
     hasAccessToFeatureToggles, 
     hasAccessToSuperAdminManagement 
   } = useAdminAuthContext();
+  const { user: unifiedUser, isAuthenticated: isUnifiedAuthenticated } = useUnifiedAuthStore();
   
   // Get admin role for permissions check
   const adminRole = currentAdmin?.role;
+  
+  // Combined permission checking for unified auth users
+  const combinedCheckPermission = (permission: string) => {
+    // Check old admin system first
+    if (currentAdmin && checkPermission(permission)) return true;
+    
+    // Check unified auth system - super_admin and owner have all permissions
+    if (unifiedUser && isUnifiedAuthenticated && 
+        (unifiedUser.role === 'super_admin' || unifiedUser.role === 'owner')) {
+      return true;
+    }
+    
+    return false;
+  };
+  
+  const combinedHasAccessToFeatureToggles = () => {
+    // Check old admin system first
+    if (hasAccessToFeatureToggles()) return true;
+    
+    // Check unified auth system
+    return unifiedUser && isUnifiedAuthenticated && 
+           (unifiedUser.role === 'super_admin' || unifiedUser.role === 'owner');
+  };
+  
+  const combinedAdminRole = currentAdmin?.role || unifiedUser?.role;
   const { success, error } = useNotifications();
   
   const [users, setUsers] = useState<PlatformUser[]>([]);
@@ -372,162 +399,159 @@ const PlatformAdmin: React.FC = () => {
   };
 
   const loadUsers = async (): Promise<void> => {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const mockUsers: PlatformUser[] = [
-      {
-        id: 'user_1',
-        address: 'neutron1abc123...',
-        email: 'alice.johnson@example.com',
-        name: 'Alice Johnson',
-        phone: '+1-555-0123',
-        country: 'United States',
-        verificationLevel: 'verified',
-        status: 'active',
-        kycStatus: 'approved',
-        joinedAt: '2024-10-15T10:00:00Z',
-        lastActive: '2024-12-05T14:30:00Z',
-        totalInvestments: 125000,
-        proposalsCreated: 2,
-        complianceScore: 95,
-        riskLevel: 'low',
-        supportTickets: 1
-      },
-      {
-        id: 'user_2',
-        address: 'neutron1def456...',
-        email: 'bob.smith@email.com',
-        name: 'Bob Smith',
-        country: 'Canada',
-        verificationLevel: 'basic',
-        status: 'active',
-        kycStatus: 'pending',
-        joinedAt: '2024-11-20T15:30:00Z',
-        lastActive: '2024-12-05T16:45:00Z',
-        totalInvestments: 50000,
-        proposalsCreated: 0,
-        complianceScore: 78,
-        riskLevel: 'medium',
-        supportTickets: 0
-      },
-      {
-        id: 'user_3',
-        address: 'neutron1ghi789...',
-        email: 'suspicious@tempmail.com',
-        name: 'John Doe',
-        verificationLevel: 'anonymous',
-        status: 'suspended',
-        kycStatus: 'rejected',
-        joinedAt: '2024-12-01T08:00:00Z',
-        lastActive: '2024-12-02T12:00:00Z',
-        totalInvestments: 0,
-        proposalsCreated: 0,
-        complianceScore: 35,
-        riskLevel: 'high',
-        supportTickets: 3
-      }
-    ];
-    
-    setUsers(mockUsers);
+    try {
+      const response = await adminAPI.getUsers({ limit: 50 });
+      
+      // Transform AdminUser to PlatformUser format for compatibility
+      const transformedUsers: PlatformUser[] = response.users.map(user => ({
+        id: user.id,
+        address: user.walletAddress || `${user.primaryAuthMethod}_${user.id.slice(0, 8)}...`,
+        email: user.email,
+        name: user.fullName,
+        phone: undefined, // Not available from backend yet
+        country: undefined, // Not available from backend yet
+        verificationLevel: user.emailVerified ? 'verified' : 'basic',
+        status: user.accountStatus as 'active' | 'suspended' | 'banned' | 'pending',
+        kycStatus: user.kycStatus as 'not_started' | 'pending' | 'approved' | 'rejected',
+        joinedAt: user.createdAt,
+        lastActive: user.lastLoginAt || user.updatedAt,
+        totalInvestments: 0, // Not available from backend yet
+        proposalsCreated: 0, // Not available from backend yet
+        complianceScore: user.kycStatus === 'verified' ? 95 : 
+                        user.kycStatus === 'pending' ? 75 : 
+                        user.accountStatus === 'active' ? 85 : 50,
+        riskLevel: user.accountStatus === 'suspended' ? 'high' : 
+                  user.kycStatus === 'rejected' ? 'high' :
+                  user.emailVerified ? 'low' : 'medium',
+        supportTickets: 0 // Will be calculated from support tickets API
+      }));
+      
+      setUsers(transformedUsers);
+    } catch (error) {
+      console.error('Failed to load users:', error);
+      // Fallback to empty array on error
+      setUsers([]);
+      throw error;
+    }
   };
 
   const loadComplianceCases = async (): Promise<void> => {
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    const mockCases: ComplianceCase[] = [
-      {
-        id: 'case_1',
-        userId: 'user_2',
-        userName: 'Bob Smith',
-        type: 'kyc_review',
-        severity: 'medium',
-        status: 'in_review',
-        description: 'KYC documents require manual verification due to document quality issues',
-        createdAt: '2024-12-04T10:00:00Z',
-        assignedTo: 'Compliance Officer A',
-        evidence: ['id_document.pdf', 'proof_of_address.pdf']
-      },
-      {
-        id: 'case_2',
-        userId: 'user_3',
-        userName: 'John Doe',
-        type: 'fraud_alert',
-        severity: 'high',
-        status: 'escalated',
-        description: 'Multiple failed attempts to submit fraudulent documents',
-        createdAt: '2024-12-01T09:30:00Z',
-        assignedTo: 'Senior Compliance Officer',
-        evidence: ['failed_attempts.log', 'document_analysis.pdf']
-      }
-    ];
-    
-    setComplianceCases(mockCases);
+    try {
+      const response = await adminAPI.getKycSubmissions({ limit: 50 });
+      
+      // Transform KycSubmission to ComplianceCase format for compatibility
+      const transformedCases: ComplianceCase[] = response.submissions.map(submission => ({
+        id: `case_${submission.id}`,
+        userId: submission.id,
+        userName: submission.fullName,
+        type: 'kyc_review' as const,
+        severity: submission.kycStatus === 'rejected' ? 'high' : 
+                 submission.kycStatus === 'pending' ? 'medium' : 'low',
+        status: submission.kycStatus === 'pending' ? 'in_review' :
+               submission.kycStatus === 'verified' ? 'resolved' :
+               submission.kycStatus === 'rejected' ? 'escalated' : 'open',
+        description: `KYC ${submission.kycStatus === 'pending' ? 'review pending' :
+                           submission.kycStatus === 'verified' ? 'approved' : 
+                           submission.kycStatus === 'rejected' ? 'rejected - requires attention' : 
+                           'awaiting submission'} for ${submission.fullName}`,
+        createdAt: submission.submittedAt,
+        assignedTo: submission.kycStatus === 'rejected' ? 'Senior Compliance Officer' :
+                   submission.kycStatus === 'pending' ? 'Compliance Officer' : undefined,
+        evidence: submission.documents.map(doc => doc.name || 'document.pdf')
+      }));
+      
+      setComplianceCases(transformedCases);
+    } catch (error) {
+      console.error('Failed to load compliance cases:', error);
+      // Fallback to empty array on error
+      setComplianceCases([]);
+      throw error;
+    }
   };
 
   const loadSupportTickets = async (): Promise<void> => {
-    await new Promise(resolve => setTimeout(resolve, 600));
-    
-    const mockTickets: SupportTicket[] = [
-      {
-        id: 'ticket_1',
-        userId: 'user_1',
-        userName: 'Alice Johnson',
-        subject: 'Unable to withdraw tokens after lockup period',
-        category: 'technical',
-        priority: 'high',
-        status: 'in_progress',
-        description: 'User reports that tokens are still locked despite lockup period ending',
-        createdAt: '2024-12-05T09:00:00Z',
-        lastUpdated: '2024-12-05T11:30:00Z',
-        responses: 3
-      },
-      {
-        id: 'ticket_2',
-        userId: 'user_3',
-        userName: 'John Doe',
-        subject: 'Account suspension appeal',
-        category: 'compliance',
-        priority: 'medium',
-        status: 'open',
-        description: 'User requesting review of account suspension',
-        createdAt: '2024-12-02T14:00:00Z',
-        lastUpdated: '2024-12-02T14:00:00Z',
-        responses: 0
-      }
-    ];
-    
-    setSupportTickets(mockTickets);
+    try {
+      const response = await adminAPI.getSupportTickets({ limit: 50 });
+      
+      // Transform SupportTicketData to SupportTicket format for compatibility
+      const transformedTickets: SupportTicket[] = response.tickets.map(ticket => ({
+        id: ticket.id,
+        userId: ticket.createdBy,
+        userName: ticket.createdByEmail.split('@')[0], // Extract username from email
+        subject: ticket.subject,
+        category: ticket.category as 'technical' | 'financial' | 'compliance' | 'general',
+        priority: ticket.priority as 'low' | 'medium' | 'high' | 'urgent',
+        status: ticket.status as 'open' | 'in_progress' | 'resolved' | 'closed',
+        description: ticket.description,
+        createdAt: ticket.createdAt,
+        lastUpdated: ticket.createdAt, // Backend doesn't have lastUpdated yet
+        responses: 0 // Backend doesn't track responses yet
+      }));
+      
+      setSupportTickets(transformedTickets);
+    } catch (error) {
+      console.error('Failed to load support tickets:', error);
+      // Fallback to empty array on error
+      setSupportTickets([]);
+      throw error;
+    }
   };
 
   const handleUserAction = async (userId: string, action: 'activate' | 'suspend' | 'ban' | 'verify') => {
-    if (!checkPermission('manage_users')) {
+    if (!combinedCheckPermission('manage_users')) {
       error('Insufficient permissions to manage users');
       return;
     }
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Map actions to API update data
+      const updateData = {
+        accountStatus: action === 'activate' ? 'active' : 
+                     action === 'suspend' ? 'suspended' : 
+                     action === 'ban' ? 'suspended' : undefined, // Using suspended for ban
+        kycStatus: action === 'verify' ? 'verified' : undefined
+      };
+
+      // Filter out undefined values
+      const cleanUpdateData = Object.fromEntries(
+        Object.entries(updateData).filter(([_, value]) => value !== undefined)
+      );
+
+      await adminAPI.updateUser(userId, cleanUpdateData);
       
+      // Update local state to reflect changes
       setUsers(prev => prev.map(user => 
         user.id === userId 
           ? { 
               ...user, 
-              status: action === 'activate' ? 'active' : action === 'suspend' ? 'suspended' : action === 'ban' ? 'banned' : user.status,
-              kycStatus: action === 'verify' ? 'approved' : user.kycStatus
+              status: updateData.accountStatus || user.status,
+              kycStatus: updateData.kycStatus === 'verified' ? 'approved' : user.kycStatus
             }
           : user
       ));
       
       success(`User ${action}${action.endsWith('e') ? 'd' : action.endsWith('y') ? 'ied' : 'ned'} successfully`);
     } catch (err) {
+      console.error(`Failed to ${action} user:`, err);
       error(`Failed to ${action} user`);
     }
   };
 
   const handleComplianceAction = async (caseId: string, action: 'approve' | 'reject' | 'escalate') => {
     try {
-      await new Promise(resolve => setTimeout(resolve, 1200));
+      // Extract the actual user ID from the case ID (remove 'case_' prefix)
+      const userId = caseId.replace('case_', '');
       
+      const updateData = {
+        status: action === 'approve' ? 'verified' : action === 'reject' ? 'rejected' : 'pending',
+        notes: action === 'escalate' ? 'Case escalated for further review' : 
+              action === 'reject' ? 'KYC documents rejected' :
+              'KYC approved'
+      };
+
+      await adminAPI.updateKycStatus(userId, updateData);
+      
+      // Update local state to reflect changes
       setComplianceCases(prev => prev.map(case_ => 
         case_.id === caseId 
           ? { 
@@ -539,6 +563,7 @@ const PlatformAdmin: React.FC = () => {
       
       success(`Compliance case ${action}${action.endsWith('e') ? 'd' : 'ed'} successfully`);
     } catch (err) {
+      console.error(`Failed to ${action} compliance case:`, err);
       error(`Failed to ${action} compliance case`);
     }
   };
@@ -609,7 +634,12 @@ const PlatformAdmin: React.FC = () => {
     return matchesSearch && matchesStatus;
   });
 
-  if (!currentAdmin || !hasAccessToPlatformAdmin()) {
+  // Combined access check for both old admin system and unified auth system
+  const hasOldAdminAccess = currentAdmin && hasAccessToPlatformAdmin();
+  const hasUnifiedAdminAccess = unifiedUser && isUnifiedAuthenticated && 
+    (unifiedUser.role === 'super_admin' || unifiedUser.role === 'owner');
+  
+  if (!hasOldAdminAccess && !hasUnifiedAdminAccess) {
     return (
       <div className="w-full h-full flex items-center justify-center">
         <div className="text-center">
@@ -669,15 +699,15 @@ const PlatformAdmin: React.FC = () => {
               { id: 'notifications', label: 'Auto Communications', icon: <Mail className="w-4 h-4" />, color: 'gray', requiresSuperAdmin: true },
               { id: 'analytics', label: 'Analytics', icon: <FileText className="w-4 h-4" />, color: 'gray', permission: 'view_analytics' }
             ].filter((tab) => {
-              // Role-based tab filtering
+              // Role-based tab filtering using combined functions
               if (tab.requiresFeatureToggleAccess) {
-                return hasAccessToFeatureToggles();
+                return combinedHasAccessToFeatureToggles();
               }
               if (tab.requiresSuperAdmin) {
-                return adminRole === 'super_admin' || adminRole === 'owner';
+                return combinedAdminRole === 'super_admin' || combinedAdminRole === 'owner';
               }
               if (tab.permission) {
-                return checkPermission(tab.permission);
+                return combinedCheckPermission(tab.permission);
               }
               return true; // Show tab if no specific permission required
             }).map((tab) => (
@@ -689,14 +719,14 @@ const PlatformAdmin: React.FC = () => {
                 aria-controls={`${tab.id}-panel`}
                 className={`flex items-center space-x-2 px-4 py-3 rounded-xl font-medium text-sm transition-all duration-200 relative ${
                   selectedTab === tab.id
-                    ? `bg-${tab.color}-600 text-white shadow-lg transform scale-105`
-                    : `text-gray-600 dark:text-gray-400 hover:bg-${tab.color}-50 dark:hover:bg-${tab.color}-900/20 hover:text-${tab.color}-600 dark:hover:text-${tab.color}-400`
+                    ? 'bg-gray-600 text-white shadow-lg transform scale-105'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-300'
                 }`}
               >
                 <div className={`p-1 rounded-lg ${
                   selectedTab === tab.id
                     ? 'bg-white/20'
-                    : `bg-${tab.color}-100 dark:bg-${tab.color}-900/30`
+                    : 'bg-gray-100 dark:bg-gray-700'
                 }`}>
                   {tab.icon}
                 </div>
@@ -705,13 +735,13 @@ const PlatformAdmin: React.FC = () => {
                   <span className={`px-2 py-1 text-xs rounded-full font-bold ${
                     selectedTab === tab.id
                       ? 'bg-white/20 text-white'
-                      : `bg-${tab.color}-100 dark:bg-${tab.color}-900/50 text-${tab.color}-600 dark:text-${tab.color}-400`
+                      : 'bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300'
                   }`}>
                     {tab.count}
                   </span>
                 )}
                 {tab.count !== undefined && tab.count > 0 && selectedTab !== tab.id && (
-                  <div className={`absolute -top-1 -right-1 w-3 h-3 bg-${tab.color}-500 rounded-full animate-pulse`} />
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse" />
                 )}
               </button>
             ))}
@@ -726,24 +756,7 @@ const PlatformAdmin: React.FC = () => {
         </div>
       ) : (
         <>
-          {/* Users Tab */}
-          {selectedTab === 'users' && (() => {
-            try {
-              console.log('Rendering UserManagement component');
-              return <UserManagement />;
-            } catch (error) {
-              console.error('UserManagement error:', error);
-              return (
-                <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 border border-gray-200 dark:border-gray-700 shadow-lg">
-                  <div className="text-center">
-                    <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">User Management Error</h3>
-                    <p className="text-gray-600 dark:text-gray-400">Failed to load user management interface.</p>
-                  </div>
-                </div>
-              );
-            }
-          })()}
+          {/* Users Tab - Real Data Implementation */}
           
           {selectedTab === 'roles' && (() => {
             try {
@@ -1006,7 +1019,7 @@ const PlatformAdmin: React.FC = () => {
           })()}
           
           {/* Remove the hidden duplicate user management section */}
-          {false && selectedTab === 'users' && (
+          {selectedTab === 'users' && (
             <div className="space-y-6">
               {/* Search and Filters */}
               <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg">

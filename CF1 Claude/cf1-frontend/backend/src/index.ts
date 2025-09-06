@@ -20,6 +20,9 @@ import assetsRoutes from './routes/assets';
 import proposalsRoutes from './routes/proposals';
 import governanceRoutes from './routes/governance';
 import adminAuthRoutes from './routes/adminAuth';
+import adminRoutes from './routes/admin';
+import featureToggleRoutes from './routes/featureToggles';
+import authRoutes from './routes/auth';
 import { handleValidationError } from './middleware/validation';
 import { generateCSRFToken, csrfErrorHandler } from './middleware/csrfProtection';
 import { secureErrorHandler, requestIdMiddleware } from './middleware/secureErrorHandler';
@@ -74,12 +77,15 @@ app.get('/health', (req, res) => {
 });
 
 // API routes
+app.use('/api/auth', authRoutes);
 app.use('/api/v1/proposals', proposalsRoutes);
 app.use('/api/v1/governance', governanceRoutes);
 app.use('/api/v1/ai-analysis', analysisRoutes);
 app.use('/api/creator-toolkit', creatorToolkitRoutes);
 app.use('/api/v1/assets', assetsRoutes);
-app.use('/api/admin', adminAuthRoutes);
+app.use('/api/admin/auth', adminAuthRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/feature-toggles', featureToggleRoutes);
 
 // Error handling middleware (order matters!)
 app.use(handleValidationError);

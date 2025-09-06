@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import Header from './Header';
-import SimpleSidebar from './SimpleSidebar';
+import GlobalSidebar from './GlobalSidebar';
 import { useEventStream } from '../../lib/realtime/useEventStream';
 import { useRealTimeUpdates } from '../../hooks/useRealTimeUpdates';
 import { useKeyboardShortcuts, useCommonShortcuts } from '../../hooks/useKeyboardShortcuts';
@@ -99,23 +99,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     }
   }, [simulateChange]);
 
-  const getSidebarType = () => {
-    if (location.pathname.startsWith('/marketplace')) {
-      return 'marketplace';
-    } else if (location.pathname.startsWith('/portfolio')) {
-      return 'portfolio';
-    } else if (location.pathname.startsWith('/launchpad') || location.pathname.startsWith('/my-submissions')) {
-      return 'launchpad';
-    } else if (location.pathname.startsWith('/governance')) {
-      return 'governance';
-    } else if (location.pathname.startsWith('/profile')) {
-      return 'profile';
-    } else if (location.pathname.startsWith('/secondary-trading')) {
-      return 'marketplace'; // Use marketplace sidebar for secondary trading
-    } else {
-      return 'dashboard';
-    }
-  };
+  // No longer needed - using global sidebar for all pages
+  // Keeping only for admin view logic
 
   return (
     <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
@@ -139,7 +124,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           {isAdmin && currentView === 'admin' ? (
             <AdminSidebar adminRole={adminRole} />
           ) : (
-            <SimpleSidebar type={getSidebarType()} />
+            <GlobalSidebar />
           )}
         </div>
         

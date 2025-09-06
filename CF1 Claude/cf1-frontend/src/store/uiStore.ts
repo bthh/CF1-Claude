@@ -76,7 +76,7 @@ export const useUIStore = create<UIState>()(
     persist(
       (set) => ({
         // Initial state
-        darkMode: false,
+        darkMode: true,
         sidebarCollapsed: false,
         notifications: [],
         unreadCount: 0,
@@ -257,17 +257,24 @@ export const useUIStore = create<UIState>()(
   )
 );
 
-// Initialize dark mode on load
+// Initialize dark mode on load - Apply immediately to prevent flash
 if (typeof window !== 'undefined') {
   const storedDarkMode = localStorage.getItem('cf1-ui-storage');
+  let shouldUseDarkMode = true; // Default to dark mode
+  
   if (storedDarkMode) {
     try {
       const parsed = JSON.parse(storedDarkMode);
-      if (parsed.state?.darkMode) {
-        document.documentElement.classList.add('dark');
-      }
+      shouldUseDarkMode = parsed.state?.darkMode !== undefined ? parsed.state.darkMode : true;
     } catch (e) {
-      // Ignore parsing errors
+      // Ignore parsing errors, default to dark mode
+      shouldUseDarkMode = true;
     }
+  }
+  
+  if (shouldUseDarkMode) {
+    document.documentElement.classList.add('dark');
+  } else {
+    document.documentElement.classList.remove('dark');
   }
 }

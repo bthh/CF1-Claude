@@ -6,6 +6,7 @@ import { SkeletonCard, SkeletonStats } from '../components/Loading/Skeleton';
 import { Card, StatusBadge, Button } from '../components/UI';
 import { useMarketplaceData, AssetListing } from '../services/marketplaceDataService';
 import { useDataMode } from '../store/dataModeStore';
+import { getAssetImage } from '../utils/assetImageUtils';
 
 // Import AssetListing type from demo service
 type AssetListingProps = AssetListing;
@@ -32,9 +33,18 @@ const AssetListing: React.FC<AssetListingProps> = ({
     >
       <div className="aspect-video bg-gray-100 dark:bg-gray-700 rounded-lg mb-4 overflow-hidden">
         <img 
-          src={imageUrl || `https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=300&fit=crop`} 
+          src={imageUrl || getAssetImage(id || name, type)} 
           alt={name} 
           className="w-full h-full object-cover" 
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            try {
+              target.src = getAssetImage('default_real_estate');
+            } catch (error) {
+              console.warn('Error loading fallback image:', error);
+              target.src = 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&h=300&fit=crop';
+            }
+          }}
         />
       </div>
 

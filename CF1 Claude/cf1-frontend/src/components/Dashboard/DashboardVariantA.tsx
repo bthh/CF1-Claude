@@ -17,6 +17,7 @@ import {
   Image as ImageIcon
 } from 'lucide-react';
 import { useDashboardV2Store } from '../../store/dashboardV2Store';
+import { useFeatureToggleStore } from '../../store/featureToggleStore';
 import { useDataMode } from '../../store/dataModeStore';
 import Card from '../UI/Card';
 import Button from '../UI/Button';
@@ -88,6 +89,11 @@ const DashboardVariantA: React.FC = memo(() => {
   
   const { currentMode } = useDataMode();
   const navigate = useNavigate();
+  
+  // Feature toggles for dashboard sections
+  const { isFeatureEnabled } = useFeatureToggleStore();
+  const showPlatformHighlights = isFeatureEnabled('dashboard_platform_highlights');
+  const showFeaturedOpportunities = isFeatureEnabled('dashboard_featured_opportunities');
 
   // Performance monitoring
   const { trackCustomInteraction } = usePerformanceMonitoring('DashboardVariantA');
@@ -152,8 +158,8 @@ const DashboardVariantA: React.FC = memo(() => {
               <div className="flex flex-wrap justify-center gap-4 mb-8">
                 <Button 
                   variant="secondary"
-                  size="lg" 
-                  className="bg-white !text-blue-900 hover:bg-blue-50 font-semibold px-8 py-3 text-lg shadow-lg border-0" 
+                  size="large" 
+                  className="bg-white text-blue-900 hover:bg-blue-50 font-semibold px-8 py-3 text-lg shadow-lg border-0" 
                   onClick={handleConnectWallet}
                 >
                   <Users className="w-5 h-5 mr-2" />
@@ -161,7 +167,7 @@ const DashboardVariantA: React.FC = memo(() => {
                 </Button>
                 <Button 
                   variant="outline" 
-                  size="lg" 
+                  size="large" 
                   className="border-white/30 text-white hover:bg-white/10 font-semibold px-8 py-3 text-lg backdrop-blur-sm" 
                   onClick={handleBrowseAssets}
                 >
@@ -170,7 +176,7 @@ const DashboardVariantA: React.FC = memo(() => {
                 </Button>
                 <Button 
                   variant="outline" 
-                  size="lg" 
+                  size="large" 
                   className="border-white/30 text-white hover:bg-white/10 font-semibold px-8 py-3 text-lg backdrop-blur-sm" 
                   onClick={handleLearnMore}
                 >
@@ -295,7 +301,8 @@ const DashboardVariantA: React.FC = memo(() => {
       </section>
 
       {/* Platform Highlights */}
-      <section>
+      {showPlatformHighlights && (
+        <section>
         <div className="text-center mb-8">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center justify-center mb-2">
             <TrendingUp className="w-7 h-7 mr-3 text-green-600" />
@@ -344,12 +351,14 @@ const DashboardVariantA: React.FC = memo(() => {
           )}
         </div>
       </section>
+      )}
 
       {/* Enhanced Demo Components - Professional Stock Images */}
       {currentMode === 'demo' && (
         <>
           {/* Featured Marketplace Assets */}
-          <section>
+          {showFeaturedOpportunities && (
+            <section>
             <div className="mb-6">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center mb-2">
                 <Building2 className="w-7 h-7 mr-3 text-purple-600" />
@@ -361,6 +370,7 @@ const DashboardVariantA: React.FC = memo(() => {
             </div>
             <EnhancedMarketplaceWidget size="full" />
           </section>
+          )}
 
         </>
       )}
@@ -423,16 +433,16 @@ const DashboardVariantA: React.FC = memo(() => {
           </Link>
         </div>
 
-        <div className="space-y-3">
-          {memoizedLatestNews.slice(0, 3).map((news) => (
-            <Card key={news.id} className="p-3 hover:shadow-md transition-shadow cursor-pointer">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {memoizedLatestNews.slice(0, 4).map((news) => (
+            <Card key={news.id} className="p-4 hover:shadow-md transition-shadow cursor-pointer">
               <div className="flex items-start space-x-3">
-                <div className="flex-shrink-0 w-2 h-2 rounded-full bg-purple-600 mt-1.5"></div>
+                <div className="flex-shrink-0 w-2 h-2 rounded-full bg-purple-600 mt-2"></div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
+                  <h3 className="font-medium text-gray-900 dark:text-white mb-1 text-sm">
                     {news.title}
                   </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
+                  <p className="text-xs text-gray-600 dark:text-gray-300 mb-2 line-clamp-2">
                     {news.summary}
                   </p>
                   <div className="flex items-center justify-between">
@@ -444,7 +454,7 @@ const DashboardVariantA: React.FC = memo(() => {
                     </span>
                   </div>
                 </div>
-                <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
               </div>
             </Card>
           ))}

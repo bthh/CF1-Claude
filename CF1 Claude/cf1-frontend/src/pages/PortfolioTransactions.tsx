@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Search, Filter, ArrowUpDown, Calendar, DollarSign } from 'lucide-react';
 import { TouchTable } from '../components/TouchOptimized';
+import TransactionDetailsModal from '../components/Portfolio/TransactionDetailsModal';
 
 interface Transaction {
   id: string;
@@ -9,6 +10,12 @@ interface Transaction {
   transactionValue: number;
   status: 'Completed' | 'Pending' | 'Failed' | 'Processing';
   timestamp: Date;
+  assetType?: string;
+  quantity?: number;
+  pricePerToken?: number;
+  fees?: number;
+  description?: string;
+  txHash?: string;
 }
 
 const PortfolioTransactions: React.FC = () => {
@@ -17,6 +24,18 @@ const PortfolioTransactions: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleViewDetails = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedTransaction(null);
+  };
 
   const transactions: Transaction[] = [
     {
@@ -25,7 +44,13 @@ const PortfolioTransactions: React.FC = () => {
       transactionType: 'Purchase',
       transactionValue: 45000,
       status: 'Completed',
-      timestamp: new Date('2024-01-28T14:30:00')
+      timestamp: new Date('2024-01-28T14:30:00'),
+      assetType: 'Commercial Real Estate',
+      quantity: 50,
+      pricePerToken: 900,
+      fees: 45,
+      description: 'Initial investment in Manhattan office complex',
+      txHash: '0xabc123def456789...'  
     },
     {
       id: '2',
@@ -33,7 +58,11 @@ const PortfolioTransactions: React.FC = () => {
       transactionType: 'Dividend',
       transactionValue: 485,
       status: 'Completed',
-      timestamp: new Date('2024-01-27T09:15:00')
+      timestamp: new Date('2024-01-27T09:15:00'),
+      assetType: 'Precious Metals',
+      fees: 2.5,
+      description: 'Quarterly dividend payment from gold bullion holdings',
+      txHash: '0xdef456abc789012...'
     },
     {
       id: '3',
@@ -41,7 +70,13 @@ const PortfolioTransactions: React.FC = () => {
       transactionType: 'Purchase',
       transactionValue: 18900,
       status: 'Completed',
-      timestamp: new Date('2024-01-26T16:45:00')
+      timestamp: new Date('2024-01-26T16:45:00'),
+      assetType: 'Collectible Vehicles',
+      quantity: 15,
+      pricePerToken: 1260,
+      fees: 18.90,
+      description: 'Investment in rare Tesla Model S collection',
+      txHash: '0x123abc456def789...'
     },
     {
       id: '4',
@@ -49,7 +84,11 @@ const PortfolioTransactions: React.FC = () => {
       transactionType: 'Interest',
       transactionValue: 820,
       status: 'Pending',
-      timestamp: new Date('2024-01-25T11:20:00')
+      timestamp: new Date('2024-01-25T11:20:00'),
+      assetType: 'Fine Art',
+      fees: 4.10,
+      description: 'Interest payment from art appreciation fund',
+      txHash: '0x789def123abc456...'
     },
     {
       id: '5',
@@ -57,7 +96,13 @@ const PortfolioTransactions: React.FC = () => {
       transactionType: 'Purchase',
       transactionValue: 68450,
       status: 'Processing',
-      timestamp: new Date('2024-01-24T13:10:00')
+      timestamp: new Date('2024-01-24T13:10:00'),
+      assetType: 'Hospitality Real Estate',
+      quantity: 25,
+      pricePerToken: 2738,
+      fees: 68.45,
+      description: 'Investment in Miami luxury beachfront resort property',
+      txHash: '0x456def789abc123...'
     },
     {
       id: '6',
@@ -65,7 +110,13 @@ const PortfolioTransactions: React.FC = () => {
       transactionType: 'Sale',
       transactionValue: 12800,
       status: 'Completed',
-      timestamp: new Date('2024-01-23T10:30:00')
+      timestamp: new Date('2024-01-23T10:30:00'),
+      assetType: 'Private Equity',
+      quantity: 20,
+      pricePerToken: 640,
+      fees: 12.80,
+      description: 'Partial sale of tech startup equity for portfolio rebalancing',
+      txHash: '0x321fed654cba987...'
     },
     {
       id: '7',
@@ -73,7 +124,11 @@ const PortfolioTransactions: React.FC = () => {
       transactionType: 'Fee',
       transactionValue: -25,
       status: 'Completed',
-      timestamp: new Date('2024-01-22T08:45:00')
+      timestamp: new Date('2024-01-22T08:45:00'),
+      assetType: 'Precious Metals',
+      fees: 0,
+      description: 'Monthly storage and management fee for gold bullion vault',
+      txHash: '0x987cba321fed456...'
     },
     {
       id: '8',
@@ -81,7 +136,12 @@ const PortfolioTransactions: React.FC = () => {
       transactionType: 'Transfer',
       transactionValue: 0,
       status: 'Failed',
-      timestamp: new Date('2024-01-21T15:20:00')
+      timestamp: new Date('2024-01-21T15:20:00'),
+      assetType: 'Commercial Real Estate',
+      quantity: 5,
+      fees: 2.50,
+      description: 'Failed transfer of tokens between wallets - insufficient gas',
+      txHash: '0x654cba987fed321...'
     },
     {
       id: '9',
@@ -89,7 +149,13 @@ const PortfolioTransactions: React.FC = () => {
       transactionType: 'Purchase',
       transactionValue: 35120,
       status: 'Completed',
-      timestamp: new Date('2024-01-20T12:00:00')
+      timestamp: new Date('2024-01-20T12:00:00'),
+      assetType: 'Fine Art',
+      quantity: 8,
+      pricePerToken: 4390,
+      fees: 35.12,
+      description: 'Initial investment in authenticated Picasso artwork collection',
+      txHash: '0x159abc753def864...'
     },
     {
       id: '10',
@@ -97,7 +163,11 @@ const PortfolioTransactions: React.FC = () => {
       transactionType: 'Dividend',
       transactionValue: 340,
       status: 'Completed',
-      timestamp: new Date('2024-01-19T14:15:00')
+      timestamp: new Date('2024-01-19T14:15:00'),
+      assetType: 'Private Equity',
+      fees: 1.70,
+      description: 'Quarterly dividend payment from tech startup revenue sharing',
+      txHash: '0x864def159abc753...'
     }
   ];
 
@@ -251,6 +321,21 @@ const PortfolioTransactions: React.FC = () => {
         <span className="text-gray-600 dark:text-gray-400">{formatDateTime(value)}</span>
       ),
     },
+    {
+      key: 'actions',
+      title: 'Actions',
+      sortable: false,
+      responsive: 'always' as const,
+      className: 'text-center',
+      render: (_: any, row: Transaction) => (
+        <button
+          onClick={() => handleViewDetails(row)}
+          className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium text-sm"
+        >
+          View Details
+        </button>
+      ),
+    },
   ];
 
   return (
@@ -330,6 +415,13 @@ const PortfolioTransactions: React.FC = () => {
         exportable={true}
         emptyMessage="No transactions found matching your criteria."
         className="shadow-sm"
+      />
+
+      {/* Transaction Details Modal */}
+      <TransactionDetailsModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        transaction={selectedTransaction}
       />
     </div>
   );

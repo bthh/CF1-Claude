@@ -272,11 +272,29 @@ export const useAIProposalAssistantStore = create<AIProposalAssistantState>()(
       },
       
       analyzeProposal: async (formData: any) => {
+        const { aiProposalAssistant } = await import('../services/aiProposalAssistant');
         set({ isAnalyzing: true });
         
         try {
-          await new Promise(resolve => setTimeout(resolve, 1500));
-          
+          const assetType = formData.assetType as AssetType;
+          if (assetType) {
+            const analysis = await aiProposalAssistant.analyzeProposal(formData, assetType);
+            
+            set({
+              currentAssetType: assetType,
+              marketData: analysis.marketData,
+              validationResults: analysis.validationResults,
+              suggestions: [...get().suggestions, ...analysis.suggestions],
+              usageStats: {
+                ...get().usageStats,
+                suggestionsGenerated: get().usageStats.suggestionsGenerated + analysis.suggestions.length,
+                lastUsed: new Date().toISOString()
+              }
+            });
+          }
+        } catch (error) {
+          console.error('AI analysis failed:', error);
+          // Fallback to basic analysis
           const assetType = formData.assetType as AssetType;
           if (assetType && assetType in mockMarketData) {
             const marketData = mockMarketData[assetType];
@@ -291,9 +309,6 @@ export const useAIProposalAssistantStore = create<AIProposalAssistantState>()(
                 lastUsed: new Date().toISOString()
               }
             });
-            
-            // Generate suggestions based on analysis
-            await get().generateSuggestions(assetType, formData);
           }
         } finally {
           set({ isAnalyzing: false });
@@ -301,67 +316,45 @@ export const useAIProposalAssistantStore = create<AIProposalAssistantState>()(
       },
       
       generateSuggestions: async (assetType: AssetType, formData: any) => {
-        const marketData = mockMarketData[assetType];
-        const suggestions: ProposalSuggestion[] = [];
+        const { aiProposalAssistant } = await import('../services/aiProposalAssistant');
         
-        // APY suggestion
-        if (!formData.expectedAPY || parseFloat(formData.expectedAPY) !== marketData.averageAPY) {
-          suggestions.push({
-            id: `apy_${Date.now()}`,
-            field: 'expectedAPY',
-            suggestion: marketData.averageAPY.toString(),
-            confidence: 0.85,
-            reasoning: `Market average APY for ${assetType.replace('_', ' ')} is ${marketData.averageAPY}%. This aligns with investor expectations.`,
-            applied: false
-          });
-        }
-        
-        // Funding amount suggestion
-        if (!formData.targetAmount || parseInt(formData.targetAmount) > marketData.medianFundingAmount * 2) {
-          suggestions.push({
-            id: `funding_${Date.now()}`,
-            field: 'targetAmount',
-            suggestion: marketData.medianFundingAmount.toString(),
-            confidence: 0.78,
-            reasoning: `Median successful funding for ${assetType.replace('_', ' ')} projects is $${(marketData.medianFundingAmount / 1000000).toFixed(1)}M.`,
-            applied: false
-          });
-        }
-        
-        // Funding timeline suggestion
-        if (!formData.fundingDays || formData.fundingDays !== marketData.typicalFundingDays) {
-          suggestions.push({
-            id: `timeline_${Date.now()}`,
-            field: 'fundingDays',
-            suggestion: marketData.typicalFundingDays.toString(),
-            confidence: 0.92,
-            reasoning: `Typical funding period for ${assetType.replace('_', ' ')} is ${marketData.typicalFundingDays} days for optimal results.`,
-            applied: false
-          });
-        }
-        
-        // Description enhancement
-        if (!formData.description || formData.description.length < 100) {
-          const template = mockTemplates.find(t => t.assetType === assetType);
-          if (template) {
+        try {
+          const suggestions = await aiProposalAssistant.generateSuggestions(assetType, formData);
+          
+          set((state) => ({
+            suggestions: [...state.suggestions, ...suggestions],
+            usageStats: {
+              ...state.usageStats,
+              suggestionsGenerated: state.usageStats.suggestionsGenerated + suggestions.length
+            }
+          }));
+        } catch (error) {
+          console.error('Failed to generate AI suggestions:', error);
+          
+          // Fallback to basic suggestions
+          const marketData = mockMarketData[assetType];
+          const suggestions: ProposalSuggestion[] = [];
+          
+          // Basic APY suggestion
+          if (!formData.expectedAPY || parseFloat(formData.expectedAPY) !== marketData.averageAPY) {
             suggestions.push({
-              id: `description_${Date.now()}`,
-              field: 'description',
-              suggestion: template.description,
-              confidence: 0.75,
-              reasoning: 'Professional description template based on successful similar projects.',
+              id: `apy_${Date.now()}`,
+              field: 'expectedAPY',
+              suggestion: marketData.averageAPY.toString(),
+              confidence: 0.85,
+              reasoning: `Market average APY for ${assetType.replace('_', ' ')} is ${marketData.averageAPY}%. This aligns with investor expectations.`,
               applied: false
             });
           }
+          
+          set((state) => ({
+            suggestions: [...state.suggestions, ...suggestions],
+            usageStats: {
+              ...state.usageStats,
+              suggestionsGenerated: state.usageStats.suggestionsGenerated + suggestions.length
+            }
+          }));
         }
-        
-        set((state) => ({
-          suggestions: [...state.suggestions, ...suggestions],
-          usageStats: {
-            ...state.usageStats,
-            suggestionsGenerated: state.usageStats.suggestionsGenerated + suggestions.length
-          }
-        }));
       },
       
       applySuggestion: (suggestionId: string) => {
@@ -384,16 +377,29 @@ export const useAIProposalAssistantStore = create<AIProposalAssistantState>()(
       },
       
       generateFieldContent: async (field: string, context: any) => {
+        const { aiProposalAssistant } = await import('../services/aiProposalAssistant');
         set({ generatingField: field });
         
         try {
-          await new Promise(resolve => setTimeout(resolve, 2000));
+          const content = await aiProposalAssistant.generateFieldContent(field, context);
           
+          set({
+            lastGenerationTime: new Date().toISOString(),
+            usageStats: {
+              ...get().usageStats,
+              suggestionsGenerated: get().usageStats.suggestionsGenerated + 1
+            }
+          });
+          
+          return content;
+        } catch (error) {
+          console.error('Failed to generate AI content:', error);
+          
+          // Fallback to template-based generation
           const assetType = context.assetType as AssetType;
           const template = mockTemplates.find(t => t.assetType === assetType);
           
           let content = '';
-          
           switch (field) {
             case 'description':
               content = template?.description || 'AI-generated description based on asset type and market analysis.';
@@ -408,14 +414,6 @@ export const useAIProposalAssistantStore = create<AIProposalAssistantState>()(
               content = `AI-generated content for ${field}`;
           }
           
-          set({
-            lastGenerationTime: new Date().toISOString(),
-            usageStats: {
-              ...get().usageStats,
-              suggestionsGenerated: get().usageStats.suggestionsGenerated + 1
-            }
-          });
-          
           return content;
         } finally {
           set({ generatingField: null });
@@ -423,18 +421,27 @@ export const useAIProposalAssistantStore = create<AIProposalAssistantState>()(
       },
       
       loadMarketData: async (assetType: AssetType) => {
-        await new Promise(resolve => setTimeout(resolve, 800));
+        const { aiProposalAssistant } = await import('../services/aiProposalAssistant');
         
-        const marketData = mockMarketData[assetType];
-        set({ marketData, currentAssetType: assetType });
+        try {
+          const marketData = await aiProposalAssistant.getMarketData(assetType);
+          set({ marketData, currentAssetType: assetType });
+        } catch (error) {
+          console.error('Failed to load market data:', error);
+          // Fallback to mock data
+          const marketData = mockMarketData[assetType];
+          set({ marketData, currentAssetType: assetType });
+        }
       },
       
       validateProposal: (formData: any) => {
+        // For sync compatibility, use basic validation
+        // The AI validation will be called separately through analyzeProposal
         const results: ValidationResult[] = [];
         const assetType = formData.assetType as AssetType;
         const marketData = assetType ? mockMarketData[assetType] : null;
         
-        // APY validation
+        // Basic APY validation
         if (formData.expectedAPY && marketData) {
           const apy = parseFloat(formData.expectedAPY);
           const marketAPY = marketData.averageAPY;
@@ -454,22 +461,6 @@ export const useAIProposalAssistantStore = create<AIProposalAssistantState>()(
               message: `APY of ${apy}% may be too low to attract investors`,
               severity: 'info',
               suggestion: `Market average is ${marketAPY}% for this asset type`
-            });
-          }
-        }
-        
-        // Target amount validation
-        if (formData.targetAmount && marketData) {
-          const amount = parseInt(formData.targetAmount);
-          const medianAmount = marketData.medianFundingAmount;
-          
-          if (amount > medianAmount * 3) {
-            results.push({
-              field: 'targetAmount',
-              isValid: false,
-              message: `Target amount is very high compared to similar projects`,
-              severity: 'warning',
-              suggestion: `Consider median funding of $${(medianAmount / 1000000).toFixed(1)}M for this asset type`
             });
           }
         }

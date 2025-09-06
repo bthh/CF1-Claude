@@ -5,6 +5,8 @@
 
 import { DataSource } from 'typeorm';
 import { ProposalAnalysis } from '../models/ProposalAnalysis';
+import { FeatureToggle } from '../models/FeatureToggle';
+import { User } from '../models/User';
 import path from 'path';
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
@@ -12,7 +14,7 @@ const isDevelopment = process.env.NODE_ENV !== 'production';
 export const AppDataSource = new DataSource({
   type: 'sqlite',
   database: process.env.DATABASE_PATH || path.join(__dirname, '../../data/cf1.db'),
-  entities: [ProposalAnalysis],
+  entities: [ProposalAnalysis, FeatureToggle, User],
   synchronize: isDevelopment, // Auto-create tables in development
   logging: isDevelopment,
   migrations: [path.join(__dirname, '../migrations/*.ts')],

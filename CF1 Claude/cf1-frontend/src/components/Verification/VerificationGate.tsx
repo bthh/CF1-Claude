@@ -50,9 +50,18 @@ export const VerificationGate: React.FC<VerificationGateProps> = ({
     ? checkInvestmentEligibility(amount, proposalId)
     : null;
 
-  // If user can perform action and investment check passes, render children
-  if (canPerform && (!investmentCheck || investmentCheck.eligible)) {
-    return <>{children}</>;
+  // Progressive verification logic - allow users to proceed after basic verification for invest action
+  if (action === 'invest') {
+    // If user has basic verification, let them proceed to investment flow
+    // where they'll get more specific guidance about wallet/identity requirements
+    if (basicVerification?.status === 'approved') {
+      return <>{children}</>;
+    }
+  } else {
+    // For other actions, use the original logic
+    if (canPerform && (!investmentCheck || investmentCheck.eligible)) {
+      return <>{children}</>;
+    }
   }
 
   // Otherwise render the gate
@@ -165,16 +174,16 @@ export const VerificationGate: React.FC<VerificationGateProps> = ({
   return (
     <>
       {/* Disabled/Gated Content */}
-      <div className="relative">
+      <div className="relative overflow-hidden rounded-lg">
         <div className="opacity-50 pointer-events-none">
           {children}
         </div>
         
         {/* Overlay */}
-        <div className="absolute inset-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg flex items-center justify-center">
+        <div className="absolute inset-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg flex items-center justify-center z-10">
           <button
             onClick={handleClick}
-            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium flex items-center space-x-2 transition-colors"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium flex items-center space-x-2 transition-colors text-sm"
           >
             {getActionIcon()}
             <span>Verify to Continue</span>

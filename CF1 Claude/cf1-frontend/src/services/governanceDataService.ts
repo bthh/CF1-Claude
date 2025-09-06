@@ -31,6 +31,10 @@ const getDemoProposals = (scenario: DemoScenario = 'demo'): GovernanceProposal[]
     votingDuration: 7,
     isPrivate: false,
     visibilityPolicy: 'always_public',
+    userVoted: 'for',
+    userVotingPower: 150,
+    userTokens: 150,
+    userEstimatedDistribution: 220.65,
     detailedBreakdown: {
       totalRevenue: '$485,000',
       operationalExpenses: '$185,000',
@@ -64,7 +68,11 @@ const getDemoProposals = (scenario: DemoScenario = 'demo'): GovernanceProposal[]
     rationale: 'Current system is 15 years old and causing higher utility costs',
     votingDuration: 14,
     isPrivate: false,
-    visibilityPolicy: 'always_public'
+    visibilityPolicy: 'always_public',
+    userVoted: null,
+    userVotingPower: 85,
+    userTokens: 85,
+    userEstimatedDistribution: 0
   },
   {
     id: 'demo-g3',
@@ -89,7 +97,11 @@ const getDemoProposals = (scenario: DemoScenario = 'demo'): GovernanceProposal[]
     rationale: 'Current management fees are above market rate',
     votingDuration: 7,
     isPrivate: false,
-    visibilityPolicy: 'always_public'
+    visibilityPolicy: 'always_public',
+    userVoted: 'against',
+    userVotingPower: 200,
+    userTokens: 200,
+    userEstimatedDistribution: 0
   }
   ];
 
@@ -390,11 +402,9 @@ const getProductionProposals = async (): Promise<GovernanceProposal[]> => {
 const getDevelopmentProposals = (): GovernanceProposal[] => {
   try {
     const allProposals = useGovernanceStore.getState().proposals || [];
-    // Return only approved proposals (not drafts)
+    // Return all proposals except drafts (drafts are handled separately)
     return allProposals.filter(proposal => 
-      proposal.status !== 'draft' && 
-      proposal.status !== 'submitted' && 
-      proposal.status !== 'under_review'
+      proposal.status !== 'draft'
     );
   } catch (error) {
     console.warn('Failed to load development proposals:', error);
@@ -408,6 +418,9 @@ export const useGovernanceData = () => {
   const { isEnabled: isDemoModeEnabled, scenario } = useDemoModeStore();
   const [productionProposals, setProductionProposals] = useState<GovernanceProposal[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Subscribe to governance store changes for development mode
+  const governanceStoreProposals = useGovernanceStore(state => state.proposals);
 
   // Load production data when mode changes to production
   useEffect(() => {
@@ -425,7 +438,8 @@ export const useGovernanceData = () => {
       case 'production':
         return productionProposals;
       case 'development':
-        return getDevelopmentProposals();
+        // Use reactive store data for development mode
+        return governanceStoreProposals.filter(proposal => proposal.status !== 'draft');
       case 'demo':
         // Use scenario-specific data when demo mode is enabled with scenarios
         if (isDemoModeEnabled && scenario) {
@@ -439,7 +453,7 @@ export const useGovernanceData = () => {
 
 
   // Memoize proposals to prevent creating new array references on every render
-  const proposals = useMemo(() => getProposals(), [currentMode, isDemoModeEnabled, scenario, productionProposals]);
+  const proposals = useMemo(() => getProposals(), [currentMode, isDemoModeEnabled, scenario, productionProposals, governanceStoreProposals]);
   
   // Memoize stats calculation based on proposals
   const stats = useMemo(() => {

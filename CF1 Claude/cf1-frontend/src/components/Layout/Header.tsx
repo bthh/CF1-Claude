@@ -1,12 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ChevronDown, Zap, Plus, Vote, Eye, User, Settings, LogOut, Moon, Sun, Bell, Wallet, HelpCircle, PlayCircle, Menu, Shield, Crown, Users, Info } from 'lucide-react';
+import { ChevronDown, Zap, Plus, Vote, Eye, User, Settings, LogOut, Moon, Sun, Bell, Wallet, HelpCircle, PlayCircle, Menu, Shield, Crown, Users, Info, Mail, MessageSquare } from 'lucide-react';
 import { MobileNavigation } from './MobileNavigation';
 import { useCosmJS } from '../../hooks/useCosmJS';
 import { useOnboardingContext } from '../Onboarding/OnboardingProvider';
 import { useVerificationStore } from '../../store/verificationStore';
 import { useAdminAuthContext } from '../../hooks/useAdminAuth';
 import { useSessionStore, SessionRole } from '../../store/sessionStore';
+import { useUnifiedAuthStore, isWalletUser, isEmailUser } from '../../store/unifiedAuthStore';
+import UnifiedAuthModal from '../Auth/UnifiedAuthModal';
 import { useFeatureToggleStore } from '../../store/featureToggleStore';
 import { RoleSelector } from '../RoleSelector';
 import AdminLogin from '../AdminLogin';
@@ -16,6 +18,9 @@ import { useNotifications } from '../../hooks/useNotifications';
 import { useDataMode } from '../../store/dataModeStore';
 import { PortfolioTestingPanel } from '../Debug/PortfolioTestingPanel';
 import { useAdminViewStore } from '../../store/adminViewStore';
+import { UserPathController } from '../Onboarding/UserPathController';
+import { OnboardingWelcome } from '../Onboarding/OnboardingWelcome';
+import SupportTicketModal from '../Support/SupportTicketModal';
 
 const Header: React.FC = () => {
   const location = useLocation();
@@ -23,8 +28,18 @@ const Header: React.FC = () => {
   // CosmJS wallet hook
   const { isConnected, address, connect, disconnect } = useCosmJS();
   
+  // Unified authentication
+  const { 
+    isAuthenticated: isUnifiedAuthenticated, 
+    user: unifiedUser, 
+    showAuthModal,
+    showLogin,
+    hideAuthModal,
+    logout: unifiedLogout
+  } = useUnifiedAuthStore();
+  
   // Onboarding context
-  const { startTour } = useOnboardingContext();
+  const { startTour, completedTours, userPreferences, updatePreferences } = useOnboardingContext();
   
   // Verification store
   const { initializeUser, level, updateProfile, submitBasicVerification, submitIdentityVerification, submitAccreditedVerification } = useVerificationStore();
@@ -42,6 +57,9 @@ const Header: React.FC = () => {
   } = useAdminAuthContext();
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [showTestingPanel, setShowTestingPanel] = useState(false);
+  const [showUserPathFlow, setShowUserPathFlow] = useState(false);
+  const [showWelcomeTours, setShowWelcomeTours] = useState(false);
+  const [showSupportModal, setShowSupportModal] = useState(false);
   
   // Feature toggles
   const { isFeatureEnabled } = useFeatureToggleStore();
@@ -59,9 +77,10 @@ const Header: React.FC = () => {
   // Simple local state for theme and notifications
   const [darkMode, setDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('darkMode') === 'true';
+      const stored = localStorage.getItem('darkMode');
+      return stored !== null ? stored === 'true' : true; // Default to dark mode
     }
-    return false;
+    return true; // Default to dark mode
   });
   
   const toggleDarkMode = () => {
@@ -74,6 +93,15 @@ const Header: React.FC = () => {
       document.documentElement.classList.remove('dark');
     }
   };
+
+  // Apply dark mode class whenever darkMode state changes
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
   
   // Initialize user verification when wallet connects
   useEffect(() => {
@@ -117,7 +145,12 @@ const Header: React.FC = () => {
     setIsProfileOpen(false);
   };
   
-  // Handle wallet connection with role selection
+  // Handle unified authentication
+  const handleSignIn = () => {
+    showLogin();
+  };
+
+  // Handle wallet connection with role selection (legacy support)
   const handleConnectWallet = () => {
     if (!isRoleSelected) {
       // Show role selector first
@@ -126,6 +159,17 @@ const Header: React.FC = () => {
       // Role already selected, proceed with wallet connection
       connect();
     }
+  };
+
+  // Handle unified logout
+  const handleUnifiedLogout = async () => {
+    await unifiedLogout();
+    // Also disconnect wallet if connected
+    if (isConnected) {
+      disconnect();
+    }
+    clearRole();
+    setIsProfileOpen(false);
   };
   
   // Handle role selection completion
@@ -199,29 +243,58 @@ const Header: React.FC = () => {
   };
 
   // Helper to check if user is platform or super admin
-  const isPlatformOrSuperAdmin = adminRole === 'platform_admin' || adminRole === 'super_admin';
+  // Check both old admin auth system and unified auth system
+  const user = unifiedUser; // Rename for clarity
+  const unifiedAuthIsAdmin = user && (user.role === 'super_admin' || user.role === 'owner' || user.role === 'creator');
+  const combinedIsAdmin = isAdmin || unifiedAuthIsAdmin;
+  const combinedAdminRole = adminRole || (user?.role === 'super_admin' ? 'super_admin' : user?.role === 'owner' ? 'owner' : user?.role === 'creator' ? 'creator' : null);
+  const isPlatformOrSuperAdmin = adminRole === 'platform_admin' || adminRole === 'super_admin' || user?.role === 'super_admin' || user?.role === 'owner';
   
   // Debug logging for production troubleshooting
   console.log('🔍 Header Debug Info:', {
-    isAdmin,
-    adminRole,
-    isPlatformOrSuperAdmin,
+    oldAdminAuth: { isAdmin, adminRole },
+    unifiedAuth: { isAuthenticated: isUnifiedAuthenticated, userRole: user?.role },
+    combined: { combinedIsAdmin, combinedAdminRole, isPlatformOrSuperAdmin },
     currentMode: currentMode,
     location: location.pathname
   });
 
   const quickActions = [
     {
-      label: 'Platform Tour',
+      label: 'Get Started',
       icon: <PlayCircle className="w-4 h-4" />,
-      action: () => startTour('welcome-tour'),
-      description: 'Take a guided tour of the platform'
+      action: () => setShowUserPathFlow(true),
+      description: 'Choose your path: Investor, Creator, or Trader'
     },
     {
-      label: 'Help & Tours',
+      label: 'Tutorials & Tours',
+      icon: <HelpCircle className="w-4 h-4" />,
+      action: () => setShowWelcomeTours(true),
+      description: 'Interactive tours and tutorials for all platform features'
+    },
+    {
+      label: 'Marketplace Tour',
       icon: <HelpCircle className="w-4 h-4" />,
       action: () => startTour('marketplace-tour'),
-      description: 'Get help and tutorials'
+      description: 'Learn to browse and invest in tokenized assets'
+    },
+    {
+      label: 'Portfolio Guide',
+      icon: <HelpCircle className="w-4 h-4" />,
+      action: () => startTour('portfolio-tour'),
+      description: 'Manage and track your investments'
+    },
+    {
+      label: 'Governance Voting',
+      icon: <HelpCircle className="w-4 h-4" />,
+      action: () => startTour('governance-tour'),
+      description: 'Participate in asset governance and voting'
+    },
+    {
+      label: 'Support Ticket',
+      icon: <MessageSquare className="w-4 h-4" />,
+      action: () => setShowSupportModal(true),
+      description: 'Get help from our support team'
     },
     // Add portfolio testing panel for development
     ...(currentMode === 'development' ? [{
@@ -267,7 +340,7 @@ const Header: React.FC = () => {
     {
       label: 'Sign Out',
       icon: <LogOut className="w-4 h-4" />,
-      onClick: handleLogout,
+      onClick: isUnifiedAuthenticated ? handleUnifiedLogout : handleLogout,
       description: 'Sign out of your account'
     }
   ];
@@ -326,14 +399,6 @@ const Header: React.FC = () => {
               Marketplace
             </Link>
           )}
-          <Link 
-            to="/portfolio"
-            className={`px-4 py-2 rounded-lg text-sm font-medium ${
-              isActive('/portfolio') ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white'
-            }`}
-          >
-            Portfolio
-          </Link>
           {isFeatureEnabled('launchpad') && (
             <Link 
               to="/launchpad"
@@ -372,7 +437,7 @@ const Header: React.FC = () => {
               Analytics
             </Link>
           )}
-          {isAdmin && (
+          {combinedIsAdmin && (
             <Link 
               to="/admin"
               className={`px-4 py-2 rounded-lg text-sm font-medium ${
@@ -401,7 +466,17 @@ const Header: React.FC = () => {
           </button>
           
           {isQuickActionsOpen && (
-            <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
+            <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
+              {/* Welcome Header */}
+              <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-600">
+                <h3 className="font-semibold text-gray-900 dark:text-white text-sm mb-1">
+                  Welcome to CF1 Platform
+                </h3>
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  Tokenized real-world assets with enterprise-grade compliance
+                </p>
+              </div>
+              
               {quickActions.map((action, index) => {
                 if (action.to) {
                   return (
@@ -454,15 +529,15 @@ const Header: React.FC = () => {
           <NotificationBell />
         </div>
 
-        {/* Connect Wallet / User Profile */}
-        {!isConnected ? (
+        {/* Sign In / User Profile */}
+        {!isUnifiedAuthenticated && !isConnected ? (
           <button 
-            data-tour="wallet-connect"
-            onClick={handleConnectWallet}
-            className="px-4 py-2 border border-gray-300 bg-white text-gray-700 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors flex items-center space-x-2"
+            data-tour="sign-in"
+            onClick={handleSignIn}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition-colors flex items-center space-x-2"
           >
-            <Wallet className="w-4 h-4" />
-            <span>Connect Wallet</span>
+            <User className="w-4 h-4" />
+            <span>Sign In</span>
           </button>
         ) : (
           <div className="relative" ref={profileRef} data-tour="profile-menu">
@@ -475,10 +550,19 @@ const Header: React.FC = () => {
               </div>
               <div className="text-left">
                 <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Account
+                  {unifiedUser?.displayName || unifiedUser?.email?.split('@')[0] || 'Account'}
                 </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">
-                  {address ? `${address.slice(0, 8)}...${address.slice(-6)}` : 'Connected'}
+                <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center space-x-1">
+                  {unifiedUser && (
+                    <>
+                      {isEmailUser(unifiedUser) && <Mail className="w-3 h-3" />}
+                      {isWalletUser(unifiedUser) && <Wallet className="w-3 h-3" />}
+                    </>
+                  )}
+                  <span>
+                    {unifiedUser?.email ? unifiedUser.email :
+                     address ? `${address.slice(0, 8)}...${address.slice(-6)}` : 'Connected'}
+                  </span>
                 </div>
               </div>
               <ChevronDown className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform ${
@@ -590,6 +674,37 @@ const Header: React.FC = () => {
       <PortfolioTestingPanel
         isOpen={showTestingPanel}
         onClose={() => setShowTestingPanel(false)}
+      />
+
+      {/* User Path Flow */}
+      <UserPathController
+        isOpen={showUserPathFlow}
+        onClose={() => setShowUserPathFlow(false)}
+      />
+      
+      {/* Tutorials & Tours Modal */}
+      <OnboardingWelcome
+        isOpen={showWelcomeTours}
+        onClose={() => setShowWelcomeTours(false)}
+        onStartTour={(tourId) => {
+          setShowWelcomeTours(false);
+          startTour(tourId);
+        }}
+        completedTours={completedTours}
+        userPreferences={userPreferences}
+        onUpdatePreferences={updatePreferences}
+      />
+      
+      {/* Unified Authentication Modal */}
+      <UnifiedAuthModal
+        isOpen={showAuthModal}
+        onClose={hideAuthModal}
+      />
+
+      {/* Support Ticket Modal */}
+      <SupportTicketModal
+        isOpen={showSupportModal}
+        onClose={() => setShowSupportModal(false)}
       />
     </>
   );

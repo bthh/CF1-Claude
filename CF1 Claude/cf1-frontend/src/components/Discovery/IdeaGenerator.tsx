@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { 
   Lightbulb, 
   Target, 
@@ -36,24 +36,30 @@ const IdeaGenerator: React.FC = () => {
     investmentGoals: []
   });
 
-  const handlePreferenceChange = (key: keyof UserPreferences, value: any) => {
-    setPreferences(prev => ({
-      ...prev,
-      [key]: value
-    }));
-  };
+  const handlePreferenceChange = useCallback((key: keyof UserPreferences, value: any) => {
+    setPreferences(prev => {
+      const newPreferences = {
+        ...prev,
+        [key]: value
+      };
+      console.log(`Setting ${key} to ${value}`, newPreferences);
+      return newPreferences;
+    });
+  }, []);
 
-  const handleArrayToggle = (key: keyof UserPreferences, value: string) => {
+  const handleArrayToggle = useCallback((key: keyof UserPreferences, value: string) => {
     setPreferences(prev => {
       const currentArray = (prev[key] as string[]) || [];
-      return {
+      const newPreferences = {
         ...prev,
         [key]: currentArray.includes(value)
           ? currentArray.filter(item => item !== value)
           : [...currentArray, value]
       };
+      console.log(`Toggling ${key} with ${value}`, newPreferences);
+      return newPreferences;
     });
-  };
+  }, []);
 
   const handleGenerateIdeas = async () => {
     const completePreferences: UserPreferences = {
@@ -215,19 +221,19 @@ const IdeaGenerator: React.FC = () => {
                 Quick Actions
               </h3>
               <div className="space-y-3">
-                <Button className="w-full justify-start" size="sm">
+                <Button className="w-full justify-start" size="small">
                   <FileText className="w-4 h-4 mr-2" />
                   Start Proposal Draft
                 </Button>
-                <Button variant="outline" className="w-full justify-start" size="sm">
+                <Button variant="outline" className="w-full justify-start" size="small">
                   <Users className="w-4 h-4 mr-2" />
                   Find Mentors
                 </Button>
-                <Button variant="outline" className="w-full justify-start" size="sm">
+                <Button variant="outline" className="w-full justify-start" size="small">
                   <BarChart3 className="w-4 h-4 mr-2" />
                   Market Research Tools
                 </Button>
-                <Button variant="outline" className="w-full justify-start" size="sm">
+                <Button variant="outline" className="w-full justify-start" size="small">
                   <Target className="w-4 h-4 mr-2" />
                   Similar Opportunities
                 </Button>
@@ -241,7 +247,7 @@ const IdeaGenerator: React.FC = () => {
               <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
                 Connect with our Creator Success team for personalized guidance on turning this idea into reality.
               </p>
-              <Button size="sm" className="w-full">
+              <Button size="small" className="w-full">
                 Get Expert Help
               </Button>
             </Card>
@@ -322,7 +328,7 @@ const IdeaGenerator: React.FC = () => {
                 <Button 
                   onClick={() => handleSelectIdea(idea)}
                   className="w-full"
-                  size="sm"
+                  size="small"
                 >
                   View Details
                   <ArrowRight className="w-4 h-4 ml-2" />
@@ -354,7 +360,8 @@ const IdeaGenerator: React.FC = () => {
       {/* Preferences Form */}
       <div className="max-w-4xl mx-auto">
         <Card className="p-8">
-          <div className="space-y-8">
+          <form onSubmit={(e) => e.preventDefault()}>
+            <div className="space-y-8">
             {/* Interests */}
             <div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
@@ -368,8 +375,8 @@ const IdeaGenerator: React.FC = () => {
                 ].map((interest) => (
                   <Button
                     key={interest}
-                    variant={preferences.interests?.includes(interest) ? 'default' : 'outline'}
-                    size="sm"
+                    variant={preferences.interests?.includes(interest) ? 'secondary' : 'outline'}
+                    size="small"
                     onClick={() => handleArrayToggle('interests', interest)}
                     className="justify-start"
                   >
@@ -393,8 +400,11 @@ const IdeaGenerator: React.FC = () => {
                 ].map((option) => (
                   <Button
                     key={option.value}
-                    variant={preferences.budgetRange === option.value ? 'default' : 'outline'}
-                    onClick={() => handlePreferenceChange('budgetRange', option.value)}
+                    variant={preferences.budgetRange === option.value ? 'secondary' : 'outline'}
+                    onClick={() => {
+                      console.log(`Budget button clicked: ${option.value}`);
+                      handlePreferenceChange('budgetRange', option.value);
+                    }}
                     className="h-auto p-4 flex-col items-start"
                   >
                     <div className="font-semibold">{option.label}</div>
@@ -417,8 +427,11 @@ const IdeaGenerator: React.FC = () => {
                 ].map((option) => (
                   <Button
                     key={option.value}
-                    variant={preferences.riskTolerance === option.value ? 'default' : 'outline'}
-                    onClick={() => handlePreferenceChange('riskTolerance', option.value)}
+                    variant={preferences.riskTolerance === option.value ? 'secondary' : 'outline'}
+                    onClick={() => {
+                      console.log(`Risk button clicked: ${option.value}`);
+                      handlePreferenceChange('riskTolerance', option.value);
+                    }}
                     className="h-auto p-4 flex-col items-start"
                   >
                     <div className="font-semibold">{option.label}</div>
@@ -441,8 +454,11 @@ const IdeaGenerator: React.FC = () => {
                 ].map((option) => (
                   <Button
                     key={option.value}
-                    variant={preferences.experience === option.value ? 'default' : 'outline'}
-                    onClick={() => handlePreferenceChange('experience', option.value)}
+                    variant={preferences.experience === option.value ? 'secondary' : 'outline'}
+                    onClick={() => {
+                      console.log(`Experience button clicked: ${option.value}`);
+                      handlePreferenceChange('experience', option.value);
+                    }}
                     className="h-auto p-4 flex-col items-start"
                   >
                     <div className="font-semibold">{option.label}</div>
@@ -464,8 +480,8 @@ const IdeaGenerator: React.FC = () => {
                 ].map((goal) => (
                   <Button
                     key={goal}
-                    variant={preferences.investmentGoals?.includes(goal) ? 'default' : 'outline'}
-                    size="sm"
+                    variant={preferences.investmentGoals?.includes(goal) ? 'secondary' : 'outline'}
+                    size="small"
                     onClick={() => handleArrayToggle('investmentGoals', goal)}
                     className="justify-start"
                   >
@@ -475,10 +491,22 @@ const IdeaGenerator: React.FC = () => {
               </div>
             </div>
 
+            {/* Debug State Display */}
+            <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg text-sm">
+              <h4 className="font-semibold mb-2">Current Selections (Debug):</h4>
+              <div className="space-y-1 text-gray-600 dark:text-gray-300">
+                <div>Interests: {preferences.interests?.join(', ') || 'None'}</div>
+                <div>Budget: {preferences.budgetRange || 'None'}</div>
+                <div>Risk: {preferences.riskTolerance || 'None'}</div>
+                <div>Experience: {preferences.experience || 'None'}</div>
+                <div>Goals: {preferences.investmentGoals?.join(', ') || 'None'}</div>
+              </div>
+            </div>
+
             {/* Generate Button */}
             <div className="text-center pt-6">
               <Button
-                size="lg"
+                size="large"
                 onClick={handleGenerateIdeas}
                 disabled={!preferences.interests?.length || !preferences.budgetRange}
                 className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
@@ -490,7 +518,8 @@ const IdeaGenerator: React.FC = () => {
                 This will take a few seconds while our AI analyzes market trends
               </p>
             </div>
-          </div>
+            </div>
+          </form>
         </Card>
       </div>
     </div>

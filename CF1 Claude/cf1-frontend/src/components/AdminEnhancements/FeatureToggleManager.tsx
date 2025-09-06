@@ -11,28 +11,50 @@ import {
 } from 'lucide-react';
 import { useFeatureToggleStore, FeatureToggle } from '../../store/featureToggleStore';
 import { useAdminAuthContext } from '../../hooks/useAdminAuth';
+import { useUnifiedAuthStore } from '../../store/unifiedAuthStore';
 import { useNotifications } from '../../hooks/useNotifications';
 import { formatTimeAgo } from '../../utils/format';
 
 const FeatureToggleManager: React.FC = () => {
   const { currentAdmin, checkPermission } = useAdminAuthContext();
+  const { user: unifiedUser, isAuthenticated: isUnifiedAuthenticated } = useUnifiedAuthStore();
   const { features, isFeatureEnabled, updateFeatureToggle, loadFeatureToggles } = useFeatureToggleStore();
   const { success, error, warning } = useNotifications();
+
+  // Combined permission checking for both admin systems
+  const combinedCheckPermission = (permission: string): boolean => {
+    // Check old admin system
+    if (currentAdmin && checkPermission(permission)) {
+      return true;
+    }
+    
+    // Check unified auth system
+    if (unifiedUser && isUnifiedAuthenticated) {
+      if (permission === 'manage_platform_config') {
+        return ['platform_admin', 'super_admin', 'owner'].includes(unifiedUser.role);
+      }
+      if (permission === 'emergency_controls') {
+        return ['super_admin', 'owner'].includes(unifiedUser.role);
+      }
+    }
+    
+    return false;
+  };
 
   useEffect(() => {
     loadFeatureToggles();
   }, [loadFeatureToggles]);
 
-  const handleToggle = (featureId: string, currentState: boolean) => {
+  const handleToggle = async (featureId: string, currentState: boolean) => {
     const feature = features[featureId];
     
-    // Check permissions
-    if (feature.requiredRole === 'super_admin' && !checkPermission('emergency_controls')) {
+    // Check permissions using combined system
+    if (feature.requiredRole === 'super_admin' && !combinedCheckPermission('emergency_controls')) {
       error('Only Super Admins can toggle this feature');
       return;
     }
     
-    if (feature.requiredRole === 'platform_admin' && !checkPermission('manage_platform_config')) {
+    if (feature.requiredRole === 'platform_admin' && !combinedCheckPermission('manage_platform_config')) {
       error('You don\'t have permission to toggle this feature');
       return;
     }
@@ -46,8 +68,13 @@ const FeatureToggleManager: React.FC = () => {
       warning('Disabling launchpad will prevent new proposals from being created');
     }
 
-    updateFeatureToggle(featureId, !currentState, currentAdmin?.address || 'unknown');
-    success(`${feature.name} has been ${!currentState ? 'enabled' : 'disabled'}`);
+    try {
+      const modifiedBy = currentAdmin?.address || unifiedUser?.email || 'unknown';
+      await updateFeatureToggle(featureId, !currentState, modifiedBy);
+      success(`${feature.name} has been ${!currentState ? 'enabled' : 'disabled'}`);
+    } catch (err) {
+      error(`Failed to update ${feature.name}: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    }
   };
 
   const getCategoryColor = (category: string) => {
@@ -57,6 +84,8 @@ const FeatureToggleManager: React.FC = () => {
       case 'governance': return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
       case 'launchpad': return 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400';
       case 'general': return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400';
+      case 'dashboard': return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/20 dark:text-indigo-400';
+      case 'portfolio': return 'bg-teal-100 text-teal-800 dark:bg-teal-900/20 dark:text-teal-400';
       default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400';
     }
   };
@@ -92,7 +121,7 @@ const FeatureToggleManager: React.FC = () => {
             Feature toggles are loading or not configured yet.
           </p>
           <button
-            onClick={loadFeatureToggles}
+            onClick={() => loadFeatureToggles()}
             className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors mx-auto"
           >
             <RefreshCw className="w-4 h-4" />
@@ -192,8 +221,8 @@ const FeatureToggleManager: React.FC = () => {
                   <button
                     onClick={() => handleToggle(feature.id, feature.enabled)}
                     disabled={
-                      (feature.requiredRole === 'super_admin' && !checkPermission('emergency_controls')) ||
-                      (feature.requiredRole === 'platform_admin' && !checkPermission('manage_platform_config'))
+                      (feature.requiredRole === 'super_admin' && !combinedCheckPermission('emergency_controls')) ||
+                      (feature.requiredRole === 'platform_admin' && !combinedCheckPermission('manage_platform_config'))
                     }
                     className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all ${
                       feature.enabled 

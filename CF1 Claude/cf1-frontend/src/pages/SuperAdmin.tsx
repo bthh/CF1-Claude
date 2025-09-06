@@ -24,6 +24,7 @@ import {
   Bell
 } from 'lucide-react';
 import { useAdminAuthContext } from '../hooks/useAdminAuth';
+import { useUnifiedAuthStore } from '../store/unifiedAuthStore';
 import { useNotifications } from '../hooks/useNotifications';
 import { formatAmount, formatPercentage, formatTimeAgo } from '../utils/format';
 import { usePlatformConfigStore } from '../store/platformConfigStore';
@@ -75,6 +76,7 @@ interface SystemLog {
 
 const SuperAdmin: React.FC = () => {
   const { currentAdmin, checkPermission, hasAccessToSuperAdminManagement, isOwner } = useAdminAuthContext();
+  const { user: unifiedUser, isAuthenticated: isUnifiedAuthenticated } = useUnifiedAuthStore();
   const { success, error } = useNotifications();
   const { config: platformConfig, updateTradingMode, updateMaxAPY } = usePlatformConfigStore();
   
@@ -298,7 +300,12 @@ const SuperAdmin: React.FC = () => {
     }
   };
 
-  if (!currentAdmin || !checkPermission('manage_platform_config')) {
+  // Combined access check for both old admin system and unified auth system
+  const hasOldAdminAccess = currentAdmin && checkPermission('manage_platform_config');
+  const hasUnifiedAdminAccess = unifiedUser && isUnifiedAuthenticated && 
+    (unifiedUser.role === 'super_admin' || unifiedUser.role === 'owner');
+  
+  if (!hasOldAdminAccess && !hasUnifiedAdminAccess) {
     return (
       <div className="w-full h-full flex items-center justify-center">
         <div className="text-center">

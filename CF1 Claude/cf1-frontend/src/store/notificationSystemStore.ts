@@ -94,6 +94,9 @@ interface NotificationSystemState {
   // Bulk operations
   markMultipleAsRead: (notificationIds: string[]) => void;
   deleteMultiple: (notificationIds: string[]) => void;
+  
+  // Demo/Development helpers
+  resetToMockData: () => void;
 }
 
 // Default notification preferences
@@ -204,13 +207,129 @@ const mockNotifications: InAppNotification[] = [
     actionable: false,
     expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Expires in 24 hours
     persistent: false
+  },
+  {
+    id: 'notif_6',
+    type: 'proposal_new',
+    priority: 'normal',
+    title: 'New Real Estate Opportunity',
+    message: 'Miami Beach Resort has launched on the platform with a $2M funding goal.',
+    timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(), // 3 hours ago
+    read: false,
+    actionable: true,
+    actionUrl: '/launchpad/miami-beach-resort',
+    actionText: 'View Opportunity',
+    metadata: {
+      proposalId: 'miami-beach-resort',
+      assetId: 'miami-beach-resort'
+    },
+    persistent: false
+  },
+  {
+    id: 'notif_7',
+    type: 'dividend_received',
+    priority: 'normal',
+    title: 'Quarterly Dividend',
+    message: 'You received $287.35 in dividends from Gold Bullion Vault.',
+    timestamp: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(), // 8 hours ago
+    read: false,
+    actionable: true,
+    actionUrl: '/portfolio',
+    actionText: 'View Portfolio',
+    metadata: {
+      assetId: 'gold-vault',
+      amount: '$287.35'
+    },
+    persistent: false
+  },
+  {
+    id: 'notif_8',
+    type: 'token_unlock',
+    priority: 'normal',
+    title: 'Tokens Unlocked',
+    message: '500 tokens from Texas Solar Farm are now available for trading.',
+    timestamp: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(), // 12 hours ago
+    read: true,
+    actionable: true,
+    actionUrl: '/portfolio',
+    actionText: 'View Tokens',
+    metadata: {
+      assetId: 'texas-solar',
+      amount: '500'
+    },
+    persistent: false
+  },
+  {
+    id: 'notif_9',
+    type: 'proposal_ending',
+    priority: 'urgent',
+    title: 'Opportunity Ending Soon',
+    message: 'Denver Tech Hub funding closes in 24 hours - 87% funded.',
+    timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(), // 5 hours ago
+    read: false,
+    actionable: true,
+    actionUrl: '/launchpad/denver-tech-hub',
+    actionText: 'Invest Now',
+    metadata: {
+      proposalId: 'denver-tech-hub',
+      assetId: 'denver-tech-hub'
+    },
+    persistent: false
+  },
+  {
+    id: 'notif_10',
+    type: 'voting_asset_owned',
+    priority: 'normal',
+    title: 'Vote on Asset Improvements',
+    message: 'Voting open for "$50K Solar Panel Upgrade" - Gold Bullion Vault facility.',
+    timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(), // 1 hour ago
+    read: false,
+    actionable: true,
+    actionUrl: '/governance/solar-upgrade-vote',
+    actionText: 'Cast Vote',
+    metadata: {
+      proposalId: 'solar-upgrade-vote',
+      assetId: 'gold-vault'
+    },
+    persistent: false
+  },
+  {
+    id: 'notif_11',
+    type: 'proposal_invested_alert',
+    priority: 'normal',
+    title: 'Investment Processing',
+    message: 'Your $12,500 investment in Miami Beach Resort is being processed.',
+    timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30 minutes ago
+    read: false,
+    actionable: true,
+    actionUrl: '/portfolio',
+    actionText: 'Track Investment',
+    metadata: {
+      assetId: 'miami-beach-resort',
+      amount: '$12,500'
+    },
+    persistent: false
+  },
+  {
+    id: 'notif_12',
+    type: 'system_alert',
+    priority: 'normal',
+    title: 'New Feature Available',
+    message: 'Portfolio analytics dashboard now includes ESG impact scoring.',
+    timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+    read: true,
+    actionable: true,
+    actionUrl: '/portfolio',
+    actionText: 'Explore Analytics',
+    metadata: {},
+    persistent: false
   }
 ];
 
 export const useNotificationSystemStore = create<NotificationSystemState>()(
   persist(
     (set, get) => ({
-      notifications: mockNotifications,
+      notifications: [...mockNotifications], // Create fresh copy
       preferences: defaultPreferences,
       unreadCount: mockNotifications.filter(n => !n.read).length,
       isEnabled: true,
@@ -411,12 +530,22 @@ export const useNotificationSystemStore = create<NotificationSystemState>()(
             unreadCount: newUnreadCount
           };
         });
+      },
+
+      resetToMockData: () => {
+        const unreadCount = mockNotifications.filter(n => !n.read).length;
+        set(() => ({
+          notifications: mockNotifications,
+          unreadCount,
+          preferences: defaultPreferences,
+          isEnabled: true
+        }));
       }
     }),
     {
       name: 'cf1-notification-system',
       partialize: (state) => ({
-        notifications: state.notifications.filter(n => n.persistent || !n.read), // Only persist unread and persistent notifications
+        notifications: state.notifications, // Persist all notifications for demo mode
         preferences: state.preferences,
         isEnabled: state.isEnabled
       })

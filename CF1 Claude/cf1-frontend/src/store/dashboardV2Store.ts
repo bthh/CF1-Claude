@@ -219,6 +219,13 @@ export const useDashboardV2Store = create<DashboardV2State>((set, get) => ({
                   summary: 'Platform assets continue to outperform market benchmarks',
                   timestamp: '3 days ago',
                   category: 'performance'
+                },
+                {
+                  id: '4',
+                  title: 'AI-Powered Investment Analytics Now Live',
+                  summary: 'New machine learning algorithms provide real-time market insights',
+                  timestamp: '5 days ago',
+                  category: 'technology'
                 }
               ]
             });

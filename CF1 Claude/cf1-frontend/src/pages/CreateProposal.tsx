@@ -20,6 +20,8 @@ import {
 import { useSubmissionStore } from '../store/submissionStore';
 import { usePlatformConfigStore } from '../store/platformConfigStore';
 import { useNotifications } from '../hooks/useNotifications';
+import { useSessionStore } from '../store/sessionStore';
+import { useWalletStore } from '../store/walletStore';
 import { useProposalNotifications } from '../hooks/useProposalNotifications';
 import { TouchInput, TouchSelect, TouchTextarea } from '../components/TouchOptimized';
 import AIProposalAssistant from '../components/AIProposalAssistant/AIProposalAssistant';
@@ -33,6 +35,7 @@ import {
   validateProposalFinancials
 } from '../services/platformConfig';
 import { createProposal, validateProposalData } from '../services/proposalService';
+import { storeAllFiles, retrieveAllFiles, cleanupDraftFiles } from '../utils/draftFileStorage';
 
 interface FormData {
   // Asset Details
@@ -66,6 +69,8 @@ const CreateProposal: React.FC = () => {
   const { addSubmission, addBackendProposalReference, saveDraft, updateDraft, getSubmissionById, deleteDraft } = useSubmissionStore();
   const { validateAPY } = usePlatformConfigStore();
   const { success, error: showError, info } = useNotifications();
+  const { selectedRole } = useSessionStore();
+  const { connection } = useWalletStore();
   const { scheduleNotificationsForProposal, hasConfiguredNotifications } = useProposalNotifications();
   const [currentStep, setCurrentStep] = useState(1);
   const [isEditingDraft, setIsEditingDraft] = useState(false);
@@ -79,6 +84,7 @@ const CreateProposal: React.FC = () => {
   const [isAutoSaving, setIsAutoSaving] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
+  const [currentSubmission, setCurrentSubmission] = useState<any>(null);
   const [formData, setFormData] = useState<FormData>({
     assetName: '',
     assetType: '',
@@ -98,42 +104,73 @@ const CreateProposal: React.FC = () => {
     useOfFunds: ''
   });
 
-  // Load draft if editing
+  // Check authentication - require wallet connection or user session
+  useEffect(() => {
+    const isAuthenticated = connection?.address || selectedRole;
+    if (!isAuthenticated) {
+      showError(
+        'Authentication Required',
+        'You must connect your wallet or log in to create proposals. Please connect your wallet from the header menu.'
+      );
+      navigate('/launchpad');
+      return;
+    }
+  }, [connection, selectedRole, navigate, showError]);
+
+  // Load draft or submission for editing
   useEffect(() => {
     const draftParam = searchParams.get('draft');
-    if (draftParam) {
-      const draft = getSubmissionById(draftParam);
-      if (draft && draft.status === 'draft') {
+    const editParam = searchParams.get('edit');
+    const submissionId = draftParam || editParam;
+    
+    if (submissionId) {
+      const submission = getSubmissionById(submissionId);
+      if (submission && (submission.status === 'draft' || submission.status === 'changes_requested')) {
         setIsEditingDraft(true);
-        setDraftId(draftParam);
+        setDraftId(submissionId);
+        setCurrentSubmission(submission);
         
         // Convert old funding deadline to days if needed
         let fundingDays = null;
-        if (draft.fundingDeadline) {
-          const deadlineDate = new Date(draft.fundingDeadline);
+        if (submission.fundingDeadline) {
+          const deadlineDate = new Date(submission.fundingDeadline);
           const today = new Date();
           const diffTime = deadlineDate.getTime() - today.getTime();
           const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
           fundingDays = diffDays > 0 ? diffDays : null;
         }
         
+        // Retrieve stored files for this draft/submission
+        const storedFiles = retrieveAllFiles(submissionId);
+        
+        // Show success message if files were restored
+        const restoredFileCount = Object.values(storedFiles).filter(file => file !== null).length;
+        if (restoredFileCount > 0) {
+          info('Files Restored', `${restoredFileCount} uploaded file(s) have been restored from your ${submission.status === 'draft' ? 'draft' : 'submission'}.`);
+        }
+        
+        // Show specific message for changes requested
+        if (submission.status === 'changes_requested') {
+          info('Editing Submission', 'You are editing a submission that requires changes. Please review the admin comments and make the necessary updates.');
+        }
+        
         setFormData({
-          assetName: draft.assetName,
-          assetType: draft.assetType,
-          category: draft.category,
-          customCategory: draft.customCategory || '',
-          location: draft.location,
-          description: draft.description,
-          targetAmount: draft.targetAmount,
-          tokenPrice: draft.tokenPrice,
-          expectedAPY: draft.expectedAPY,
+          assetName: submission.assetName,
+          assetType: submission.assetType,
+          category: submission.category,
+          customCategory: submission.customCategory || '',
+          location: submission.location,
+          description: submission.description,
+          targetAmount: submission.targetAmount,
+          tokenPrice: submission.tokenPrice,
+          expectedAPY: submission.expectedAPY,
           fundingDays: fundingDays,
-          businessPlan: null, // Files can't be restored from drafts
-          financialProjections: null,
-          legalDocuments: null,
-          assetValuation: null,
-          riskFactors: draft.riskFactors,
-          useOfFunds: draft.useOfFunds
+          businessPlan: storedFiles.businessPlan,
+          financialProjections: storedFiles.financialProjections,
+          legalDocuments: storedFiles.legalDocuments,
+          assetValuation: storedFiles.assetValuation,
+          riskFactors: submission.riskFactors,
+          useOfFunds: submission.useOfFunds
         });
       }
     }
@@ -356,7 +393,7 @@ const CreateProposal: React.FC = () => {
     }
   };
 
-  const handleSaveDraft = () => {
+  const handleSaveDraft = async () => {
     // Calculate deadline date from funding days
     const fundingDeadline = formData.fundingDays 
       ? new Date(Date.now() + formData.fundingDays * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
@@ -382,6 +419,8 @@ const CreateProposal: React.FC = () => {
       useOfFunds: formData.useOfFunds
     };
 
+    let currentDraftId = draftId;
+
     if (isEditingDraft && draftId) {
       updateDraft(draftId, submissionData);
       success('Draft Updated', 'Your proposal draft has been saved with the latest changes.');
@@ -389,6 +428,7 @@ const CreateProposal: React.FC = () => {
       const newDraftId = saveDraft(submissionData);
       setDraftId(newDraftId);
       setIsEditingDraft(true);
+      currentDraftId = newDraftId;
       success(
         'Draft Saved', 
         'Your proposal has been saved as a draft. You can continue editing or submit it later.',
@@ -397,6 +437,22 @@ const CreateProposal: React.FC = () => {
           onAction: () => navigate('/launchpad/drafts')
         }
       );
+    }
+
+    // Store files separately using the draft ID
+    if (currentDraftId) {
+      try {
+        await storeAllFiles(currentDraftId, {
+          businessPlan: formData.businessPlan,
+          financialProjections: formData.financialProjections,
+          legalDocuments: formData.legalDocuments,
+          assetValuation: formData.assetValuation
+        });
+        console.log('📄 Files stored successfully for draft:', currentDraftId);
+      } catch (error) {
+        console.error('Error storing files for draft:', error);
+        showError('File Storage Warning', 'Your draft was saved but uploaded files may not persist between sessions.');
+      }
     }
   };
 
@@ -473,7 +529,9 @@ const CreateProposal: React.FC = () => {
         // If we were editing a draft, remove it from local store since it's now submitted to backend
         if (isEditingDraft && draftId) {
           deleteDraft(draftId);
-          console.log('🗑️ [CREATE PROPOSAL] Removed local draft after successful backend submission');
+          // Also cleanup stored files
+          cleanupDraftFiles(draftId);
+          console.log('🗑️ [CREATE PROPOSAL] Removed local draft and files after successful backend submission');
         }
         
         // Trigger AI analysis if suitable documents are available
@@ -621,12 +679,27 @@ const CreateProposal: React.FC = () => {
         useOfFunds: formData.useOfFunds
       };
 
+      let currentDraftId = draftId;
+
       if (isEditingDraft && draftId) {
         updateDraft(draftId, submissionData);
       } else {
         const newDraftId = saveDraft(submissionData);
         setDraftId(newDraftId);
         setIsEditingDraft(true);
+        currentDraftId = newDraftId;
+      }
+
+      // Auto-save files if any are present (don't await to avoid blocking UI)
+      if (currentDraftId && (formData.businessPlan || formData.financialProjections || formData.legalDocuments || formData.assetValuation)) {
+        storeAllFiles(currentDraftId, {
+          businessPlan: formData.businessPlan,
+          financialProjections: formData.financialProjections,
+          legalDocuments: formData.legalDocuments,
+          assetValuation: formData.assetValuation
+        }).catch(error => {
+          console.error('Auto-save file storage failed:', error);
+        });
       }
       
       setLastAutoSave(new Date().toLocaleTimeString());
@@ -1220,10 +1293,12 @@ const CreateProposal: React.FC = () => {
         
         <div className="text-center flex-1">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            {isEditingDraft ? 'Edit Draft Proposal' : 'Submit New Proposal'}
+            {currentSubmission?.status === 'changes_requested' ? 'Address Required Changes' : 
+             isEditingDraft ? 'Edit Draft Proposal' : 'Submit New Proposal'}
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
-            {isEditingDraft ? 'Edit and submit your saved draft' : 'Create a new tokenized asset proposal'}
+            {currentSubmission?.status === 'changes_requested' ? 'Update your proposal based on admin feedback' :
+             isEditingDraft ? 'Edit and submit your saved draft' : 'Create a new tokenized asset proposal'}
           </p>
           
           {/* Auto-save status */}
@@ -1255,6 +1330,40 @@ const CreateProposal: React.FC = () => {
         
         <div className="w-32"></div> {/* Spacer for centering */}
       </div>
+
+      {/* Admin Comments Section - Show for changes requested */}
+      {currentSubmission && currentSubmission.status === 'changes_requested' && currentSubmission.reviewComments && (
+        <div className="bg-gradient-to-r from-orange-50 to-yellow-50 dark:from-orange-900/20 dark:to-yellow-900/20 border-2 border-orange-200 dark:border-orange-800 rounded-xl p-6 shadow-sm">
+          <div className="flex items-start space-x-4">
+            <div className="flex-shrink-0">
+              <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-orange-600" />
+              </div>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-orange-900 dark:text-orange-200 mb-2">
+                Changes Requested by Admin
+              </h3>
+              <div className="bg-white dark:bg-gray-800 border border-orange-200 dark:border-orange-700 rounded-lg p-4 mb-4">
+                <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
+                  {currentSubmission.reviewComments}
+                </p>
+              </div>
+              {currentSubmission.reviewDate && (
+                <p className="text-sm text-orange-700 dark:text-orange-300">
+                  Reviewed on {new Date(currentSubmission.reviewDate).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-8">
         {renderStepIndicator()}

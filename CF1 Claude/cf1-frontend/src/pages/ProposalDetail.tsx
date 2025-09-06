@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Clock, Users, Target, TrendingUp, Zap } from 'lucide-react';
 import { InvestmentModal } from '../components/InvestmentModal';
 import { useBusinessTracking } from '../hooks/useMonitoring';
 import { AIAnalysisTab } from '../components/AIAnalysis/AIAnalysisTab';
+import { useFeatureToggleStore } from '../store/featureToggleStore';
+import { ProposalReviewDetail } from '../components/ProposalReviewDetail';
 import { useSessionStore } from '../store/sessionStore';
 import { useNotifications } from '../hooks/useNotifications';
 import { useSubmissionStore } from '../store/submissionStore';
@@ -18,12 +20,14 @@ import { apiClient } from '../lib/api/client';
 const ProposalDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [showInvestModal, setShowInvestModal] = useState(false);
   const { trackProposal } = useBusinessTracking();
   const { selectedRole } = useSessionStore();
   const { success, error } = useNotifications();
   const [isInstantFunding, setIsInstantFunding] = useState(false);
   const { getSubmissionById, updateFundingStatus } = useSubmissionStore();
+  const { isFeatureEnabled } = useFeatureToggleStore();
   const { addTransaction, addAsset } = usePortfolioStore();
   const { connection } = useWalletStore();
   const { isAdmin, isSuperAdmin, isOwner, currentAdmin } = useAdminAuth();
@@ -91,6 +95,18 @@ const ProposalDetail: React.FC = () => {
 
     fetchProposalFromBackend();
   }, [id]);
+
+  // Check for invest=true query parameter and auto-open modal
+  useEffect(() => {
+    const shouldOpenInvestModal = searchParams.get('invest') === 'true';
+    if (shouldOpenInvestModal) {
+      setShowInvestModal(true);
+      // Remove the query parameter from the URL to clean it up
+      const newSearchParams = new URLSearchParams(searchParams);
+      newSearchParams.delete('invest');
+      setSearchParams(newSearchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   // Check if user has admin privileges for instant funding with enhanced security
   const canInstantFund = (selectedRole === 'super_admin' || selectedRole === 'owner') && 
@@ -434,6 +450,14 @@ const ProposalDetail: React.FC = () => {
   // Use proposalData instead of proposal for the rest of the component
   const proposal = proposalData;
 
+  // Check if this proposal is in review status and should use review-focused layout
+  const isInReview = ['submitted', 'under_review', 'changes_requested'].includes(
+    proposal.status?.toLowerCase() || ''
+  );
+
+  // If this is accessed via /my-submissions route or is in review status, show review-focused view
+  const isSubmissionView = window.location.pathname.includes('/my-submissions') || isInReview;
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -492,6 +516,11 @@ const ProposalDetail: React.FC = () => {
         </div>
       </div>
 
+      {/* Conditional rendering based on view type */}
+      {isSubmissionView ? (
+        <ProposalReviewDetail proposal={proposal} showAdminComments={true} />
+      ) : (
+        <>
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
@@ -581,15 +610,15 @@ const ProposalDetail: React.FC = () => {
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-gray-600 dark:text-gray-400">Expected APY</span>
-                <span className="font-medium text-green-600">{proposal.financial_terms.expected_apy}</span>
+                <span className="font-medium text-gray-900 dark:text-white">{proposal.financial_terms.expected_apy}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600 dark:text-gray-400">Minimum Investment</span>
-                <span className="font-medium">$1,000</span>
+                <span className="font-medium text-gray-900 dark:text-white">$1,000</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600 dark:text-gray-400">Token Price</span>
-                <span className="font-medium">$1,000</span>
+                <span className="font-medium text-gray-900 dark:text-white">$1,000</span>
               </div>
             </div>
           </div>
@@ -606,11 +635,15 @@ const ProposalDetail: React.FC = () => {
         </div>
       </div>
 
-      {/* AI Analysis Section */}
-      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">AI Analysis</h2>
-        <AIAnalysisTab proposalId={proposal.id} />
-      </div>
+      {/* AI Analysis Section - Conditionally rendered based on feature toggle */}
+      {isFeatureEnabled('launchpad_ai_analysis') && (
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">AI Analysis</h2>
+          <AIAnalysisTab proposalId={proposal.id} />
+        </div>
+      )}
+        </>
+      )}
 
       {/* Investment Modal */}
       <InvestmentModal

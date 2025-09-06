@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp, TrendingDown, DollarSign, PieChart, BarChart3, Activity, Target, Calendar, Eye, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, PieChart, BarChart3, Gift, Target, Calendar, Eye, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, BarChart, Bar } from 'recharts';
 import { useEnhancedPortfolioData } from '../../services/demoPortfolioData';
+import { useRewardsStore } from '../../store/rewardsStore';
+import { getAssetImage } from '../../utils/assetImageUtils';
 import AllTiersModal from './AllTiersModal';
 
 interface PortfolioOverviewProps {
@@ -31,13 +33,13 @@ const assetAllocation = [
 
 // Static performance data to avoid glitching
 const performanceData = [
-  { month: 'Jan', value: 85000, target: 90000 },
-  { month: 'Feb', value: 88500, target: 92000 },
-  { month: 'Mar', value: 94200, target: 95000 },
-  { month: 'Apr', value: 101300, target: 98000 },
-  { month: 'May', value: 108750, target: 102000 },
-  { month: 'Jun', value: 118420, target: 106000 },
-  { month: 'Jul', value: 125680, target: 110000 }
+  { month: 'Jan', value: 85000, target: 90000, dividends: 245.50, monthlyIncrease: 3500 },
+  { month: 'Feb', value: 88500, target: 92000, dividends: 278.30, monthlyIncrease: 3500 },
+  { month: 'Mar', value: 94200, target: 95000, dividends: 312.75, monthlyIncrease: 5700 },
+  { month: 'Apr', value: 101300, target: 98000, dividends: 356.20, monthlyIncrease: 7100 },
+  { month: 'May', value: 108750, target: 102000, dividends: 398.45, monthlyIncrease: 7450 },
+  { month: 'Jun', value: 118420, target: 106000, dividends: 445.80, monthlyIncrease: 9670 },
+  { month: 'Jul', value: 125680, target: 110000, dividends: 492.25, monthlyIncrease: 7260 }
 ];
 
 const topAssets = [
@@ -110,6 +112,9 @@ export const EnhancedPortfolioOverview: React.FC<PortfolioOverviewProps> = ({ cl
   // Get enhanced portfolio data with tier information
   const { assets, summary } = useEnhancedPortfolioData();
   
+  // Get rewards data from the rewards store with error handling
+  const { totalRewardsEarned = 0, totalMonthlyRewards = 0 } = useRewardsStore();
+  
   // Parse portfolio data from the new service (memoized to prevent re-renders)
   const portfolioData = React.useMemo(() => {
     if (!summary || assets.length === 0) {
@@ -118,8 +123,9 @@ export const EnhancedPortfolioOverview: React.FC<PortfolioOverviewProps> = ({ cl
         totalInvested: 0,
         totalGains: 0,
         totalGainsPercent: 0,
-        totalDividends: 0,
-        totalDividendsYield: 0,
+        totalRewards: 0,
+        totalRewardsYield: 0,
+        monthlyRewards: 0,
         assetsCount: 0,
         monthlyGrowth: 0,
         yearlyGrowth: 0
@@ -131,18 +137,22 @@ export const EnhancedPortfolioOverview: React.FC<PortfolioOverviewProps> = ({ cl
     const totalGains = parseFloat(summary.totalGain.replace(/[$,+]/g, '')) || 0;
     const totalGainsPercent = parseFloat(summary.totalGainPercent.replace(/[%+]/g, '')) || 0;
 
+    // Calculate rewards yield as percentage of total value
+    const rewardsYield = totalValue > 0 ? (totalRewardsEarned / totalValue * 100) : 0;
+
     return {
       totalValue,
       totalInvested,
       totalGains,
       totalGainsPercent,
-      totalDividends: 0,
-      totalDividendsYield: 0,
+      totalRewards: totalRewardsEarned,
+      totalRewardsYield: rewardsYield,
+      monthlyRewards: totalMonthlyRewards,
       assetsCount: assets.length,
       monthlyGrowth: 8.34,
       yearlyGrowth: 34.12
     };
-  }, [summary, assets.length]);
+  }, [summary, assets.length, totalRewardsEarned, totalMonthlyRewards]);
   
   // Convert assets to allocation data (memoized)
   const assetAllocation = React.useMemo(() => {
@@ -163,8 +173,8 @@ export const EnhancedPortfolioOverview: React.FC<PortfolioOverviewProps> = ({ cl
     }, [] as any[]);
   }, [assets, portfolioData.totalValue]);
   
-  // Get top performing assets (memoized)
-  const topAssets = React.useMemo(() => {
+  // Get first 5 assets for display (memoized)
+  const displayAssets = React.useMemo(() => {
     if (!assets.length) return [];
     
     return assets
@@ -174,10 +184,18 @@ export const EnhancedPortfolioOverview: React.FC<PortfolioOverviewProps> = ({ cl
         invested: parseFloat(asset.purchaseValue.replace(/[$,]/g, '')) || 0,
         gain: parseFloat(asset.change.replace(/[$,+]/g, '')) || 0,
         gainPercent: parseFloat(asset.changePercent.replace(/[%+]/g, '')) || 0,
-        performance: asset.isPositive ? (parseFloat(asset.changePercent.replace(/[%+]/g, '')) > 20 ? 'excellent' : 'good') : 'poor'
+        performance: asset.isPositive ? (parseFloat(asset.changePercent.replace(/[%+]/g, '')) > 20 ? 'excellent' : 'good') : 'poor',
+        // Use consistent asset images across the platform with error handling
+        imageUrl: asset.imageUrl || (function() {
+          try {
+            return getAssetImage(asset.id || asset.name, asset.type);
+          } catch (error) {
+            console.warn('Error getting asset image:', error);
+            return 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=300&h=300&fit=crop';
+          }
+        })()
       }))
-      .sort((a, b) => b.gainPercent - a.gainPercent)
-      .slice(0, 4);
+      .slice(0, 5); // Show first 5 assets
   }, [assets]);
 
   return (
@@ -231,16 +249,16 @@ export const EnhancedPortfolioOverview: React.FC<PortfolioOverviewProps> = ({ cl
           className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700"
         >
           <div className="flex items-center justify-between mb-2">
-            <Activity className="w-8 h-8 text-purple-500" />
-            <span className="text-purple-500 text-sm font-medium">Dividends</span>
+            <Gift className="w-8 h-8 text-purple-500" />
+            <span className="text-purple-500 text-sm font-medium">Rewards</span>
           </div>
           <div className="space-y-1">
-            <p className="text-gray-600 dark:text-gray-400 text-sm">Total Dividends</p>
+            <p className="text-gray-600 dark:text-gray-400 text-sm">Total Rewards</p>
             <p className="text-2xl font-bold text-gray-900 dark:text-white">
-              {formatCurrency(portfolioData.totalDividends)}
+              {formatCurrency(portfolioData.totalRewards)}
             </p>
             <p className="text-purple-500 text-sm">
-              {portfolioData.totalDividendsYield}% yield
+              {portfolioData.totalRewardsYield.toFixed(2)}% yield
             </p>
           </div>
         </motion.div>
@@ -319,6 +337,14 @@ export const EnhancedPortfolioOverview: React.FC<PortfolioOverviewProps> = ({ cl
                   tick={{ fontSize: 12, fill: '#6B7280' }}
                   tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
                 />
+                <YAxis 
+                  yAxisId="right"
+                  orientation="right"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 12, fill: '#6B7280' }}
+                  tickFormatter={(value) => `$${value}`}
+                />
                 <Tooltip
                   contentStyle={{
                     backgroundColor: '#1F2937',
@@ -328,8 +354,12 @@ export const EnhancedPortfolioOverview: React.FC<PortfolioOverviewProps> = ({ cl
                   }}
                   formatter={(value: number, name: string) => [
                     formatCurrency(value),
-                    name === 'value' ? 'Portfolio Value' : 'Target'
+                    name === 'value' ? 'Portfolio Value' : 
+                    name === 'target' ? 'Target' :
+                    name === 'dividends' ? 'Monthly Dividends' : 
+                    'Monthly Increase'
                   ]}
+                  labelFormatter={(label) => `Month: ${label}`}
                 />
                 <Area
                   type="monotone"
@@ -345,6 +375,22 @@ export const EnhancedPortfolioOverview: React.FC<PortfolioOverviewProps> = ({ cl
                   strokeWidth={1}
                   strokeDasharray="5 5"
                   fill="transparent"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="dividends"
+                  stroke="#A855F7"
+                  strokeWidth={1}
+                  fill="transparent"
+                  yAxisId="right"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="monthlyIncrease"
+                  stroke="#10B981"
+                  strokeWidth={1}
+                  fill="transparent"
+                  yAxisId="right"
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -416,7 +462,7 @@ export const EnhancedPortfolioOverview: React.FC<PortfolioOverviewProps> = ({ cl
         </motion.div>
       </div>
 
-      {/* Top Performing Assets */}
+      {/* Your Assets */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -425,25 +471,39 @@ export const EnhancedPortfolioOverview: React.FC<PortfolioOverviewProps> = ({ cl
       >
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Top Performing Assets</h3>
-            <p className="text-gray-600 dark:text-gray-400 text-sm">Your best investments by performance</p>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Your Assets</h3>
+            <p className="text-gray-600 dark:text-gray-400 text-sm">All your tokenized asset investments</p>
           </div>
           <button className="flex items-center space-x-1 text-blue-600 dark:text-blue-400 text-sm font-medium hover:text-blue-700 dark:hover:text-blue-300">
             <Eye className="w-4 h-4" />
-            <span>View All</span>
+            <span>View All ({assets.length})</span>
           </button>
         </div>
 
         <div className="space-y-4">
-          {topAssets.map((asset, index) => (
+          {displayAssets.map((asset, index) => (
             <div
               key={asset.id}
               className="flex items-center space-x-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors cursor-pointer"
               onClick={() => setSelectedAssetForTiers({id: asset.id, name: asset.name, tokens: asset.tokens})}
             >
               <div className="flex-shrink-0">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold">
-                  #{index + 1}
+                <div className="w-12 h-12 rounded-lg overflow-hidden">
+                  <img 
+                    src={asset.imageUrl} 
+                    alt={asset.name} 
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      // Fallback to gradient if image fails to load
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                      const parent = target.parentElement;
+                      if (parent) {
+                        parent.className = "w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold";
+                        parent.innerHTML = `#${index + 1}`;
+                      }
+                    }}
+                  />
                 </div>
               </div>
 

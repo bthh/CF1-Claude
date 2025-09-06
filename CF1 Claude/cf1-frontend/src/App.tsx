@@ -21,6 +21,7 @@ import CreateProposal from './pages/CreateProposal';
 import ProposalDetail from './pages/ProposalDetail';
 import LaunchpadDrafts from './pages/LaunchpadDrafts';
 import MySubmissions from './pages/MySubmissions';
+import SubmissionDetail from './pages/SubmissionDetail';
 import './utils/testProposalFlow'; // Load test utilities
 import Governance from './pages/Governance';
 import CreateGovernanceProposal from './pages/CreateGovernanceProposal';
@@ -84,6 +85,7 @@ function App() {
               <Route path="/launchpad/proposal/:id" element={<ProposalDetail />} />
               <Route path="/launchpad/drafts" element={<LaunchpadDrafts />} />
               <Route path="/my-submissions" element={<MySubmissions />} />
+              <Route path="/my-submissions/:id" element={<SubmissionDetail />} />
               <Route path="/governance" element={<Governance />} />
               <Route path="/governance/active" element={<Governance />} />
               <Route path="/governance/passed" element={<Governance />} />

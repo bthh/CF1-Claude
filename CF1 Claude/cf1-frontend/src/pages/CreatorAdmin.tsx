@@ -38,6 +38,7 @@ import {
   Crown
 } from 'lucide-react';
 import { useAdminAuthContext } from '../hooks/useAdminAuth';
+import { useUnifiedAuthStore } from '../store/unifiedAuthStore';
 import { useCosmJS } from '../hooks/useCosmJS';
 import { useNotifications } from '../hooks/useNotifications';
 import { useFeatureToggleStore } from '../store/featureToggleStore';
@@ -132,6 +133,7 @@ interface CreatorAnalytics {
 const CreatorAdmin: React.FC = () => {
   const navigate = useNavigate();
   const { currentAdmin, checkPermission } = useAdminAuthContext();
+  const { user: unifiedUser, isAuthenticated: isUnifiedAuthenticated } = useUnifiedAuthStore();
   const { isConnected } = useCosmJS();
   const { success, error } = useNotifications();
   const { isFeatureEnabled } = useFeatureToggleStore();
@@ -674,7 +676,12 @@ const CreatorAdmin: React.FC = () => {
     communicationTypeFilter
   ].filter(Boolean).length;
 
-  if (!currentAdmin || !checkPermission('access_creator_admin')) {
+  // Combined access check for both old admin system and unified auth system
+  const hasOldAdminAccess = currentAdmin && checkPermission('access_creator_admin');
+  const hasUnifiedAdminAccess = unifiedUser && isUnifiedAuthenticated && 
+    (unifiedUser.role === 'creator' || unifiedUser.role === 'super_admin' || unifiedUser.role === 'owner');
+  
+  if (!hasOldAdminAccess && !hasUnifiedAdminAccess) {
     return (
       <div className="w-full h-full flex items-center justify-center">
         <div className="text-center">
