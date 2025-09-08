@@ -4,17 +4,17 @@ FROM node:18-alpine
 # Set working directory
 WORKDIR /app
 
-# Copy package files
+# Copy package files first (for better Docker layer caching)
 COPY package*.json ./
 
-# Install ALL dependencies (including dev dependencies for ts-node-dev)
-RUN npm ci
-
-# Install global packages
-RUN npm install -g ts-node typescript ts-node-dev
+# Install all dependencies (needed for TypeScript compilation)
+RUN npm ci --silent
 
 # Copy source code
 COPY . .
+
+# Create data directory
+RUN mkdir -p /app/data
 
 # Expose port
 EXPOSE 3001
