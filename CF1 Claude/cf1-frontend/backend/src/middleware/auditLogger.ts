@@ -28,6 +28,13 @@ export enum AuditEventType {
   ADMIN_CONFIG_CHANGE = 'admin.config.change',
   ADMIN_USER_ACTION = 'admin.user.action',
   ADMIN_SYSTEM_ACTION = 'admin.system.action',
+  ADMIN_ACTION = 'admin.action',
+  
+  // User actions
+  USER_ACTION = 'user.action',
+  USER_CREATED = 'user.created',
+  USER_UPDATED = 'user.updated',
+  USER_DELETED = 'user.deleted',
   
   // Proposal management
   PROPOSAL_CREATE = 'proposal.create',
@@ -75,6 +82,10 @@ export enum AuditEventType {
   DATA_IMPORT = 'data.import',
   DATA_BACKUP = 'data.backup',
   DATA_RESTORE = 'data.restore',
+  DATA_ACCESS = 'data.access',
+  
+  // System configuration
+  SYSTEM_CONFIG = 'system.config',
   
   // Compliance events
   COMPLIANCE_KYC_SUBMIT = 'compliance.kyc.submit',

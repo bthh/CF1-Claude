@@ -102,8 +102,11 @@ router.get('/users',
       AuditLogger.logEvent(
         AuditEventType.ADMIN_ACTION,
         'Admin viewed users list',
-        (req as any).user?.id || (req as any).adminUser?.username,
-        { search, page, limit, role, status, kycStatus, total }
+        req,
+        { 
+          adminUser: (req as any).user?.id || (req as any).adminUser?.username,
+          search, page, limit, role, status, kycStatus, total 
+        }
       );
 
       res.json({
@@ -172,7 +175,7 @@ router.put('/users/:id',
       const { id } = req.params;
       const userRepo = AppDataSource.getRepository(User);
       
-      const user = await userRepo.findOne(id);
+      const user = await userRepo.findOne({ where: { id } });
       if (!user) {
         return res.status(404).json({
           success: false,
@@ -212,13 +215,13 @@ router.put('/users/:id',
 
       await userRepo.update(id, updates);
       
-      const updatedUser = await userRepo.findOne(id);
+      const updatedUser = await userRepo.findOne({ where: { id } });
 
       // Log admin action
       AuditLogger.logEvent(
         AuditEventType.ADMIN_ACTION,
         'Admin updated user',
-        adminUser?.id || adminUser?.username,
+        req,
         { 
           targetUserId: id, 
           updates,
@@ -361,7 +364,7 @@ router.put('/kyc-submissions/:id',
       const { status, notes } = req.body;
       const userRepo = AppDataSource.getRepository(User);
       
-      const user = await userRepo.findOne(id);
+      const user = await userRepo.findOne({ where: { id } });
       if (!user) {
         return res.status(404).json({
           success: false,
@@ -378,7 +381,7 @@ router.put('/kyc-submissions/:id',
 
       await userRepo.update(id, { kycStatus: status });
       
-      const updatedUser = await userRepo.findOne(id);
+      const updatedUser = await userRepo.findOne({ where: { id } });
 
       // Log admin action
       AuditLogger.logEvent(

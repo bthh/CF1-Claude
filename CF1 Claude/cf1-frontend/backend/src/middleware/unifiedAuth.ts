@@ -169,11 +169,12 @@ export class UnifiedAuthMiddleware {
     }
 
     if (!req.user.walletAddress) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         message: 'Wallet connection required for this operation',
         code: 'WALLET_REQUIRED'
       });
+      return;
     }
 
     next();
@@ -217,11 +218,12 @@ export class UnifiedAuthMiddleware {
       }
 
       if (userRequests.count >= maxRequests) {
-        return res.status(429).json({
+        res.status(429).json({
           success: false,
           message: 'Rate limit exceeded',
           retryAfter: Math.ceil((userRequests.resetTime - now) / 1000)
         });
+        return;
       }
 
       userRequests.count++;

@@ -399,7 +399,7 @@ export class AuthService {
   /**
    * Remove sensitive data from user object
    */
-  private sanitizeUser(user: User): Omit<User, 'passwordHash' | 'passwordResetToken' | 'emailVerificationToken'> {
+  private sanitizeUser(user: User): any {
     const { passwordHash, passwordResetToken, emailVerificationToken, ...sanitizedUser } = user;
     return sanitizedUser;
   }

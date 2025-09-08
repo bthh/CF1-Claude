@@ -49,9 +49,10 @@ router.get('/', requireSuperAdminOrOwner, async (req: AdminAuthenticatedRequest,
     // Return safe user objects (no password hashes)
     const safeUsers = adminUsers.map(user => user.toSafeObject());
     
-    AuditLogger.logEvent(AuditEventType.DATA_ACCESS, 'Admin users list accessed', req.adminUser?.username, {
+    AuditLogger.logEvent(AuditEventType.DATA_ACCESS, 'Admin users list accessed', req, {
       action: 'list_admin_users',
-      count: safeUsers.length
+      count: safeUsers.length,
+      adminUser: req.adminUser?.username
     });
     
     res.json({
@@ -107,8 +108,9 @@ router.post('/', requireSuperAdminOrOwner, async (req: AdminAuthenticatedRequest
       notes
     });
     
-    AuditLogger.logEvent(AuditEventType.USER_CREATED, 'New admin user created', req.adminUser?.username, {
+    AuditLogger.logEvent(AuditEventType.USER_CREATED, 'New admin user created', req, {
       action: 'create_admin_user',
+      adminUser: req.adminUser?.username,
       createdUserId: newUser.id,
       createdUserEmail: newUser.email,
       createdUserRole: newUser.role
@@ -159,7 +161,8 @@ router.put('/:id', requireSuperAdminOrOwner, async (req: AdminAuthenticatedReque
     const adminUserService = new AdminUserService();
     const updatedUser = await adminUserService.updateAdminUser(id, updates);
     
-    AuditLogger.logEvent(AuditEventType.USER_UPDATED, 'Admin user updated', req.adminUser?.username, {
+    AuditLogger.logEvent(AuditEventType.USER_UPDATED, 'Admin user updated', req, {
+      adminUser: req.adminUser?.username,
       action: 'update_admin_user',
       updatedUserId: id,
       updatedUserEmail: updatedUser.email,
@@ -210,7 +213,8 @@ router.delete('/:id', requireSuperAdminOrOwner, async (req: AdminAuthenticatedRe
     
     await adminUserService.deleteAdminUser(id);
     
-    AuditLogger.logEvent(AuditEventType.USER_DELETED, 'Admin user deleted', req.adminUser?.username, {
+    AuditLogger.logEvent(AuditEventType.USER_DELETED, 'Admin user deleted', req, {
+      adminUser: req.adminUser?.username,
       action: 'delete_admin_user',
       deletedUserId: id
     });
@@ -246,7 +250,8 @@ router.post('/initialize', requireSuperAdminOrOwner, async (req: AdminAuthentica
     const adminUserService = new AdminUserService();
     await adminUserService.initializeDefaultAdmins();
     
-    AuditLogger.logEvent(AuditEventType.SYSTEM_CONFIG, 'Default admin users initialized', req.adminUser?.username, {
+    AuditLogger.logEvent(AuditEventType.SYSTEM_CONFIG, 'Default admin users initialized', req, {
+      adminUser: 'system',
       action: 'initialize_default_admins'
     });
     
