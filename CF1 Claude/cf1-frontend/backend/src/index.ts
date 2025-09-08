@@ -21,6 +21,7 @@ import proposalsRoutes from './routes/proposals';
 import governanceRoutes from './routes/governance';
 import adminAuthRoutes from './routes/adminAuth';
 import adminRoutes from './routes/admin';
+import adminUsersRoutes from './routes/adminUsers';
 import featureToggleRoutes from './routes/featureToggles';
 import authRoutes from './routes/auth';
 import { handleValidationError } from './middleware/validation';
@@ -84,6 +85,7 @@ app.use('/api/v1/ai-analysis', analysisRoutes);
 app.use('/api/creator-toolkit', creatorToolkitRoutes);
 app.use('/api/v1/assets', assetsRoutes);
 app.use('/api/admin/auth', adminAuthRoutes);
+app.use('/api/admin/users', adminUsersRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/feature-toggles', featureToggleRoutes);
 

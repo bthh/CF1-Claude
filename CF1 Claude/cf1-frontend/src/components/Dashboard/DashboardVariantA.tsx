@@ -19,6 +19,8 @@ import {
 import { useDashboardV2Store } from '../../store/dashboardV2Store';
 import { useFeatureToggleStore } from '../../store/featureToggleStore';
 import { useDataMode } from '../../store/dataModeStore';
+import { useUnifiedAuthStore } from '../../store/unifiedAuthStore';
+import { useOnboarding } from '../../hooks/useOnboarding';
 import Card from '../UI/Card';
 import Button from '../UI/Button';
 import SkylineHero from '../UI/SkylineHero';
@@ -26,6 +28,8 @@ import { usePerformanceMonitoring } from '../../hooks/usePerformanceTracker';
 import EnhancedMarketplaceWidget from './EnhancedMarketplaceWidget';
 import EnhancedPortfolioWidget from './EnhancedPortfolioWidget';
 import { getAssetImage } from '../../services/assetImageService';
+import { UserPathEntryModal } from '../Onboarding/UserPathEntryModal';
+import { OnboardingTourComponent } from '../Onboarding/OnboardingTour';
 
 // Professional Asset Image Component with fallback handling
 interface AssetImageProps {
@@ -89,6 +93,25 @@ const DashboardVariantA: React.FC = memo(() => {
   
   const { currentMode } = useDataMode();
   const navigate = useNavigate();
+  const { showLogin } = useUnifiedAuthStore();
+  const { 
+    startTour, 
+    isActive,
+    currentTour,
+    currentStep,
+    nextStep,
+    previousStep,
+    skipTour,
+    completeTour,
+    highlightElement,
+    clearHighlight,
+    scrollToElement,
+    navigateToPage,
+    waitForElement
+  } = useOnboarding();
+  
+  // Modal states
+  const [showPathModal, setShowPathModal] = useState(false);
   
   // Feature toggles for dashboard sections
   const { isFeatureEnabled } = useFeatureToggleStore();
@@ -105,17 +128,36 @@ const DashboardVariantA: React.FC = memo(() => {
   }, []);
 
   // Memoize button click handlers
-  const handleConnectWallet = useCallback(() => {
-    trackCustomInteraction?.('connect_wallet_clicked', 0);
+  const handleGetStarted = useCallback(() => {
+    trackCustomInteraction?.('get_started_clicked', 0);
+    setShowPathModal(true);
   }, [trackCustomInteraction]);
 
   const handleBrowseAssets = useCallback(() => {
     trackCustomInteraction?.('browse_assets_clicked', 0);
-  }, [trackCustomInteraction]);
+    navigate('/launchpad');
+  }, [trackCustomInteraction, navigate]);
 
   const handleLearnMore = useCallback(() => {
     trackCustomInteraction?.('learn_more_clicked', 0);
-  }, [trackCustomInteraction]);
+    startTour('platform_overview');
+  }, [trackCustomInteraction, startTour]);
+
+  const handleConnectWallet = useCallback(() => {
+    trackCustomInteraction?.('connect_wallet_clicked', 0);
+    showLogin();
+  }, [trackCustomInteraction, showLogin]);
+
+  const handlePathSelect = useCallback((path: 'investor' | 'creator') => {
+    trackCustomInteraction?.('path_selected', 0, { path });
+    setShowPathModal(false);
+    // Navigate to appropriate onboarding flow
+    if (path === 'investor') {
+      startTour('investor_onboarding');
+    } else {
+      startTour('creator_onboarding');
+    }
+  }, [trackCustomInteraction, startTour]);
 
   const handleProposalClick = useCallback((proposalId: string) => {
     trackCustomInteraction?.('proposal_card_clicked', 0);
@@ -160,7 +202,7 @@ const DashboardVariantA: React.FC = memo(() => {
                   variant="secondary"
                   size="large" 
                   className="bg-white text-blue-900 hover:bg-blue-50 font-semibold px-8 py-3 text-lg shadow-lg border-0" 
-                  onClick={handleConnectWallet}
+                  onClick={handleGetStarted}
                 >
                   <Users className="w-5 h-5 mr-2" />
                   Get Started
@@ -460,6 +502,30 @@ const DashboardVariantA: React.FC = memo(() => {
           ))}
         </div>
       </section>
+
+      {/* User Path Entry Modal */}
+      <UserPathEntryModal
+        isOpen={showPathModal}
+        onClose={() => setShowPathModal(false)}
+        onSelectPath={handlePathSelect}
+      />
+
+      {/* Onboarding Tour Component */}
+      <OnboardingTourComponent
+        tourId={currentTour}
+        currentStep={currentStep}
+        isActive={isActive}
+        onNext={nextStep}
+        onPrevious={previousStep}
+        onSkip={skipTour}
+        onComplete={() => currentTour && completeTour(currentTour)}
+        onClose={() => currentTour && completeTour(currentTour)}
+        highlightElement={highlightElement}
+        clearHighlight={clearHighlight}
+        scrollToElement={scrollToElement}
+        navigateToPage={navigateToPage}
+        waitForElement={waitForElement}
+      />
     </div>
   );
 });

@@ -8,6 +8,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import { auditAuth, auditSecurity, AuditEventType, AuditLogger } from './auditLogger';
+import { AdminUserService } from '../services/AdminUserService';
 
 // Secure admin authentication configuration - NO DEFAULT VALUES
 const ADMIN_API_KEY = process.env.ADMIN_API_KEY;
@@ -15,6 +16,50 @@ const ADMIN_USERNAME = process.env.ADMIN_USERNAME;
 const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH;
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
+
+// Additional admin users (Brock and Brian)
+const BROCK_PASSWORD_HASH = process.env.BROCK_PASSWORD_HASH;
+const BRIAN_PASSWORD_HASH = process.env.BRIAN_PASSWORD_HASH;
+
+// Define admin users with their credentials and permissions (supports both username and email)
+const ADMIN_USERS: { [key: string]: { passwordHash: string; permissions: string[]; role: string; displayName: string } } = {
+  cf1admin: {
+    passwordHash: ADMIN_PASSWORD_HASH!,
+    permissions: ['admin', 'governance', 'proposals', 'users', 'super_admin'],
+    role: 'super_admin',
+    displayName: 'CF1 Admin'
+  },
+  'admin@cf1platform.com': {
+    passwordHash: ADMIN_PASSWORD_HASH!,
+    permissions: ['admin', 'governance', 'proposals', 'users', 'super_admin'],
+    role: 'super_admin',
+    displayName: 'CF1 Admin'
+  },
+  brock: {
+    passwordHash: BROCK_PASSWORD_HASH || '',
+    permissions: ['admin', 'governance', 'proposals', 'users', 'super_admin'],
+    role: 'super_admin',
+    displayName: 'Brock'
+  },
+  'bthardwick@gmail.com': {
+    passwordHash: BROCK_PASSWORD_HASH || '',
+    permissions: ['admin', 'governance', 'proposals', 'users', 'super_admin'],
+    role: 'super_admin',
+    displayName: 'Brock'
+  },
+  brian: {
+    passwordHash: BRIAN_PASSWORD_HASH || '',
+    permissions: ['admin', 'governance', 'proposals', 'users', 'super_admin'],
+    role: 'super_admin',
+    displayName: 'Brian'
+  },
+  'brian@cf1platform.com': {
+    passwordHash: BRIAN_PASSWORD_HASH || '',
+    permissions: ['admin', 'governance', 'proposals', 'users', 'super_admin'],
+    role: 'super_admin',
+    displayName: 'Brian'
+  }
+};
 
 // Validate required environment variables at startup
 if (!ADMIN_API_KEY) {
@@ -60,7 +105,7 @@ export const requireAdminApiKey = (req: AdminAuthenticatedRequest, res: Response
     // Log failed authentication attempt
     auditSecurity.breachAttempt(req, {
       attemptType: 'invalid_api_key',
-      providedKey: apiKey.substring(0, 8) + '...' // Log only first 8 characters
+      providedKey: Array.isArray(apiKey) ? apiKey[0]?.substring(0, 8) + '...' : apiKey?.substring(0, 8) + '...' // Log only first 8 characters
     });
     
     return res.status(401).json({
@@ -227,10 +272,13 @@ export const adminLogin = async (req: Request, res: Response) => {
       });
     }
     
-    // Validate credentials
-    if (username !== ADMIN_USERNAME) {
+    // Use database service to authenticate user
+    const adminUserService = new AdminUserService();
+    const authenticatedUser = await adminUserService.authenticateUser(username, password);
+    
+    if (!authenticatedUser) {
       // Log failed login attempt
-      auditAuth.loginFailure(req, username, 'invalid_username');
+      auditAuth.loginFailure(req, username, 'invalid_credentials');
       
       return res.status(401).json({
         success: false,
@@ -239,20 +287,8 @@ export const adminLogin = async (req: Request, res: Response) => {
       });
     }
     
-    const isPasswordValid = await bcrypt.compare(password, ADMIN_PASSWORD_HASH!);
-    if (!isPasswordValid) {
-      // Log failed login attempt
-      auditAuth.loginFailure(req, username, 'invalid_password');
-      
-      return res.status(401).json({
-        success: false,
-        error: 'Invalid credentials',
-        code: 'INVALID_CREDENTIALS'
-      });
-    }
-    
-    // Generate JWT token
-    const token = generateAdminJWT(username);
+    // Generate JWT token with user permissions
+    const token = generateAdminJWT(authenticatedUser.username, authenticatedUser.permissions);
     
     // Log successful login with audit system
     auditAuth.loginSuccess(req, username);
@@ -262,8 +298,13 @@ export const adminLogin = async (req: Request, res: Response) => {
       token,
       expiresIn: JWT_EXPIRES_IN,
       user: {
-        username,
-        permissions: ['admin', 'governance', 'proposals', 'users']
+        id: authenticatedUser.id,
+        username: authenticatedUser.username,
+        permissions: authenticatedUser.permissions,
+        role: authenticatedUser.role,
+        name: authenticatedUser.name,
+        email: authenticatedUser.email,
+        lastLoginAt: authenticatedUser.lastLoginAt
       }
     });
     

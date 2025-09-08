@@ -7,6 +7,7 @@ import { DataSource } from 'typeorm';
 import { ProposalAnalysis } from '../models/ProposalAnalysis';
 import { FeatureToggle } from '../models/FeatureToggle';
 import { User } from '../models/User';
+import { AdminUser } from '../entities/AdminUser';
 import path from 'path';
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
@@ -14,7 +15,7 @@ const isDevelopment = process.env.NODE_ENV !== 'production';
 export const AppDataSource = new DataSource({
   type: 'sqlite',
   database: process.env.DATABASE_PATH || path.join(__dirname, '../../data/cf1.db'),
-  entities: [ProposalAnalysis, FeatureToggle, User],
+  entities: [ProposalAnalysis, FeatureToggle, User, AdminUser],
   synchronize: isDevelopment, // Auto-create tables in development
   logging: isDevelopment,
   migrations: [path.join(__dirname, '../migrations/*.ts')],
@@ -31,6 +32,16 @@ export const initializeDatabase = async (): Promise<void> => {
     const fs = require('fs');
     if (!fs.existsSync(dataDir)) {
       fs.mkdirSync(dataDir, { recursive: true });
+    }
+    
+    // Initialize default admin users
+    try {
+      const { AdminUserService } = require('../services/AdminUserService');
+      const adminUserService = new AdminUserService();
+      await adminUserService.initializeDefaultAdmins();
+      console.log('✅ Default admin users initialized');
+    } catch (error) {
+      console.log('⚠️ Admin user initialization skipped:', error);
     }
     
   } catch (error) {
