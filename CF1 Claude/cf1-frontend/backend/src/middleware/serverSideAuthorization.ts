@@ -259,10 +259,18 @@ export class AuthorizationManager {
       const basicEndpoints = ['/health', '/api/config', '/auth'];
       const adminAuthEndpoints = ['/admin/auth/login', '/admin/auth/verify', '/admin/auth/logout', '/admin/auth/refresh'];
       
+      // Debug logging
+      console.log(`🔍 Authorization check - Path: ${path}, Method: ${method}`);
+      console.log(`🔍 Basic endpoints check:`, basicEndpoints.some(endpoint => path.startsWith(endpoint)));
+      console.log(`🔍 Admin endpoints check:`, adminAuthEndpoints.includes(path));
+      
       if (basicEndpoints.some(endpoint => path.startsWith(endpoint)) || 
           adminAuthEndpoints.includes(path)) {
+        console.log(`✅ Authorization bypassed for: ${path}`);
         return { authorized: true };
       }
+      
+      console.log(`❌ Authorization denied for: ${path}`);
       return { authorized: false, reason: 'Endpoint not configured for authorization' };
     }
 
