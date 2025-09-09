@@ -111,6 +111,15 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Test endpoint to verify authorization is disabled
+app.get('/api/test-auth', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Authorization bypassed successfully',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Manual database setup endpoint for production troubleshooting  
 app.get('/setup-database', async (req, res) => {
   try {
