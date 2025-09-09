@@ -80,7 +80,11 @@ interface UnifiedAuthState {
   setLoading: (loading: boolean) => void;
 }
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+// Production Railway backend with correct /api path
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 
+  (import.meta.env.MODE === 'production' 
+    ? 'https://cf1-claude-production.up.railway.app/api' 
+    : 'http://localhost:3001/api');
 
 export const useUnifiedAuthStore = create<UnifiedAuthState>()(
   devtools(
@@ -115,6 +119,8 @@ export const useUnifiedAuthStore = create<UnifiedAuthState>()(
             // If regular login fails, try admin login
             if (!response.ok) {
               console.log('Regular login failed, trying admin login...');
+              console.log('import.meta.env.VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL);
+              console.log('import.meta.env.MODE:', import.meta.env.MODE);
               console.log('API_BASE:', API_BASE);
               const adminUrl = `${API_BASE}/admin/auth/login`;
               console.log('Constructed admin URL:', adminUrl);
