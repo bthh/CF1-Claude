@@ -97,8 +97,15 @@ app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 // CSRF protection for all routes
 app.use(generateCSRFToken);
 
-// Server-side authorization for all API endpoints
-app.use('/api', serverSideAuthorization);
+// Server-side authorization for API endpoints (excluding auth routes)
+app.use('/api', (req, res, next) => {
+  // Skip authorization for authentication endpoints
+  if (req.path.startsWith('/auth/') || req.path.startsWith('/admin/auth/')) {
+    return next();
+  }
+  // Apply authorization to other API endpoints
+  serverSideAuthorization(req, res, next);
+});
 
 // Health check endpoint
 app.get('/health', (req, res) => {
