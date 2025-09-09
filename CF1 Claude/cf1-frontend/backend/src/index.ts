@@ -97,18 +97,6 @@ app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 // CSRF protection for all routes
 app.use(generateCSRFToken);
 
-// Server-side authorization with admin auth route exclusion  
-app.use('/api', (req, res, next) => {
-  // Skip authorization for admin auth routes
-  if (req.path.startsWith('/admin/auth/')) {
-    console.log(`✅ Skipping authorization for admin auth route: ${req.path}`);
-    return next();
-  }
-  
-  // Apply authorization for all other /api routes
-  return serverSideAuthorization(req, res, next);
-});
-
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({
@@ -119,52 +107,8 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Test endpoint to verify authorization is disabled
-app.get('/api/test-auth', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Authorization bypassed successfully',
-    timestamp: new Date().toISOString()
-  });
-});
-
-// Direct admin login test endpoint (bypasses authorization middleware)
-app.post('/direct-admin-login', async (req, res) => {
-  try {
-    const { AdminUserService } = require('./services/AdminUserService');
-    const adminUserService = new AdminUserService();
-    const { username, password } = req.body;
-    
-    console.log(`🔍 Direct login attempt: ${username}`);
-    const authenticatedUser = await adminUserService.authenticateUser(username, password);
-    
-    if (authenticatedUser) {
-      console.log(`✅ Direct login success: ${username}`);
-      res.json({
-        success: true,
-        message: 'Direct login successful',
-        user: {
-          username: authenticatedUser.username,
-          email: authenticatedUser.email,
-          role: authenticatedUser.role,
-          permissions: authenticatedUser.permissions
-        }
-      });
-    } else {
-      console.log(`❌ Direct login failed: ${username}`);
-      res.json({
-        success: false,
-        message: 'Invalid credentials'
-      });
-    }
-  } catch (error) {
-    console.error('Direct login error:', error);
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
-    });
-  }
-});
+// Admin auth routes BEFORE authorization middleware
+app.use('/api/admin/auth', adminAuthRoutes);
 
 // Manual database setup endpoint for production troubleshooting  
 app.get('/setup-database', async (req, res) => {
@@ -196,14 +140,25 @@ app.get('/setup-database', async (req, res) => {
   }
 });
 
-// API routes
+// Server-side authorization for all other /api routes
+app.use('/api', serverSideAuthorization);
+
+// Test endpoint to verify authorization is disabled
+app.get('/api/test-auth', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Authorization bypassed successfully',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// API routes (these will go through authorization)
 app.use('/api/auth', authRoutes);
 app.use('/api/v1/proposals', proposalsRoutes);
 app.use('/api/v1/governance', governanceRoutes);
 app.use('/api/v1/ai-analysis', analysisRoutes);
 app.use('/api/creator-toolkit', creatorToolkitRoutes);
 app.use('/api/v1/assets', assetsRoutes);
-app.use('/api/admin/auth', adminAuthRoutes);
 app.use('/api/admin/users', adminUsersRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/feature-toggles', featureToggleRoutes);
