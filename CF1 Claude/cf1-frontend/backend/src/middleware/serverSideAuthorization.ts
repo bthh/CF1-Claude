@@ -256,8 +256,11 @@ export class AuthorizationManager {
 
     if (!resourceAccess) {
       // If endpoint not explicitly configured, allow for basic endpoints
-      const basicEndpoints = ['/health', '/api/config', '/auth', '/admin/auth'];
-      if (basicEndpoints.some(endpoint => path.startsWith(endpoint))) {
+      const basicEndpoints = ['/health', '/api/config', '/auth'];
+      const adminAuthEndpoints = ['/admin/auth/login', '/admin/auth/verify', '/admin/auth/logout', '/admin/auth/refresh'];
+      
+      if (basicEndpoints.some(endpoint => path.startsWith(endpoint)) || 
+          adminAuthEndpoints.includes(path)) {
         return { authorized: true };
       }
       return { authorized: false, reason: 'Endpoint not configured for authorization' };
