@@ -13,7 +13,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
-import { initializeDatabase, closeDatabase } from './config/database';
+import { initializeDatabase, closeDatabase, AppDataSource } from './config/database';
 import analysisRoutes from './routes/analysis';
 import creatorToolkitRoutes from './routes/creatorToolkit';
 import assetsRoutes from './routes/assets';
@@ -75,6 +75,36 @@ app.get('/health', (req, res) => {
     version: '1.0.0',
     timestamp: new Date().toISOString()
   });
+});
+
+// Manual database setup endpoint for production troubleshooting
+app.post('/setup-database', async (req, res) => {
+  try {
+    console.log('🔧 Manual database setup requested');
+    
+    // Force table synchronization
+    await AppDataSource.synchronize();
+    console.log('✅ Tables synchronized');
+    
+    // Initialize admin users
+    const { AdminUserService } = require('./services/AdminUserService');
+    const adminUserService = new AdminUserService();
+    await adminUserService.initializeDefaultAdmins();
+    
+    res.json({
+      success: true,
+      message: 'Database setup completed',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('❌ Database setup failed:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Database setup failed',
+      message: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 // API routes
