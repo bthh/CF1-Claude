@@ -123,11 +123,7 @@ export const useUnifiedAuthStore = create<UnifiedAuthState>()(
             // If regular login fails, try admin login
             if (!response.ok) {
               console.log('Regular login failed, trying admin login...');
-              console.log('import.meta.env.VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL);
-              console.log('import.meta.env.MODE:', import.meta.env.MODE);
-              console.log('API_BASE:', API_BASE);
               const adminUrl = `${API_BASE}/admin/auth/login`;
-              console.log('Constructed admin URL:', adminUrl);
               
               const adminResponse = await fetch(adminUrl, {
                 method: 'POST',
@@ -152,7 +148,7 @@ export const useUnifiedAuthStore = create<UnifiedAuthState>()(
                     id: adminData.user.id,
                     email: adminData.user.email,
                     displayName: adminData.user.name,
-                    role: 'admin',
+                    role: 'super_admin', // Use super_admin for admin users
                     authMethod: 'email',
                     emailVerified: true,
                     accountStatus: 'active',
@@ -164,6 +160,7 @@ export const useUnifiedAuthStore = create<UnifiedAuthState>()(
                   accessToken: adminData.token,
                   loading: false,
                   error: null,
+                  showAuthModal: false, // Close the auth modal
                 });
                 
                 // Set API client auth token for admin requests
