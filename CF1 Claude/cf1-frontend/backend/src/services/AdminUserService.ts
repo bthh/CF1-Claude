@@ -270,13 +270,18 @@ export class AdminUserService {
         return;
       }
       
+      // Pre-calculate password hashes
+      const defaultPasswordHash1 = process.env.ADMIN_PASSWORD_HASH || await bcrypt.hash('CF1Admin2025!', 12);
+      const defaultPasswordHash2 = process.env.BROCK_PASSWORD_HASH || await bcrypt.hash('BrockCF1Admin2025!', 12);
+      const defaultPasswordHash3 = process.env.BRIAN_PASSWORD_HASH || await bcrypt.hash('BrianCF1Admin2025!', 12);
+      
       // Create default admin users
       const admins = [
         {
           id: uuidv4(),
           email: 'admin@cf1platform.com',
           username: process.env.ADMIN_USERNAME || 'cf1admin',
-          passwordHash: process.env.ADMIN_PASSWORD_HASH || await bcrypt.hash('CF1Admin2025!', 12),
+          passwordHash: defaultPasswordHash1,
           name: 'CF1 System Admin',
           role: 'super_admin',
           permissions: 'admin,governance,proposals,users,super_admin'
@@ -285,7 +290,7 @@ export class AdminUserService {
           id: uuidv4(),
           email: 'bthardwick@gmail.com',
           username: 'brock',
-          passwordHash: process.env.BROCK_PASSWORD_HASH || await bcrypt.hash('BrockCF1Admin2025!', 12),
+          passwordHash: defaultPasswordHash2,
           name: 'Brock',
           role: 'super_admin',
           permissions: 'admin,governance,proposals,users,super_admin'
@@ -294,7 +299,7 @@ export class AdminUserService {
           id: uuidv4(),
           email: 'brian@cf1platform.com',
           username: 'brian',
-          passwordHash: process.env.BRIAN_PASSWORD_HASH || await bcrypt.hash('BrianCF1Admin2025!', 12),
+          passwordHash: defaultPasswordHash3,
           name: 'Brian',
           role: 'super_admin',
           permissions: 'admin,governance,proposals,users,super_admin'
