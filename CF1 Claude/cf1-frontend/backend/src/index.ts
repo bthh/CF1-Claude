@@ -107,6 +107,55 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Direct admin auth endpoints (completely bypass all middleware)
+app.post('/admin-login', async (req, res) => {
+  try {
+    const { AdminUserService } = require('./services/AdminUserService');
+    const adminUserService = new AdminUserService();
+    const { username, password } = req.body;
+    
+    console.log(`🔍 Admin login attempt: ${username}`);
+    const authenticatedUser = await adminUserService.authenticateUser(username, password);
+    
+    if (!authenticatedUser) {
+      console.log(`❌ Admin login failed: ${username}`);
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid credentials',
+        code: 'INVALID_CREDENTIALS'
+      });
+    }
+    
+    // Generate JWT token
+    const { generateAdminJWT } = require('./middleware/adminAuth');
+    const token = generateAdminJWT(authenticatedUser.username, authenticatedUser.permissions);
+    
+    console.log(`✅ Admin login success: ${username}`);
+    res.json({
+      success: true,
+      token,
+      expiresIn: '24h',
+      user: {
+        id: authenticatedUser.id,
+        username: authenticatedUser.username,
+        permissions: authenticatedUser.permissions,
+        role: authenticatedUser.role,
+        name: authenticatedUser.name,
+        email: authenticatedUser.email,
+        lastLoginAt: authenticatedUser.lastLoginAt
+      }
+    });
+    
+  } catch (error) {
+    console.error('Admin login error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      code: 'INTERNAL_ERROR'
+    });
+  }
+});
+
 // Admin auth routes BEFORE authorization middleware
 app.use('/api/admin/auth', adminAuthRoutes);
 
