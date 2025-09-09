@@ -81,10 +81,14 @@ interface UnifiedAuthState {
 }
 
 // Production Railway backend with correct /api path
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 
-  (import.meta.env.MODE === 'production' 
-    ? 'https://cf1-claude-production.up.railway.app/api' 
-    : 'http://localhost:3001/api');
+let API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+
+// Ensure API_BASE always ends with /api in production
+if (import.meta.env.MODE === 'production' && !API_BASE.endsWith('/api')) {
+  API_BASE = API_BASE.endsWith('/') 
+    ? API_BASE + 'api' 
+    : API_BASE + '/api';
+}
 
 export const useUnifiedAuthStore = create<UnifiedAuthState>()(
   devtools(
