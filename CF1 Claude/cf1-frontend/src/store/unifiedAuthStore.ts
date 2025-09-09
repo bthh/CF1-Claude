@@ -115,8 +115,10 @@ export const useUnifiedAuthStore = create<UnifiedAuthState>()(
             // If regular login fails, try admin login
             if (!response.ok) {
               console.log('Regular login failed, trying admin login...');
+              const adminUrl = `${API_BASE}/admin/auth/login`;
+              console.log('Admin login URL:', adminUrl);
               
-              const adminResponse = await fetch(`${API_BASE}/admin/auth/login`, {
+              const adminResponse = await fetch(adminUrl, {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
