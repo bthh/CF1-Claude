@@ -28,7 +28,7 @@ import { handleValidationError } from './middleware/validation';
 import { generateCSRFToken, csrfErrorHandler } from './middleware/csrfProtection';
 import { secureErrorHandler, requestIdMiddleware } from './middleware/secureErrorHandler';
 import { AuditLogger, auditMiddleware, AuditEventType } from './middleware/auditLogger';
-// import { serverSideAuthorization } from './middleware/serverSideAuthorization';
+import { serverSideAuthorization } from './middleware/serverSideAuthorization';
 
 // Environment variables already loaded at the top
 
@@ -97,9 +97,8 @@ app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 // CSRF protection for all routes
 app.use(generateCSRFToken);
 
-// Temporarily disable server-side authorization to fix login issues
-// TODO: Re-enable with proper path exclusions once login is working
-// app.use('/api', serverSideAuthorization);
+// Server-side authorization with admin auth route exclusion  
+app.use('/api', serverSideAuthorization);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
