@@ -100,7 +100,8 @@ export const useUnifiedAuthStore = create<UnifiedAuthState>()(
           set({ loading: true, error: null });
           
           try {
-            const response = await fetch(`${API_BASE}/auth/login`, {
+            // First try regular user login
+            let response = await fetch(`${API_BASE}/auth/login`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -109,12 +110,59 @@ export const useUnifiedAuthStore = create<UnifiedAuthState>()(
               body: JSON.stringify(credentials),
             });
 
-            const data = await response.json();
+            let data = await response.json();
 
+            // If regular login fails, try admin login
             if (!response.ok) {
-              throw new Error(data.message || 'Login failed');
+              console.log('Regular login failed, trying admin login...');
+              
+              const adminResponse = await fetch(`${API_BASE}/admin/auth/login`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                  username: credentials.email,
+                  password: credentials.password
+                }),
+              });
+
+              const adminData = await adminResponse.json();
+
+              if (adminResponse.ok) {
+                console.log('Admin login successful');
+                // Handle admin login success
+                set({
+                  isAuthenticated: true,
+                  user: {
+                    id: adminData.user.id,
+                    email: adminData.user.email,
+                    displayName: adminData.user.name,
+                    role: 'admin',
+                    authMethod: 'email',
+                    emailVerified: true,
+                    accountStatus: 'active',
+                    kycStatus: 'verified',
+                    canPerformBlockchainOperations: true,
+                    createdAt: new Date().toISOString(),
+                    lastLoginAt: adminData.user.lastLoginAt
+                  },
+                  accessToken: adminData.token,
+                  loading: false,
+                  error: null,
+                });
+                
+                // Set API client auth token for admin requests
+                apiClient.setAuthToken(adminData.token);
+                return;
+              } else {
+                // Both regular and admin login failed
+                throw new Error(data.message || adminData.message || 'Login failed');
+              }
             }
 
+            // Regular login was successful
             // Set API client auth token for authenticated requests
             apiClient.setAuthToken(data.data.accessToken);
 
