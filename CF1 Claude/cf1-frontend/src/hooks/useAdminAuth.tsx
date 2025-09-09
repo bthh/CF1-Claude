@@ -220,7 +220,7 @@ export const useAdminAuth = (): AdminAuthContextType => {
           throw new Error('Admin credentials required in production');
         }
         
-        const response = await fetch(`${BACKEND_URL}/api/admin/login`, {
+        const response = await fetch(`${BACKEND_URL}/api/admin/auth/login`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -294,7 +294,7 @@ export const useAdminAuth = (): AdminAuthContextType => {
         // Notify backend of logout
         const token = await getStoredToken();
         if (token) {
-          await fetch(`${BACKEND_URL}/api/admin/logout`, {
+          await fetch(`${BACKEND_URL}/api/admin/auth/logout`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -381,7 +381,7 @@ export const useAdminAuth = (): AdminAuthContextType => {
         const token = await getStoredToken();
         if (token) {
           try {
-            const response = await fetch(`${BACKEND_URL}/api/admin/verify`, {
+            const response = await fetch(`${BACKEND_URL}/api/admin/auth/verify`, {
               headers: {
                 'Authorization': `Bearer ${token}`
               }
