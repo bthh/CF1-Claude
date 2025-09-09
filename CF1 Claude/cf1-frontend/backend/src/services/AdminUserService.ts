@@ -7,6 +7,7 @@ import { Repository } from 'typeorm';
 import { AdminUser } from '../entities/AdminUser';
 import { AppDataSource } from '../config/database';
 import bcrypt from 'bcrypt';
+import { v4 as uuidv4 } from 'uuid';
 
 export class AdminUserService {
   private adminUserRepository: Repository<AdminUser>;
@@ -28,6 +29,7 @@ export class AdminUserService {
     walletAddress?: string;
     phoneNumber?: string;
     notes?: string;
+    passwordHash?: string; // Optional pre-hashed password
   }): Promise<AdminUser> {
     // Check if email or username already exists
     const existingUser = await this.adminUserRepository.findOne({
@@ -41,8 +43,15 @@ export class AdminUserService {
       throw new Error('Admin user with this email or username already exists');
     }
 
-    // Hash the password
-    const passwordHash = await bcrypt.hash(userData.password, 12);
+    // Use provided hash or hash the password
+    let passwordHash: string;
+    if (userData.passwordHash) {
+      // Use pre-hashed password (from Railway environment variables)
+      passwordHash = userData.passwordHash;
+    } else {
+      // Hash the plain text password
+      passwordHash = await bcrypt.hash(userData.password, 12);
+    }
 
     // Create new admin user
     const adminUser = this.adminUserRepository.create({
@@ -136,6 +145,9 @@ export class AdminUserService {
    */
   async initializeDefaultAdmins(): Promise<void> {
     try {
+      // First ensure the admin_users table exists
+      await this.ensureAdminUsersTable();
+      
       const existingAdmins = await this.adminUserRepository.count();
       if (existingAdmins > 0) {
         console.log(`✅ Admin users already initialized (count: ${existingAdmins})`);
@@ -145,7 +157,10 @@ export class AdminUserService {
       console.log('🔧 Initializing default admin users...');
     } catch (error) {
       console.error('❌ Error checking existing admin users:', error);
-      throw error;
+      
+      // Try direct SQL approach as fallback
+      console.log('🔄 Attempting direct SQL initialization...');
+      return this.initializeAdminUsersDirectSQL();
     }
 
     // Create default admin users from environment variables if they exist
@@ -154,6 +169,7 @@ export class AdminUserService {
         email: 'admin@cf1platform.com',
         username: process.env.ADMIN_USERNAME || 'cf1admin',
         password: process.env.ADMIN_PASSWORD || 'CF1Admin2025!',
+        passwordHash: process.env.ADMIN_PASSWORD_HASH,
         name: 'CF1 System Admin',
         role: 'super_admin',
         permissions: ['admin', 'governance', 'proposals', 'users', 'super_admin']
@@ -162,6 +178,7 @@ export class AdminUserService {
         email: 'bthardwick@gmail.com',
         username: 'brock',
         password: process.env.BROCK_PASSWORD || 'BrockCF1Admin2025!',
+        passwordHash: process.env.BROCK_PASSWORD_HASH,
         name: 'Brock',
         role: 'super_admin',
         permissions: ['admin', 'governance', 'proposals', 'users', 'super_admin']
@@ -170,6 +187,7 @@ export class AdminUserService {
         email: 'brian@cf1platform.com',
         username: 'brian',
         password: process.env.BRIAN_PASSWORD || 'BrianCF1Admin2025!',
+        passwordHash: process.env.BRIAN_PASSWORD_HASH,
         name: 'Brian',
         role: 'super_admin',
         permissions: ['admin', 'governance', 'proposals', 'users', 'super_admin']
@@ -192,5 +210,112 @@ export class AdminUserService {
     }
     
     console.log(`🎉 Admin initialization completed: ${successCount}/${defaultAdmins.length} users created`);
+  }
+
+  /**
+   * Ensure admin_users table exists using raw SQL
+   */
+  private async ensureAdminUsersTable(): Promise<void> {
+    try {
+      const queryRunner = AppDataSource.createQueryRunner();
+      await queryRunner.connect();
+      
+      // Create table if it doesn't exist
+      await queryRunner.query(`
+        CREATE TABLE IF NOT EXISTS "admin_users" (
+          "id" varchar PRIMARY KEY NOT NULL,
+          "email" varchar NOT NULL,
+          "username" varchar NOT NULL,
+          "passwordHash" varchar NOT NULL,
+          "name" varchar NOT NULL,
+          "role" varchar NOT NULL DEFAULT 'creator_admin',
+          "permissions" text NOT NULL,
+          "isActive" boolean NOT NULL DEFAULT 1,
+          "lastLoginAt" datetime,
+          "walletAddress" varchar,
+          "phoneNumber" varchar,
+          "notes" varchar,
+          "createdAt" datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "updatedAt" datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+      
+      // Create unique indexes
+      await queryRunner.query(`CREATE UNIQUE INDEX IF NOT EXISTS "IDX_admin_users_email" ON "admin_users" ("email")`);
+      await queryRunner.query(`CREATE UNIQUE INDEX IF NOT EXISTS "IDX_admin_users_username" ON "admin_users" ("username")`);
+      
+      await queryRunner.release();
+      console.log('✅ Admin users table ensured via SQL');
+    } catch (error) {
+      console.warn('⚠️ Error ensuring admin_users table:', error);
+    }
+  }
+
+  /**
+   * Initialize admin users using direct SQL as fallback
+   */
+  private async initializeAdminUsersDirectSQL(): Promise<void> {
+    try {
+      const queryRunner = AppDataSource.createQueryRunner();
+      await queryRunner.connect();
+      
+      // First ensure table exists
+      await this.ensureAdminUsersTable();
+      
+      // Check if any admin users exist
+      const existingCount = await queryRunner.query(`SELECT COUNT(*) as count FROM admin_users`);
+      if (existingCount[0]?.count > 0) {
+        console.log(`✅ Admin users already exist via SQL (count: ${existingCount[0].count})`);
+        await queryRunner.release();
+        return;
+      }
+      
+      // Create default admin users
+      const admins = [
+        {
+          id: uuidv4(),
+          email: 'admin@cf1platform.com',
+          username: process.env.ADMIN_USERNAME || 'cf1admin',
+          passwordHash: process.env.ADMIN_PASSWORD_HASH || await bcrypt.hash('CF1Admin2025!', 12),
+          name: 'CF1 System Admin',
+          role: 'super_admin',
+          permissions: 'admin,governance,proposals,users,super_admin'
+        },
+        {
+          id: uuidv4(),
+          email: 'bthardwick@gmail.com',
+          username: 'brock',
+          passwordHash: process.env.BROCK_PASSWORD_HASH || await bcrypt.hash('BrockCF1Admin2025!', 12),
+          name: 'Brock',
+          role: 'super_admin',
+          permissions: 'admin,governance,proposals,users,super_admin'
+        },
+        {
+          id: uuidv4(),
+          email: 'brian@cf1platform.com',
+          username: 'brian',
+          passwordHash: process.env.BRIAN_PASSWORD_HASH || await bcrypt.hash('BrianCF1Admin2025!', 12),
+          name: 'Brian',
+          role: 'super_admin',
+          permissions: 'admin,governance,proposals,users,super_admin'
+        }
+      ];
+      
+      for (const admin of admins) {
+        await queryRunner.query(`
+          INSERT INTO admin_users (id, email, username, passwordHash, name, role, permissions, isActive, createdAt, updatedAt)
+          VALUES (?, ?, ?, ?, ?, ?, ?, 1, datetime('now'), datetime('now'))
+        `, [admin.id, admin.email, admin.username, admin.passwordHash, admin.name, admin.role, admin.permissions]);
+        
+        console.log(`✅ Created admin user via SQL: ${admin.email}`);
+      }
+      
+      await queryRunner.release();
+      console.log(`🎉 SQL admin initialization completed: ${admins.length} users created`);
+      
+    } catch (error) {
+      console.error('❌ SQL admin initialization failed:', error);
+      throw error;
+    }
   }
 }
