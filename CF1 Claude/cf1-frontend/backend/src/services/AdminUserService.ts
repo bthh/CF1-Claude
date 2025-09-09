@@ -135,16 +135,24 @@ export class AdminUserService {
    * Initialize default admin users (for migration/setup)
    */
   async initializeDefaultAdmins(): Promise<void> {
-    const existingAdmins = await this.adminUserRepository.count();
-    if (existingAdmins > 0) {
-      return; // Already have admin users
+    try {
+      const existingAdmins = await this.adminUserRepository.count();
+      if (existingAdmins > 0) {
+        console.log(`✅ Admin users already initialized (count: ${existingAdmins})`);
+        return; // Already have admin users
+      }
+      
+      console.log('🔧 Initializing default admin users...');
+    } catch (error) {
+      console.error('❌ Error checking existing admin users:', error);
+      throw error;
     }
 
     // Create default admin users from environment variables if they exist
     const defaultAdmins = [
       {
         email: 'admin@cf1platform.com',
-        username: 'cf1admin',
+        username: process.env.ADMIN_USERNAME || 'cf1admin',
         password: process.env.ADMIN_PASSWORD || 'CF1Admin2025!',
         name: 'CF1 System Admin',
         role: 'super_admin',
@@ -168,13 +176,21 @@ export class AdminUserService {
       }
     ];
 
+    let successCount = 0;
     for (const adminData of defaultAdmins) {
       try {
         await this.createAdminUser(adminData);
         console.log(`✅ Created default admin user: ${adminData.email}`);
+        successCount++;
       } catch (error) {
-        console.log(`⚠️ Admin user ${adminData.email} already exists or error:`, error);
+        if (error instanceof Error && error.message.includes('already exists')) {
+          console.log(`ℹ️ Admin user ${adminData.email} already exists, skipping`);
+        } else {
+          console.error(`❌ Failed to create admin user ${adminData.email}:`, error);
+        }
       }
     }
+    
+    console.log(`🎉 Admin initialization completed: ${successCount}/${defaultAdmins.length} users created`);
   }
 }
