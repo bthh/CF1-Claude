@@ -189,6 +189,48 @@ app.get('/setup-database', async (req, res) => {
   }
 });
 
+// Test admin credentials endpoint
+app.post('/test-admin-credentials', async (req, res) => {
+  try {
+    const { AdminUserService } = require('./services/AdminUserService');
+    const adminUserService = new AdminUserService();
+    const { username, password } = req.body;
+    
+    console.log(`🔍 Testing credentials for: ${username}`);
+    
+    // Find user
+    const user = await adminUserService.findByEmailOrUsername(username);
+    if (!user) {
+      return res.json({
+        success: false,
+        message: 'User not found',
+        username,
+        availableUsers: 'Check server logs'
+      });
+    }
+    
+    // Test authentication
+    const authenticated = await adminUserService.authenticateUser(username, password);
+    
+    res.json({
+      success: !!authenticated,
+      message: authenticated ? 'Credentials valid' : 'Credentials invalid',
+      user: authenticated ? {
+        username: authenticated.username,
+        email: authenticated.email,
+        role: authenticated.role
+      } : null
+    });
+    
+  } catch (error) {
+    console.error('Credential test error:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
 // Server-side authorization for all other /api routes
 app.use('/api', serverSideAuthorization);
 
