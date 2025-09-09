@@ -256,7 +256,7 @@ export class AuthorizationManager {
 
     if (!resourceAccess) {
       // If endpoint not explicitly configured, allow for basic endpoints
-      const basicEndpoints = ['/health', '/api/config', '/auth'];
+      const basicEndpoints = ['/health', '/config', '/auth'];
       const adminAuthEndpoints = ['/admin/auth/login', '/admin/auth/verify', '/admin/auth/logout', '/admin/auth/refresh'];
       
       // Debug logging

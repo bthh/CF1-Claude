@@ -98,7 +98,16 @@ app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use(generateCSRFToken);
 
 // Server-side authorization with admin auth route exclusion  
-app.use('/api', serverSideAuthorization);
+app.use('/api', (req, res, next) => {
+  // Skip authorization for admin auth routes
+  if (req.path.startsWith('/admin/auth/')) {
+    console.log(`✅ Skipping authorization for admin auth route: ${req.path}`);
+    return next();
+  }
+  
+  // Apply authorization for all other /api routes
+  return serverSideAuthorization(req, res, next);
+});
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -117,6 +126,44 @@ app.get('/api/test-auth', (req, res) => {
     message: 'Authorization bypassed successfully',
     timestamp: new Date().toISOString()
   });
+});
+
+// Direct admin login test endpoint (bypasses authorization middleware)
+app.post('/direct-admin-login', async (req, res) => {
+  try {
+    const { AdminUserService } = require('./services/AdminUserService');
+    const adminUserService = new AdminUserService();
+    const { username, password } = req.body;
+    
+    console.log(`🔍 Direct login attempt: ${username}`);
+    const authenticatedUser = await adminUserService.authenticateUser(username, password);
+    
+    if (authenticatedUser) {
+      console.log(`✅ Direct login success: ${username}`);
+      res.json({
+        success: true,
+        message: 'Direct login successful',
+        user: {
+          username: authenticatedUser.username,
+          email: authenticatedUser.email,
+          role: authenticatedUser.role,
+          permissions: authenticatedUser.permissions
+        }
+      });
+    } else {
+      console.log(`❌ Direct login failed: ${username}`);
+      res.json({
+        success: false,
+        message: 'Invalid credentials'
+      });
+    }
+  } catch (error) {
+    console.error('Direct login error:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
 });
 
 // Manual database setup endpoint for production troubleshooting  
