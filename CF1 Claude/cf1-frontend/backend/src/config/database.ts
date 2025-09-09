@@ -35,7 +35,11 @@ export const AppDataSource = new DataSource({
   synchronize: true, // Always auto-create tables since we're using SQLite
   logging: isDevelopment,
   migrations: [path.join(__dirname, '../migrations/*.ts')],
-  migrationsRun: true
+  migrationsRun: true,
+  // Additional SQLite-specific options
+  extra: {
+    foreign_keys: 'ON'
+  }
 });
 
 export const initializeDatabase = async (): Promise<void> => {
@@ -54,6 +58,19 @@ export const initializeDatabase = async (): Promise<void> => {
     
     await AppDataSource.initialize();
     console.log('✅ Database connection established');
+    
+    // Force table creation for all entities
+    if (isProduction) {
+      console.log('🔧 Production environment detected - ensuring all tables exist');
+      try {
+        // Force synchronization for production to ensure tables are created
+        await AppDataSource.synchronize();
+        console.log('✅ Database tables synchronized');
+      } catch (syncError) {
+        console.warn('⚠️ Table synchronization warning:', syncError);
+        // Continue anyway
+      }
+    }
     
     // Initialize default admin users with retry mechanism
     let adminInitRetries = 3;
