@@ -28,7 +28,7 @@ import { handleValidationError } from './middleware/validation';
 import { generateCSRFToken, csrfErrorHandler } from './middleware/csrfProtection';
 import { secureErrorHandler, requestIdMiddleware } from './middleware/secureErrorHandler';
 import { AuditLogger, auditMiddleware, AuditEventType } from './middleware/auditLogger';
-import { serverSideAuthorization } from './middleware/serverSideAuthorization';
+// import { serverSideAuthorization } from './middleware/serverSideAuthorization';
 
 // Environment variables already loaded at the top
 
