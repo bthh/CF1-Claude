@@ -35,12 +35,45 @@ import { serverSideAuthorization } from './middleware/serverSideAuthorization';
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Security and middleware
-app.use(helmet());
+// Security and middleware with CSP configuration
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      connectSrc: ["'self'", "https://rwa2.netlify.app", "wss://rwa2.netlify.app"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "https:"],
+    },
+  },
+  crossOriginEmbedderPolicy: false,
+}));
 app.use(compression());
+
+// CORS configuration for multiple origins
+const allowedOrigins = [
+  'https://rwa2.netlify.app',
+  'https://app.cf1platform.com',
+  'https://cf1platform.com',
+  'http://localhost:5173',
+  'http://localhost:3000'
+];
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-  credentials: true
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.warn(`CORS blocked origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token', 'X-Requested-With']
 }));
 
 // Cookie parser for CSRF tokens
