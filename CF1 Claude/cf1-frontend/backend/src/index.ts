@@ -77,8 +77,8 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Manual database setup endpoint for production troubleshooting
-app.post('/setup-database', async (req, res) => {
+// Manual database setup endpoint for production troubleshooting  
+app.get('/setup-database', async (req, res) => {
   try {
     console.log('🔧 Manual database setup requested');
     
