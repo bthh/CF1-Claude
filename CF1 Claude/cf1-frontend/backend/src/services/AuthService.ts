@@ -390,6 +390,20 @@ export class AuthService {
   }
 
   /**
+   * Update user role
+   */
+  async updateUserRole(userId: string, role: string): Promise<User> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    user.role = role;
+    await this.userRepository.save(user);
+    return user;
+  }
+
+  /**
    * Delete user by ID
    */
   async deleteUser(userId: string): Promise<void> {

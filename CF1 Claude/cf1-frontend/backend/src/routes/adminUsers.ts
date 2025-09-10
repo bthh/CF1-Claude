@@ -357,6 +357,57 @@ router.post('/initialize', requireSuperAdminOrOwner, async (req: AdminAuthentica
 });
 
 /**
+ * PUT /api/admin/users/regular/:id - Update regular user role
+ */
+router.put('/regular/:id', requireSuperAdminOrOwner, async (req: AdminAuthenticatedRequest, res) => {
+  try {
+    const { id } = req.params;
+    const { role } = req.body;
+    
+    // Validate role
+    const validRoles = ['investor', 'creator_admin', 'platform_admin', 'super_admin'];
+    if (!validRoles.includes(role)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid role. Must be one of: ' + validRoles.join(', '),
+        code: 'INVALID_ROLE'
+      });
+    }
+    
+    const authService = new AuthService();
+    const updatedUser = await authService.updateUserRole(id, role);
+    
+    AuditLogger.logEvent(AuditEventType.USER_UPDATED, 'Regular user role updated', req, {
+      adminUser: req.adminUser?.username,
+      action: 'update_user_role',
+      updatedUserId: id,
+      newRole: role
+    });
+    
+    res.json({
+      success: true,
+      user: updatedUser
+    });
+  } catch (error: any) {
+    console.error('Error updating user role:', error);
+    
+    if (error.message.includes('not found')) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found',
+        code: 'USER_NOT_FOUND'
+      });
+    }
+    
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update user role',
+      code: 'UPDATE_ERROR'
+    });
+  }
+});
+
+/**
  * POST /api/admin/users/cleanup-mock - Remove mock/test users and fix real users
  */
 router.post('/cleanup-mock', requireSuperAdminOrOwner, async (req: AdminAuthenticatedRequest, res) => {

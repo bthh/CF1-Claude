@@ -190,7 +190,13 @@ const AdminUsers: React.FC = () => {
     setError(null);
     
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/admin/users/${userId}`, {
+      // Determine the correct endpoint based on user type
+      const user = users.find(u => u.id === userId);
+      const endpoint = user?.userType === 'admin' 
+        ? `${import.meta.env.VITE_API_BASE_URL}/api/admin/users/${userId}`
+        : `${import.meta.env.VITE_API_BASE_URL}/api/admin/users/regular/${userId}`;
+      
+      const response = await fetch(endpoint, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
