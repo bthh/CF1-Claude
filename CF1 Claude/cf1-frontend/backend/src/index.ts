@@ -231,6 +231,11 @@ app.post('/test-admin-credentials', async (req, res) => {
   }
 });
 
+// Admin routes BEFORE server-side authorization (they use their own admin JWT auth)
+app.use('/api/admin/auth', adminAuthRoutes);
+app.use('/api/admin/users', adminUsersRoutes);
+app.use('/api/admin', adminRoutes);
+
 // Server-side authorization for all other /api routes
 app.use('/api', serverSideAuthorization);
 
@@ -250,8 +255,6 @@ app.use('/api/v1/governance', governanceRoutes);
 app.use('/api/v1/ai-analysis', analysisRoutes);
 app.use('/api/creator-toolkit', creatorToolkitRoutes);
 app.use('/api/v1/assets', assetsRoutes);
-app.use('/api/admin/users', adminUsersRoutes);
-app.use('/api/admin', adminRoutes);
 app.use('/feature-toggles', featureToggleRoutes);
 
 // Error handling middleware (order matters!)

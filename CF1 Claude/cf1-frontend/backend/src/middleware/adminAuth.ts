@@ -53,7 +53,7 @@ const ADMIN_USERS: { [key: string]: { passwordHash: string; permissions: string[
     role: 'super_admin',
     displayName: 'Brian'
   },
-  'brian@cf1platform.com': {
+  'brian.d.towner@gmail.com': {
     passwordHash: BRIAN_PASSWORD_HASH || '',
     permissions: ['admin', 'governance', 'proposals', 'users', 'super_admin'],
     role: 'super_admin',

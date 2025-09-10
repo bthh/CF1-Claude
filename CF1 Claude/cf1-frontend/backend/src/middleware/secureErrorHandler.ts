@@ -51,18 +51,7 @@ export class BackendSecureErrorHandler {
 
   private static readonly MAX_ERROR_LOG_SIZE = 500;
   private static readonly SENSITIVE_PATTERNS = [
-    /password/i,
-    /token/i,
-    /secret/i,
-    /key/i,
-    /credential/i,
-    /auth/i,
-    /session/i,
-    /private/i,
-    /internal/i,
-    /debug/i,
-    /stack/i,
-    /trace/i,
+    // Only apply to error messages, not request bodies
     /file:\//i,
     /http:\/\/localhost/i,
     /127\.0\.0\.1/i,
@@ -70,8 +59,8 @@ export class BackendSecureErrorHandler {
     /config/i,
     /database/i,
     /connection/i,
-    /jwt/i,
-    /bearer/i
+    /stack/i,
+    /trace/i
   ];
 
   /**
@@ -148,13 +137,23 @@ export class BackendSecureErrorHandler {
   /**
    * Sanitize error message to prevent information disclosure
    */
-  static sanitizeErrorMessage(message: string): string {
+  static sanitizeErrorMessage(message: string, req?: Request): string {
     if (!IS_PRODUCTION) {
       // In development, show full error for debugging
       return message;
     }
     
-    // Remove sensitive information in production
+    // Don't sanitize authentication errors - they need clear error messages
+    if (req && (req.path.includes('/auth/') || req.path.includes('/admin/auth/'))) {
+      // Only remove paths and URLs for auth endpoints, keep error details
+      let sanitized = message;
+      sanitized = sanitized.replace(/\/[^\s]+/g, '[PATH_REMOVED]');
+      sanitized = sanitized.replace(/https?:\/\/[^\s]+/g, '[URL_REMOVED]');
+      sanitized = sanitized.replace(/\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/g, '[IP_REMOVED]');
+      return sanitized.trim();
+    }
+    
+    // Remove sensitive information in production for non-auth endpoints
     let sanitized = message;
     
     // Remove file paths
@@ -300,7 +299,7 @@ export class BackendSecureErrorHandler {
     const requestId = req.headers['x-request-id'] as string || this.generateRequestId();
     const severity = this.classifyErrorSeverity(error, statusCode);
     const errorCode = this.generateErrorCode(error, req.path);
-    const sanitizedMessage = this.sanitizeErrorMessage(error.message);
+    const sanitizedMessage = this.sanitizeErrorMessage(error.message, req);
     const userMessage = this.createUserMessage(severity, errorCode);
 
     // Log error

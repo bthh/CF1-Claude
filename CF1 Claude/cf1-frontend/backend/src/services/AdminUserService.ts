@@ -184,7 +184,7 @@ export class AdminUserService {
         permissions: ['admin', 'governance', 'proposals', 'users', 'super_admin']
       },
       {
-        email: 'brian@cf1platform.com',
+        email: 'brian.d.towner@gmail.com',
         username: 'brian',
         password: process.env.BRIAN_PASSWORD || 'BrianCF1Admin2025!',
         passwordHash: process.env.BRIAN_PASSWORD_HASH,
@@ -297,7 +297,7 @@ export class AdminUserService {
         },
         {
           id: uuidv4(),
-          email: 'brian@cf1platform.com',
+          email: 'brian.d.towner@gmail.com',
           username: 'brian',
           passwordHash: defaultPasswordHash3,
           name: 'Brian',

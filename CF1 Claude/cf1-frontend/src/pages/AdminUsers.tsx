@@ -57,77 +57,44 @@ const AdminUsers: React.FC = () => {
     setError(null);
     
     try {
-      // For now, use mock data since backend user list isn't implemented yet
-      const mockUsers: User[] = [
-        {
-          id: '1',
-          email: 'john.doe@example.com',
-          firstName: 'John',
-          lastName: 'Doe',
-          displayName: 'John Doe',
-          role: 'investor',
-          authMethod: 'email',
-          emailVerified: true,
-          accountStatus: 'active',
-          kycStatus: 'verified',
-          createdAt: '2024-01-15T10:30:00Z',
-          lastLoginAt: '2024-01-20T15:45:00Z'
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/admin/users`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
         },
-        {
-          id: '2',
-          walletAddress: '0x742d35Cc8bC4D7C7b2b5F7c4b3f4a1c8D9E0F123',
-          displayName: 'Crypto Investor',
-          role: 'creator',
-          authMethod: 'wallet',
-          emailVerified: false,
-          accountStatus: 'active',
-          kycStatus: 'not_started',
-          createdAt: '2024-01-10T08:15:00Z',
-          lastLoginAt: '2024-01-19T12:30:00Z'
-        },
-        {
-          id: '3',
-          email: 'alice.smith@example.com',
-          walletAddress: '0x123d35Cc8bC4D7C7b2b5F7c4b3f4a1c8D9E0F789',
-          firstName: 'Alice',
-          lastName: 'Smith',
-          displayName: 'Alice Smith',
-          role: 'creator',
-          authMethod: 'hybrid',
-          emailVerified: true,
-          accountStatus: 'active',
-          kycStatus: 'pending',
-          createdAt: '2024-01-12T14:20:00Z',
-          lastLoginAt: '2024-01-21T09:15:00Z'
-        },
-        {
-          id: '4',
-          email: 'bob.pending@example.com',
-          firstName: 'Bob',
-          lastName: 'Wilson',
-          displayName: 'Bob Wilson',
-          role: 'investor',
-          authMethod: 'email',
-          emailVerified: false,
-          accountStatus: 'pending_verification',
-          kycStatus: 'not_started',
-          createdAt: '2024-01-18T16:45:00Z'
-        },
-        {
-          id: '5',
-          email: 'suspended.user@example.com',
-          displayName: 'Suspended User',
-          role: 'investor',
-          authMethod: 'email',
-          emailVerified: true,
-          accountStatus: 'suspended',
-          kycStatus: 'rejected',
-          createdAt: '2024-01-05T11:30:00Z',
-          lastLoginAt: '2024-01-16T14:20:00Z'
-        }
-      ];
+        credentials: 'include',
+      });
 
-      setUsers(mockUsers);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to fetch admin users');
+      }
+
+      // Transform admin users to match the User interface expected by the component
+      const transformedUsers: User[] = data.users.map((adminUser: any) => ({
+        id: adminUser.id,
+        email: adminUser.email,
+        firstName: adminUser.name?.split(' ')[0] || '',
+        lastName: adminUser.name?.split(' ').slice(1).join(' ') || '',
+        displayName: adminUser.name,
+        walletAddress: adminUser.walletAddress,
+        role: adminUser.role,
+        authMethod: adminUser.email ? 'email' : 'wallet' as 'email' | 'wallet' | 'hybrid',
+        emailVerified: adminUser.isActive, // Assume active admin users have verified emails
+        accountStatus: adminUser.isActive ? 'active' : 'suspended' as 'active' | 'suspended' | 'pending_verification' | 'locked',
+        kycStatus: 'verified' as 'pending' | 'verified' | 'rejected' | 'not_started', // Admin users are considered verified
+        createdAt: adminUser.createdAt,
+        lastLoginAt: adminUser.lastLoginAt
+      }));
+
+      setUsers(transformedUsers);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch users');
     } finally {
