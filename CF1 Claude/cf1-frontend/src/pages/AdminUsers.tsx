@@ -48,7 +48,7 @@ interface User {
 type FilterType = 'all' | 'email' | 'wallet' | 'active' | 'suspended' | 'admin' | 'regular' | 'pending';
 
 const AdminUsers: React.FC = () => {
-  const { accessToken } = useUnifiedAuthStore();
+  const { accessToken, user: currentUser } = useUnifiedAuthStore();
   
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -141,6 +141,35 @@ const AdminUsers: React.FC = () => {
     }
   };
 
+  // Map database roles to business user levels
+  const getUserLevel = (user: User): string => {
+    // Super admins (Brock and Brian)
+    if (user.role === 'super_admin') return 'Super Admin';
+    
+    // Platform admin (would be set via role management)
+    if (user.role === 'platform_admin') return 'Platform Admin';
+    
+    // Creator admin (for asset creators)
+    if (user.role === 'creator_admin') return 'Creator Admin';
+    
+    // Investor (regular users with investments) - TODO: Check actual investments
+    if (user.role === 'investor' || user.role === 'owner') return 'Investor';
+    
+    // Default for new users with no role set
+    return 'None';
+  };
+
+  const getUserLevelColor = (level: string): string => {
+    switch (level) {
+      case 'Super Admin': return 'text-red-600 bg-red-100 dark:bg-red-900/30';
+      case 'Platform Admin': return 'text-purple-600 bg-purple-100 dark:bg-purple-900/30';
+      case 'Creator Admin': return 'text-orange-600 bg-orange-100 dark:bg-orange-900/30';
+      case 'Investor': return 'text-blue-600 bg-blue-100 dark:bg-blue-900/30';
+      case 'None': return 'text-gray-600 bg-gray-100 dark:bg-gray-900/30';
+      default: return 'text-gray-600 bg-gray-100 dark:bg-gray-900/30';
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -154,6 +183,37 @@ const AdminUsers: React.FC = () => {
   const handleUserAction = (action: string, user: User) => {
     console.log(`Action: ${action} for user:`, user);
     // TODO: Implement user actions (suspend, activate, reset password, etc.)
+  };
+
+  const handleRoleChange = async (userId: string, newRole: string) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/admin/users/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        credentials: 'include',
+        body: JSON.stringify({ role: newRole }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to update user role');
+      }
+
+      // Refresh user list
+      await fetchUsers();
+      setShowUserModal(false);
+      
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to update user role');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -305,7 +365,7 @@ const AdminUsers: React.FC = () => {
                     Status
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Role
+                    User Level
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Permissions
@@ -356,8 +416,10 @@ const AdminUsers: React.FC = () => {
                         {user.accountStatus ? user.accountStatus.replace('_', ' ') : (user.isActive ? 'active' : 'inactive')}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 capitalize">
-                      {user.role}
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getUserLevelColor(getUserLevel(user))}`}>
+                        {getUserLevel(user)}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex flex-wrap gap-1">
@@ -410,24 +472,95 @@ const AdminUsers: React.FC = () => {
         )}
       </Card>
 
-      {/* User Details Modal - Placeholder */}
+      {/* User Details Modal */}
       {showUserModal && selectedUser && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-2xl">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-3xl">
             <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                User Details - {selectedUser.displayName}
+                User Details - {selectedUser.name || selectedUser.displayName}
               </h2>
             </div>
-            <div className="p-6">
-              <p className="text-gray-600 dark:text-gray-400">
-                Detailed user management features will be implemented here.
-              </p>
+            <div className="p-6 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-3">Basic Information</h3>
+                  <div className="space-y-2">
+                    <p><span className="text-gray-600 dark:text-gray-400">Name:</span> {selectedUser.name}</p>
+                    <p><span className="text-gray-600 dark:text-gray-400">Email:</span> {selectedUser.email}</p>
+                    <p><span className="text-gray-600 dark:text-gray-400">Username:</span> {selectedUser.username}</p>
+                    <p><span className="text-gray-600 dark:text-gray-400">User Type:</span> {selectedUser.userType}</p>
+                    <p><span className="text-gray-600 dark:text-gray-400">Account Status:</span> {selectedUser.accountStatus || (selectedUser.isActive ? 'active' : 'inactive')}</p>
+                    <p><span className="text-gray-600 dark:text-gray-400">KYC Status:</span> {selectedUser.kycStatus}</p>
+                    <p><span className="text-gray-600 dark:text-gray-400">Created:</span> {formatDate(selectedUser.createdAt)}</p>
+                    <p><span className="text-gray-600 dark:text-gray-400">Last Login:</span> {selectedUser.lastLoginAt ? formatDate(selectedUser.lastLoginAt) : 'Never'}</p>
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-3">Current User Level</h3>
+                  <div className="mb-4">
+                    <span className={`px-3 py-1 inline-flex text-sm font-semibold rounded-full ${getUserLevelColor(getUserLevel(selectedUser))}`}>
+                      {getUserLevel(selectedUser)}
+                    </span>
+                  </div>
+                  
+                  {/* Role Management - Only for super admins */}
+                  {currentUser?.role === 'super_admin' && (
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-3">Change User Level</h3>
+                      <select
+                        value={selectedUser.role}
+                        onChange={(e) => handleRoleChange(selectedUser.id, e.target.value)}
+                        className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                        disabled={loading}
+                      >
+                        <option value="investor">Investor</option>
+                        <option value="creator_admin">Creator Admin</option>
+                        <option value="platform_admin">Platform Admin</option>
+                        <option value="super_admin">Super Admin</option>
+                      </select>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Select the appropriate user level for this user
+                      </p>
+                    </div>
+                  )}
+                  
+                  <div className="mt-4">
+                    <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Permissions</h4>
+                    <div className="flex flex-wrap gap-1">
+                      {selectedUser.permissions && selectedUser.permissions.length > 0 ? (
+                        selectedUser.permissions.map((permission, index) => (
+                          <span 
+                            key={index}
+                            className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full"
+                          >
+                            {permission}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-xs text-gray-400">No specific permissions</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end">
-              <Button onClick={() => setShowUserModal(false)}>
+            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end space-x-3">
+              <Button variant="outline" onClick={() => setShowUserModal(false)} disabled={loading}>
                 Close
               </Button>
+              {currentUser?.role === 'super_admin' && selectedUser.id !== currentUser.id && (
+                <Button 
+                  variant="outline"
+                  onClick={() => {
+                    // TODO: Add more user management actions
+                    console.log('Additional actions for user:', selectedUser);
+                  }}
+                  disabled={loading}
+                >
+                  More Actions
+                </Button>
+              )}
             </div>
           </div>
         </div>

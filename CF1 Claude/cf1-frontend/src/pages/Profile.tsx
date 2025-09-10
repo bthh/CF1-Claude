@@ -239,27 +239,33 @@ const Profile: React.FC = () => {
                 <div className="flex items-start justify-between mb-6">
                   <div className="flex items-center space-x-4">
                     <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center overflow-hidden">
-                      {profile?.profileImage ? (
+                      {user?.profileImageUrl ? (
                         <img 
-                          src={profile.profileImage} 
+                          src={user.profileImageUrl} 
                           alt="Profile" 
                           className="w-full h-full object-cover"
                         />
                       ) : (
                         <span className="text-blue-600 font-bold text-2xl">
-                          {profile?.personalInfo.firstName?.[0]}{profile?.personalInfo.lastName?.[0]}
+                          {displayUser.displayName?.[0] || 'U'}
                         </span>
                       )}
                     </div>
                     <div>
                       <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                        {profile?.personalInfo.firstName} {profile?.personalInfo.lastName}
+                        {displayUser.displayName}
                       </h2>
                       <div className="flex items-center space-x-2 mt-1">
-                        {isVerificationComplete && (
+                        {user?.kycStatus === 'verified' && (
                           <div className="flex items-center space-x-1 text-green-600">
                             <Shield className="w-4 h-4" />
-                            <span className="text-sm font-medium">Verified</span>
+                            <span className="text-sm font-medium">KYC Verified</span>
+                          </div>
+                        )}
+                        {user?.emailVerified && (
+                          <div className="flex items-center space-x-1 text-blue-600">
+                            <CheckCircle className="w-4 h-4" />
+                            <span className="text-sm font-medium">Email Verified</span>
                           </div>
                         )}
                       </div>
@@ -278,22 +284,22 @@ const Profile: React.FC = () => {
                   <div className="space-y-4">
                     <div className="flex items-center space-x-3">
                       <Mail className="w-5 h-5 text-gray-400" />
-                      <span className="text-gray-600 dark:text-gray-400">{profile?.personalInfo.email}</span>
+                      <span className="text-gray-600 dark:text-gray-400">{displayUser.email}</span>
                     </div>
-                    {profile?.personalInfo.phone && (
+                    {user?.firstName && user?.lastName && (
                       <div className="flex items-center space-x-3">
-                        <Phone className="w-5 h-5 text-gray-400" />
-                        <span className="text-gray-600 dark:text-gray-400">{profile.personalInfo.phone}</span>
-                      </div>
-                    )}
-                    {profile?.address && (
-                      <div className="flex items-center space-x-3">
-                        <MapPin className="w-5 h-5 text-gray-400" />
+                        <User className="w-5 h-5 text-gray-400" />
                         <span className="text-gray-600 dark:text-gray-400">
-                          {profile.address.city}, {profile.address.state}
+                          {user.firstName} {user.lastName}
                         </span>
                       </div>
                     )}
+                    <div className="flex items-center space-x-3">
+                      <Shield className="w-5 h-5 text-gray-400" />
+                      <span className="text-gray-600 dark:text-gray-400">
+                        User Level: {user?.role === 'super_admin' ? 'Super Admin' : user?.role === 'platform_admin' ? 'Platform Admin' : user?.role === 'creator_admin' ? 'Creator Admin' : user?.role === 'investor' ? 'Investor' : 'None'}
+                      </span>
+                    </div>
                   </div>
                   <div className="space-y-4">
                     <div className="flex items-center space-x-3">
