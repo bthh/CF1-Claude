@@ -53,15 +53,16 @@ const EditProfile: React.FC = () => {
   const [activeSection, setActiveSection] = useState<'personal' | 'address' | 'preferences' | 'privacy'>('personal');
   const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  // Initialize form data with real user data
   const [formData, setFormData] = useState<{
     personalInfo: PersonalInfo;
     address: Address;
     preferences: any;
-  }>(() => ({
+  }>({
     personalInfo: {
-      firstName: user?.firstName || '',
-      lastName: user?.lastName || '',
-      email: user?.email || '',
+      firstName: '',
+      lastName: '',
+      email: '',
       phone: '',
       dateOfBirth: '',
       bio: '',
@@ -85,47 +86,38 @@ const EditProfile: React.FC = () => {
       newsUpdates: true,
       publicProfile: false
     }
-  }));
+  });
 
-  // Update form data when user data changes
+  // Initialize form data with real user data when user becomes available
   useEffect(() => {
-    if (user) {
+    if (user && user.email) {
+      console.log('Setting form data with real user:', user);
       setFormData(prev => ({
         ...prev,
         personalInfo: {
           ...prev.personalInfo,
           firstName: user.firstName || '',
           lastName: user.lastName || '',
-          email: user.email || ''
+          email: user.email || '',
+          // If displayName exists and no firstName/lastName, try to split it
+          ...((!user.firstName || !user.lastName) && user.displayName ? {
+            firstName: user.firstName || user.displayName.split(' ')[0] || '',
+            lastName: user.lastName || user.displayName.split(' ').slice(1).join(' ') || ''
+          } : {})
         }
       }));
     }
   }, [user]);
 
-  // Load profile on mount
+  // Load profile on mount - but don't let it override real user data
   useEffect(() => {
     if (user?.id && !profile) {
       loadProfile(user.id);
     }
   }, [user, profile, loadProfile]);
 
-  // Update form data when profile loads
-  useEffect(() => {
-    if (profile) {
-      setFormData({
-        personalInfo: profile.personalInfo,
-        address: profile.address || {
-          street: '',
-          street2: '',
-          city: '',
-          state: '',
-          zipCode: '',
-          country: 'United States'
-        },
-        preferences: profile.preferences
-      });
-    }
-  }, [profile]);
+  // Don't override real user data with mock profile data
+  // The form data is already initialized with real user data above
 
   // Handle form field changes
   const handlePersonalInfoChange = (field: keyof PersonalInfo, value: string) => {
@@ -313,7 +305,7 @@ const EditProfile: React.FC = () => {
                   <div className="flex items-center space-x-6">
                     <div className="relative">
                       <img
-                        src={imagePreview || profile.profileImage || `https://ui-avatars.com/api/?name=${formData.personalInfo.firstName} ${formData.personalInfo.lastName}&background=3B82F6&color=fff`}
+                        src={imagePreview || user?.profileImageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.personalInfo.firstName)} ${encodeURIComponent(formData.personalInfo.lastName)}&background=3B82F6&color=fff`}
                         alt="Profile"
                         className="w-20 h-20 rounded-full object-cover border-4 border-gray-200 dark:border-gray-600"
                       />
