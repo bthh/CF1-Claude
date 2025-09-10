@@ -1437,7 +1437,7 @@ const PlatformAdmin: React.FC = () => {
                               />
                             </div>
                             
-                            {currentAdminUser?.role === 'super_admin' && (
+                            {(hasOldAdminAccess || hasUnifiedAdminAccess || currentAdminUser || unifiedUser) && (
                               <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                   Role
@@ -1630,8 +1630,22 @@ const PlatformAdmin: React.FC = () => {
                           </div>
                         </div>
                         
-                        {/* Role Management Section - Only for Super Admins */}
-                        {currentAdminUser?.role === 'super_admin' && (
+                        {/* Debug: Current Admin User Info */}
+                        <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-600">
+                          <details className="mb-4">
+                            <summary className="text-sm text-gray-500 dark:text-gray-400 cursor-pointer">Debug: Current Admin Info</summary>
+                            <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg text-xs">
+                              <div>Current Admin User Role: {currentAdminUser?.role || 'undefined'}</div>
+                              <div>Has manage_users permission: {combinedCheckPermission('manage_users') ? 'Yes' : 'No'}</div>
+                              <div>Current Admin Email: {currentAdminUser?.email || 'undefined'}</div>
+                              <div>Unified User Role: {unifiedUser?.role || 'undefined'}</div>
+                              <div>Is Unified Authenticated: {isUnifiedAuthenticated ? 'Yes' : 'No'}</div>
+                            </div>
+                          </details>
+                        </div>
+
+                        {/* Role Management Section - For Admins */}
+                        {(hasOldAdminAccess || hasUnifiedAdminAccess || currentAdminUser || unifiedUser) && (
                           <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-600">
                             <h4 className="font-semibold text-gray-900 dark:text-white mb-3">Role Management</h4>
                             <div className="flex items-center space-x-4">
