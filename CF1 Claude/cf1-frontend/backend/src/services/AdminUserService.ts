@@ -141,6 +141,17 @@ export class AdminUserService {
   }
 
   /**
+   * Delete an admin user by email
+   */
+  async deleteAdminUserByEmail(email: string): Promise<void> {
+    const user = await this.adminUserRepository.findOne({ where: { email } });
+    if (!user) {
+      throw new Error('Admin user not found');
+    }
+    await this.adminUserRepository.remove(user);
+  }
+
+  /**
    * Initialize default admin users (for migration/setup)
    */
   async initializeDefaultAdmins(): Promise<void> {

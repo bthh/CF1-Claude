@@ -20,7 +20,7 @@ import {
   Settings,
   User
 } from 'lucide-react';
-import { useAuthStore } from '../store/authStore';
+import { useUnifiedAuthStore } from '../store/unifiedAuthStore';
 import { useUserProfileStore } from '../store/userProfileStore';
 import { usePaymentMethodsStore } from '../store/paymentMethodsStore';
 import { useVerificationStore } from '../store/verificationStore';
@@ -33,7 +33,7 @@ const Profile: React.FC = () => {
   const { success, error: showError } = useNotifications();
   
   // Store hooks
-  const { user } = useAuthStore();
+  const { user } = useUnifiedAuthStore();
   const { 
     profile, 
     loading: profileLoading, 
@@ -59,19 +59,12 @@ const Profile: React.FC = () => {
 
   // Load data on component mount
   useEffect(() => {
-    // Create a demo user if none exists
-    const currentUser = user || {
-      id: 'demo_user',
-      address: '0x742d35Cc5BF8EE5f7DB4C3e6B2c1A3B4f5F6D7E8',
-      name: 'Demo User',
-      email: 'demo@cf1platform.com',
-      verified: true,
-      kycStatus: 'pending' as const,
-      joinDate: new Date().toISOString(),
-      walletAddress: '0x742d35Cc5BF8EE5f7DB4C3e6B2c1A3B4f5F6D7E8'
-    };
-    
-    loadProfile(currentUser.id);
+    if (user) {
+      loadProfile(user.id);
+    } else {
+      // Load demo profile for non-authenticated users
+      loadProfile('demo_user');
+    }
     loadPaymentMethods();
   }, [user, loadProfile, loadPaymentMethods]);
 
@@ -87,16 +80,21 @@ const Profile: React.FC = () => {
     );
   }
 
-  // Get user data (fallback to demo user if no auth user)
-  const currentUser = user || {
+  // Get user data with fallback for demo
+  const displayUser = user ? {
+    id: user.id,
+    email: user.email,
+    displayName: user.displayName || `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email?.split('@')[0] || 'User',
+    walletAddress: user.walletAddress,
+    kycStatus: user.kycStatus,
+    createdAt: user.createdAt
+  } : {
     id: 'demo_user',
-    address: '0x742d35Cc5BF8EE5f7DB4C3e6B2c1A3B4f5F6D7E8',
-    name: 'Demo User', 
     email: 'demo@cf1platform.com',
-    verified: true,
-    kycStatus: 'pending' as const,
-    joinDate: new Date().toISOString(),
-    walletAddress: '0x742d35Cc5BF8EE5f7DB4C3e6B2c1A3B4f5F6D7E8'
+    displayName: 'Demo User',
+    walletAddress: undefined,
+    kycStatus: 'not_started' as const,
+    createdAt: new Date().toISOString()
   };
 
   const verificationProgress = getVerificationProgress();
@@ -301,12 +299,17 @@ const Profile: React.FC = () => {
                     <div className="flex items-center space-x-3">
                       <Calendar className="w-5 h-5 text-gray-400" />
                       <span className="text-gray-600 dark:text-gray-400">
-                        Member since {new Date(profile?.lastUpdated || Date.now()).toLocaleDateString()}
+                        Member since {new Date(displayUser.createdAt).toLocaleDateString()}
                       </span>
                     </div>
                     <div className="flex items-center space-x-3">
                       <Wallet className="w-5 h-5 text-gray-400" />
-                      <span className="text-gray-600 dark:text-gray-400 font-mono text-sm">{currentUser?.walletAddress || currentUser?.address || 'Not connected'}</span>
+                      <span className="text-gray-600 dark:text-gray-400 font-mono text-sm">
+                        {displayUser.walletAddress ? 
+                          `${displayUser.walletAddress.slice(0, 8)}...${displayUser.walletAddress.slice(-6)}` : 
+                          'Not connected'
+                        }
+                      </span>
                     </div>
                   </div>
                 </div>

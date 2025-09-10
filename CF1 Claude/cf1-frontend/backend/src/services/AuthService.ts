@@ -370,6 +370,66 @@ export class AuthService {
   }
 
   /**
+   * Get all regular users (for admin access)
+   */
+  async getAllUsers(): Promise<User[]> {
+    return await this.userRepository.find({
+      order: {
+        createdAt: 'DESC'
+      }
+    });
+  }
+
+  /**
+   * Get user by email
+   */
+  async getUserByEmail(email: string): Promise<User | null> {
+    return await this.userRepository.findOne({
+      where: { email: email.toLowerCase() }
+    });
+  }
+
+  /**
+   * Delete user by ID
+   */
+  async deleteUser(userId: string): Promise<void> {
+    const result = await this.userRepository.delete(userId);
+    if (result.affected === 0) {
+      throw new Error('User not found');
+    }
+  }
+
+  /**
+   * Activate user account
+   */
+  async activateUser(userId: string): Promise<void> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new Error('User not found');
+    }
+    
+    user.accountStatus = 'active';
+    user.emailVerified = true;
+    await this.userRepository.save(user);
+  }
+
+  /**
+   * Reset user password (admin function)
+   */
+  async resetUserPassword(userId: string, newPassword: string): Promise<void> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, this.saltRounds);
+    user.passwordHash = passwordHash;
+    user.resetFailedLogins();
+    
+    await this.userRepository.save(user);
+  }
+
+  /**
    * Generate JWT tokens
    */
   private generateTokens(user: User): { accessToken: string; refreshToken: string } {

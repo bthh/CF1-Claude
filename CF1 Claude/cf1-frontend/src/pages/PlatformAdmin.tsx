@@ -58,6 +58,9 @@ interface PlatformUser {
   complianceScore: number;
   riskLevel: 'low' | 'medium' | 'high';
   supportTickets: number;
+  role?: string;
+  permissions?: string[];
+  userType?: 'admin' | 'regular';
 }
 
 interface ComplianceCase {
@@ -385,14 +388,25 @@ const PlatformAdmin: React.FC = () => {
   const loadPlatformData = async () => {
     setLoading(true);
     try {
-      await Promise.all([
+      // Use Promise.allSettled to allow partial success - users can load even if other APIs fail
+      const results = await Promise.allSettled([
         loadUsers(),
         loadComplianceCases(),
         loadSupportTickets()
       ]);
+      
+      // Log which operations succeeded/failed
+      results.forEach((result, index) => {
+        const operationNames = ['loadUsers', 'loadComplianceCases', 'loadSupportTickets'];
+        if (result.status === 'rejected') {
+          console.warn(`🔍 PlatformAdmin: ${operationNames[index]} failed:`, result.reason);
+        } else {
+          console.log(`🔍 PlatformAdmin: ${operationNames[index]} succeeded`);
+        }
+      });
+      
     } catch (err) {
       console.error('Error loading platform admin data:', err);
-      // Continue execution to allow partial loading if some requests fail
     } finally {
       setLoading(false);
     }
@@ -400,36 +414,76 @@ const PlatformAdmin: React.FC = () => {
 
   const loadUsers = async (): Promise<void> => {
     try {
-      const response = await adminAPI.getUsers({ limit: 50 });
-      
-      // Transform AdminUser to PlatformUser format for compatibility
-      const transformedUsers: PlatformUser[] = response.users.map(user => ({
-        id: user.id,
-        address: user.walletAddress || `${user.primaryAuthMethod}_${user.id.slice(0, 8)}...`,
-        email: user.email,
-        name: user.fullName,
-        phone: undefined, // Not available from backend yet
-        country: undefined, // Not available from backend yet
-        verificationLevel: user.emailVerified ? 'verified' : 'basic',
-        status: user.accountStatus as 'active' | 'suspended' | 'banned' | 'pending',
-        kycStatus: user.kycStatus as 'not_started' | 'pending' | 'approved' | 'rejected',
-        joinedAt: user.createdAt,
-        lastActive: user.lastLoginAt || user.updatedAt,
-        totalInvestments: 0, // Not available from backend yet
-        proposalsCreated: 0, // Not available from backend yet
-        complianceScore: user.kycStatus === 'verified' ? 95 : 
-                        user.kycStatus === 'pending' ? 75 : 
-                        user.accountStatus === 'active' ? 85 : 50,
-        riskLevel: user.accountStatus === 'suspended' ? 'high' : 
-                  user.kycStatus === 'rejected' ? 'high' :
-                  user.emailVerified ? 'low' : 'medium',
-        supportTickets: 0 // Will be calculated from support tickets API
-      }));
-      
-      setUsers(transformedUsers);
+      // Fetch both admin users and regular users in parallel
+      const [adminResponse, regularResponse] = await Promise.allSettled([
+        adminAPI.getUsers({ limit: 50 }),
+        adminAPI.getRegularUsers({ limit: 50 })
+      ]);
+
+      const allUsers: PlatformUser[] = [];
+
+      // Process admin users
+      if (adminResponse.status === 'fulfilled') {
+        console.log('🔍 Admin users loaded:', adminResponse.value.users.length);
+        const adminUsers: PlatformUser[] = adminResponse.value.users.map(user => ({
+          id: user.id,
+          address: user.walletAddress || `admin_${user.username}_${user.id.slice(0, 8)}...`,
+          email: user.email,
+          name: user.name || user.username || 'Admin User',
+          phone: user.phoneNumber || undefined,
+          country: undefined,
+          verificationLevel: 'verified' as 'anonymous' | 'basic' | 'verified' | 'accredited',
+          status: user.isActive ? 'active' : 'suspended' as 'active' | 'suspended' | 'banned' | 'pending',
+          kycStatus: 'approved' as 'not_started' | 'pending' | 'approved' | 'rejected',
+          joinedAt: user.createdAt || new Date().toISOString(),
+          lastActive: user.lastLoginAt || user.updatedAt || new Date().toISOString(),
+          totalInvestments: 0,
+          proposalsCreated: 0,
+          complianceScore: user.isActive ? 95 : 50,
+          riskLevel: user.role === 'super_admin' || user.role === 'owner' ? 'low' : 'medium' as 'low' | 'medium' | 'high',
+          supportTickets: 0,
+          role: user.role,
+          permissions: user.permissions,
+          userType: 'admin'
+        }));
+        allUsers.push(...adminUsers);
+      } else {
+        console.error('Failed to load admin users:', adminResponse.reason);
+      }
+
+      // Process regular users
+      if (regularResponse.status === 'fulfilled') {
+        console.log('🔍 Regular users loaded:', regularResponse.value.users.length);
+        const regularUsers: PlatformUser[] = regularResponse.value.users.map(user => ({
+          id: user.id,
+          address: user.walletAddress || `user_${user.username}_${user.id.slice(0, 8)}...`,
+          email: user.email,
+          name: user.name || user.username || 'Platform User',
+          phone: user.phoneNumber || undefined,
+          country: undefined,
+          verificationLevel: user.email ? 'basic' : 'anonymous' as 'anonymous' | 'basic' | 'verified' | 'accredited',
+          status: user.isActive ? 'active' : 'suspended' as 'active' | 'suspended' | 'banned' | 'pending',
+          kycStatus: 'not_started' as 'not_started' | 'pending' | 'approved' | 'rejected',
+          joinedAt: user.createdAt || new Date().toISOString(),
+          lastActive: user.lastLoginAt || user.updatedAt || new Date().toISOString(),
+          totalInvestments: 0,
+          proposalsCreated: 0,
+          complianceScore: user.isActive ? 75 : 25,
+          riskLevel: 'medium' as 'low' | 'medium' | 'high',
+          supportTickets: 0,
+          role: user.role || 'user',
+          permissions: user.permissions || [],
+          userType: 'regular'
+        }));
+        allUsers.push(...regularUsers);
+      } else {
+        console.warn('Failed to load regular users:', regularResponse.reason);
+      }
+
+      console.log('🔍 Total users loaded:', allUsers.length, '(Admin + Regular)');
+      setUsers(allUsers);
     } catch (error) {
       console.error('Failed to load users:', error);
-      // Fallback to empty array on error
       setUsers([]);
       throw error;
     }
@@ -1075,10 +1129,10 @@ const PlatformAdmin: React.FC = () => {
                                 {user.name || 'Anonymous User'}
                               </h3>
                               <span className={`px-2 py-1 rounded-lg text-xs font-medium ${getStatusColor(user.status)}`}>
-                                {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
+                                {user.status ? user.status.charAt(0).toUpperCase() + user.status.slice(1) : 'Unknown'}
                               </span>
                               <span className={`px-2 py-1 rounded-lg text-xs font-medium ${getStatusColor(user.kycStatus)}`}>
-                                KYC: {user.kycStatus.replace('_', ' ').charAt(0).toUpperCase() + user.kycStatus.replace('_', ' ').slice(1)}
+                                KYC: {user.kycStatus ? user.kycStatus.replace('_', ' ').charAt(0).toUpperCase() + user.kycStatus.replace('_', ' ').slice(1) : 'Unknown'}
                               </span>
                             </div>
                             
@@ -1141,7 +1195,7 @@ const PlatformAdmin: React.FC = () => {
                           <div>
                             <p className="text-sm text-gray-500 dark:text-gray-400">Risk Level</p>
                             <p className={`font-semibold ${getRiskColor(user.riskLevel)}`}>
-                              {user.riskLevel.charAt(0).toUpperCase() + user.riskLevel.slice(1)}
+                              {user.riskLevel ? user.riskLevel.charAt(0).toUpperCase() + user.riskLevel.slice(1) : 'Unknown'}
                             </p>
                           </div>
                           
@@ -1215,19 +1269,19 @@ const PlatformAdmin: React.FC = () => {
                               {user.email && (
                                 <div className="flex items-center space-x-2">
                                   <Mail className="w-4 h-4 text-gray-400" />
-                                  <span>{user.email}</span>
+                                  <span className="text-gray-700 dark:text-gray-300">{user.email}</span>
                                 </div>
                               )}
                               {user.phone && (
                                 <div className="flex items-center space-x-2">
                                   <Phone className="w-4 h-4 text-gray-400" />
-                                  <span>{user.phone}</span>
+                                  <span className="text-gray-700 dark:text-gray-300">{user.phone}</span>
                                 </div>
                               )}
                               {user.country && (
                                 <div className="flex items-center space-x-2">
                                   <Globe className="w-4 h-4 text-gray-400" />
-                                  <span>{user.country}</span>
+                                  <span className="text-gray-700 dark:text-gray-300">{user.country}</span>
                                 </div>
                               )}
                             </div>
@@ -1236,18 +1290,18 @@ const PlatformAdmin: React.FC = () => {
                           <div>
                             <h4 className="font-semibold text-gray-900 dark:text-white mb-3">Activity Summary</h4>
                             <div className="space-y-2 text-sm">
-                              <div>Proposals Created: {user.proposalsCreated}</div>
-                              <div>Support Tickets: {user.supportTickets}</div>
-                              <div>Member Since: {new Date(user.joinedAt).toLocaleDateString()}</div>
+                              <div className="text-gray-700 dark:text-gray-300">Proposals Created: {user.proposalsCreated}</div>
+                              <div className="text-gray-700 dark:text-gray-300">Support Tickets: {user.supportTickets}</div>
+                              <div className="text-gray-700 dark:text-gray-300">Member Since: {new Date(user.joinedAt).toLocaleDateString()}</div>
                             </div>
                           </div>
                           
                           <div>
                             <h4 className="font-semibold text-gray-900 dark:text-white mb-3">Compliance</h4>
                             <div className="space-y-2 text-sm">
-                              <div>Verification Level: {user.verificationLevel}</div>
-                              <div>KYC Status: {user.kycStatus}</div>
-                              <div>Risk Assessment: {user.riskLevel}</div>
+                              <div className="text-gray-700 dark:text-gray-300">Verification Level: {user.verificationLevel}</div>
+                              <div className="text-gray-700 dark:text-gray-300">KYC Status: {user.kycStatus}</div>
+                              <div className="text-gray-700 dark:text-gray-300">Risk Assessment: {user.riskLevel}</div>
                             </div>
                           </div>
                         </div>
@@ -1307,7 +1361,7 @@ const PlatformAdmin: React.FC = () => {
                           </h3>
                         </div>
                         <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(case_.status)}`}>
-                          {case_.status.replace('_', ' ').charAt(0).toUpperCase() + case_.status.replace('_', ' ').slice(1)}
+                          {case_.status ? case_.status.replace('_', ' ').charAt(0).toUpperCase() + case_.status.replace('_', ' ').slice(1) : 'Unknown'}
                         </span>
                         <span className={`px-3 py-1 rounded-full text-xs font-bold ${
                           case_.severity === 'critical' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' :
@@ -1436,7 +1490,7 @@ const PlatformAdmin: React.FC = () => {
                           {ticket.priority.toUpperCase()} PRIORITY
                         </span>
                         <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(ticket.status)}`}>
-                          {ticket.status.replace('_', ' ').charAt(0).toUpperCase() + ticket.status.replace('_', ' ').slice(1)}
+                          {ticket.status ? ticket.status.replace('_', ' ').charAt(0).toUpperCase() + ticket.status.replace('_', ' ').slice(1) : 'Unknown'}
                         </span>
                       </div>
                       

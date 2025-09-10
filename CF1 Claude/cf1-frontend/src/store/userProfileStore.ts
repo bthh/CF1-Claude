@@ -160,57 +160,84 @@ export const useUserProfileStore = create<UserProfileState>()(
           set({ loading: true, error: null });
           
           try {
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            // Get user from unified auth store for real data
+            const { user } = await import('./unifiedAuthStore').then(m => m.useUnifiedAuthStore.getState());
             
-            // Get user from auth store for initial data
-            const authUser = useAuthStore.getState().user;
-            
-            const mockProfile: UserProfile = {
-              id: userId,
-              personalInfo: {
-                firstName: authUser?.name?.split(' ')[0] || 'Demo',
-                lastName: authUser?.name?.split(' ')[1] || 'User',
-                email: authUser?.email || 'demo@cf1platform.com',
-                phone: '+1 (555) 123-4567',
-                dateOfBirth: '1990-01-15',
-                bio: 'Passionate investor interested in real-world asset tokenization and DeFi opportunities.',
-                occupation: 'Software Engineer',
-                company: 'Tech Corp',
-                linkedIn: 'https://linkedin.com/in/demouser',
-                twitter: 'https://twitter.com/demouser'
-              },
-              address: {
-                street: '123 Main Street',
-                street2: 'Apt 4B',
-                city: 'San Francisco',
-                state: 'CA',
-                zipCode: '94105',
-                country: 'United States'
-              },
-              profileImage: authUser?.profileImage || `https://ui-avatars.com/api/?name=${authUser?.name || 'Demo User'}&background=3B82F6&color=fff`,
-              isProfileComplete: false,
-              profileCompletionScore: 0,
-              lastUpdated: new Date().toISOString(),
-              preferences: {
-                emailNotifications: true,
-                smsNotifications: false,
-                marketingEmails: true,
-                newsUpdates: true,
-                publicProfile: false
-              }
-            };
-            
-            // Calculate completion score
-            mockProfile.profileCompletionScore = calculateProfileCompletion(mockProfile);
-            mockProfile.isProfileComplete = mockProfile.profileCompletionScore >= 80;
-            
-            set({
-              profile: mockProfile,
-              loading: false,
-              lastSyncTime: new Date().toISOString()
-            });
-            
+            if (user) {
+              // Use real authenticated user data
+              const realProfile: UserProfile = {
+                id: user.id,
+                personalInfo: {
+                  firstName: user.firstName || user.displayName?.split(' ')[0] || '',
+                  lastName: user.lastName || user.displayName?.split(' ').slice(1).join(' ') || '',
+                  email: user.email || '',
+                  phone: undefined,
+                  dateOfBirth: undefined,
+                  bio: undefined,
+                  occupation: undefined,
+                  company: undefined,
+                  linkedIn: undefined,
+                  twitter: undefined
+                },
+                address: undefined,
+                profileImage: user.profileImageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || user.email || 'User')}&background=3B82F6&color=fff`,
+                isProfileComplete: false,
+                profileCompletionScore: 0,
+                lastUpdated: new Date().toISOString(),
+                preferences: {
+                  emailNotifications: true,
+                  smsNotifications: false,
+                  marketingEmails: true,
+                  newsUpdates: true,
+                  publicProfile: false
+                }
+              };
+              
+              // Calculate completion score based on real data
+              realProfile.profileCompletionScore = calculateProfileCompletion(realProfile);
+              realProfile.isProfileComplete = realProfile.profileCompletionScore >= 80;
+              
+              set({
+                profile: realProfile,
+                loading: false,
+                lastSyncTime: new Date().toISOString()
+              });
+            } else {
+              // Fallback for demo mode
+              const demoProfile: UserProfile = {
+                id: userId,
+                personalInfo: {
+                  firstName: 'Demo',
+                  lastName: 'User',
+                  email: 'demo@cf1platform.com',
+                  phone: undefined,
+                  dateOfBirth: undefined,
+                  bio: 'Demo user profile',
+                  occupation: undefined,
+                  company: undefined,
+                  linkedIn: undefined,
+                  twitter: undefined
+                },
+                address: undefined,
+                profileImage: `https://ui-avatars.com/api/?name=Demo+User&background=3B82F6&color=fff`,
+                isProfileComplete: false,
+                profileCompletionScore: 25,
+                lastUpdated: new Date().toISOString(),
+                preferences: {
+                  emailNotifications: true,
+                  smsNotifications: false,
+                  marketingEmails: true,
+                  newsUpdates: true,
+                  publicProfile: false
+                }
+              };
+              
+              set({
+                profile: demoProfile,
+                loading: false,
+                lastSyncTime: new Date().toISOString()
+              });
+            }
           } catch (error) {
             set({
               loading: false,

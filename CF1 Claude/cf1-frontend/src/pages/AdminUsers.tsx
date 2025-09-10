@@ -24,20 +24,28 @@ import LoadingSpinner from '../components/UI/LoadingSpinner';
 interface User {
   id: string;
   email?: string;
+  username?: string;
+  name?: string;
   walletAddress?: string;
   firstName?: string;
   lastName?: string;
   displayName?: string;
   role: string;
-  authMethod: 'email' | 'wallet' | 'hybrid';
-  emailVerified: boolean;
-  accountStatus: 'active' | 'suspended' | 'pending_verification' | 'locked';
-  kycStatus: 'pending' | 'verified' | 'rejected' | 'not_started';
+  permissions: string[];
+  authMethod?: 'email' | 'wallet' | 'hybrid';
+  emailVerified?: boolean;
+  accountStatus?: 'active' | 'suspended' | 'pending_verification' | 'locked';
+  kycStatus?: 'pending' | 'verified' | 'rejected' | 'not_started';
+  isActive: boolean;
+  userType: 'admin' | 'regular';
   createdAt: string;
   lastLoginAt?: string;
+  updatedAt: string;
+  phoneNumber?: string;
+  notes?: string;
 }
 
-type FilterType = 'all' | 'email' | 'wallet' | 'active' | 'suspended' | 'verified' | 'pending';
+type FilterType = 'all' | 'email' | 'wallet' | 'active' | 'suspended' | 'admin' | 'regular' | 'pending';
 
 const AdminUsers: React.FC = () => {
   const { accessToken } = useUnifiedAuthStore();
@@ -57,7 +65,7 @@ const AdminUsers: React.FC = () => {
     setError(null);
     
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/admin/users`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/admin/users/all-users`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -74,27 +82,11 @@ const AdminUsers: React.FC = () => {
       const data = await response.json();
       
       if (!data.success) {
-        throw new Error(data.error || 'Failed to fetch admin users');
+        throw new Error(data.error || 'Failed to fetch users');
       }
 
-      // Transform admin users to match the User interface expected by the component
-      const transformedUsers: User[] = data.users.map((adminUser: any) => ({
-        id: adminUser.id,
-        email: adminUser.email,
-        firstName: adminUser.name?.split(' ')[0] || '',
-        lastName: adminUser.name?.split(' ').slice(1).join(' ') || '',
-        displayName: adminUser.name,
-        walletAddress: adminUser.walletAddress,
-        role: adminUser.role,
-        authMethod: adminUser.email ? 'email' : 'wallet' as 'email' | 'wallet' | 'hybrid',
-        emailVerified: adminUser.isActive, // Assume active admin users have verified emails
-        accountStatus: adminUser.isActive ? 'active' : 'suspended' as 'active' | 'suspended' | 'pending_verification' | 'locked',
-        kycStatus: 'verified' as 'pending' | 'verified' | 'rejected' | 'not_started', // Admin users are considered verified
-        createdAt: adminUser.createdAt,
-        lastLoginAt: adminUser.lastLoginAt
-      }));
-
-      setUsers(transformedUsers);
+      // Users are already in the correct format from the API
+      setUsers(data.users);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch users');
     } finally {
@@ -110,19 +102,20 @@ const AdminUsers: React.FC = () => {
   const filteredUsers = users.filter(user => {
     const searchLower = searchTerm.toLowerCase();
     const matchesSearch = 
-      user.displayName?.toLowerCase().includes(searchLower) ||
+      user.name?.toLowerCase().includes(searchLower) ||
+      user.username?.toLowerCase().includes(searchLower) ||
       user.email?.toLowerCase().includes(searchLower) ||
       user.walletAddress?.toLowerCase().includes(searchLower) ||
-      user.firstName?.toLowerCase().includes(searchLower) ||
-      user.lastName?.toLowerCase().includes(searchLower);
+      user.displayName?.toLowerCase().includes(searchLower);
 
     const matchesFilter = 
       selectedFilter === 'all' ||
-      (selectedFilter === 'email' && (user.authMethod === 'email' || user.authMethod === 'hybrid')) ||
-      (selectedFilter === 'wallet' && (user.authMethod === 'wallet' || user.authMethod === 'hybrid')) ||
-      (selectedFilter === 'active' && user.accountStatus === 'active') ||
-      (selectedFilter === 'suspended' && user.accountStatus === 'suspended') ||
-      (selectedFilter === 'verified' && user.kycStatus === 'verified') ||
+      (selectedFilter === 'email' && user.email) ||
+      (selectedFilter === 'wallet' && user.walletAddress) ||
+      (selectedFilter === 'active' && (user.isActive || user.accountStatus === 'active')) ||
+      (selectedFilter === 'suspended' && (!user.isActive || user.accountStatus === 'suspended')) ||
+      (selectedFilter === 'admin' && user.userType === 'admin') ||
+      (selectedFilter === 'regular' && user.userType === 'regular') ||
       (selectedFilter === 'pending' && user.accountStatus === 'pending_verification');
 
     return matchesSearch && matchesFilter;
@@ -210,7 +203,7 @@ const AdminUsers: React.FC = () => {
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">Active Users</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {users.filter(u => u.accountStatus === 'active').length}
+                {users.filter(u => u.isActive || u.accountStatus === 'active').length}
               </p>
             </div>
           </div>
@@ -222,9 +215,9 @@ const AdminUsers: React.FC = () => {
               <Shield className="w-5 h-5 text-yellow-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Verified KYC</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Admin Users</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {users.filter(u => u.kycStatus === 'verified').length}
+                {users.filter(u => u.userType === 'admin').length}
               </p>
             </div>
           </div>
@@ -236,9 +229,9 @@ const AdminUsers: React.FC = () => {
               <UserX className="w-5 h-5 text-red-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Suspended</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Regular Users</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {users.filter(u => u.accountStatus === 'suspended').length}
+                {users.filter(u => u.userType === 'regular').length}
               </p>
             </div>
           </div>
@@ -268,11 +261,12 @@ const AdminUsers: React.FC = () => {
               className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
             >
               <option value="all">All Users</option>
+              <option value="admin">Admin Users</option>
+              <option value="regular">Regular Users</option>
               <option value="email">Email Users</option>
               <option value="wallet">Wallet Users</option>
               <option value="active">Active</option>
               <option value="suspended">Suspended</option>
-              <option value="verified">KYC Verified</option>
               <option value="pending">Pending</option>
             </select>
           </div>
@@ -305,16 +299,16 @@ const AdminUsers: React.FC = () => {
                     User
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Auth Method
+                    Type
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Status
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    KYC Status
+                    Role
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Role
+                    Permissions
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Last Login
@@ -331,12 +325,12 @@ const AdminUsers: React.FC = () => {
                       <div className="flex items-center">
                         <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
                           <span className="text-sm font-medium text-blue-600">
-                            {user.displayName?.[0] || user.email?.[0] || 'U'}
+                            {(user.name || user.displayName || user.email)?.[0] || 'U'}
                           </span>
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900 dark:text-white">
-                            {user.displayName}
+                            {user.name || user.displayName || user.username || 'Unknown User'}
                           </div>
                           <div className="text-sm text-gray-500 dark:text-gray-400">
                             {user.email || (user.walletAddress ? `${user.walletAddress.slice(0, 8)}...${user.walletAddress.slice(-6)}` : 'No identifier')}
@@ -345,32 +339,46 @@ const AdminUsers: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center space-x-2">
-                        {user.authMethod === 'email' && <Mail className="w-4 h-4 text-blue-500" />}
-                        {user.authMethod === 'wallet' && <Wallet className="w-4 h-4 text-green-500" />}
-                        {user.authMethod === 'hybrid' && (
-                          <>
-                            <Mail className="w-4 h-4 text-blue-500" />
-                            <Wallet className="w-4 h-4 text-green-500" />
-                          </>
-                        )}
-                        <span className="text-sm text-gray-700 dark:text-gray-300 capitalize">
-                          {user.authMethod}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(user.accountStatus)}`}>
-                        {user.accountStatus.replace('_', ' ')}
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        user.userType === 'admin' ? 'text-purple-600 bg-purple-100 dark:bg-purple-900/30' : 'text-blue-600 bg-blue-100 dark:bg-blue-900/30'
+                      }`}>
+                        {user.userType === 'admin' ? 'Admin' : 'Regular'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getKycColor(user.kycStatus)}`}>
-                        {user.kycStatus.replace('_', ' ')}
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        user.isActive || user.accountStatus === 'active' 
+                          ? 'text-green-600 bg-green-100 dark:bg-green-900/30' 
+                          : user.accountStatus === 'pending_verification'
+                          ? 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30'
+                          : 'text-red-600 bg-red-100 dark:bg-red-900/30'
+                      }`}>
+                        {user.accountStatus ? user.accountStatus.replace('_', ' ') : (user.isActive ? 'active' : 'inactive')}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 capitalize">
                       {user.role}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex flex-wrap gap-1">
+                        {user.permissions && user.permissions.length > 0 ? (
+                          user.permissions.slice(0, 3).map((permission, index) => (
+                            <span 
+                              key={index}
+                              className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full"
+                            >
+                              {permission}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-xs text-gray-400">None</span>
+                        )}
+                        {user.permissions && user.permissions.length > 3 && (
+                          <span className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full">
+                            +{user.permissions.length - 3}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                       {user.lastLoginAt ? formatDate(user.lastLoginAt) : 'Never'}
