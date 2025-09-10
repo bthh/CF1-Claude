@@ -25,13 +25,13 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useUserProfileStore, PersonalInfo, Address } from '../store/userProfileStore';
-import { useAuthStore } from '../store/authStore';
+import { useUnifiedAuthStore } from '../store/unifiedAuthStore';
 import { useNotifications } from '../hooks/useNotifications';
 
 const EditProfile: React.FC = () => {
   const navigate = useNavigate();
   const { success, error: showError } = useNotifications();
-  const { user } = useAuthStore();
+  const { user } = useUnifiedAuthStore();
   
   const {
     profile,
@@ -57,11 +57,11 @@ const EditProfile: React.FC = () => {
     personalInfo: PersonalInfo;
     address: Address;
     preferences: any;
-  }>({
+  }>(() => ({
     personalInfo: {
-      firstName: '',
-      lastName: '',
-      email: '',
+      firstName: user?.firstName || '',
+      lastName: user?.lastName || '',
+      email: user?.email || '',
       phone: '',
       dateOfBirth: '',
       bio: '',
@@ -85,7 +85,22 @@ const EditProfile: React.FC = () => {
       newsUpdates: true,
       publicProfile: false
     }
-  });
+  }));
+
+  // Update form data when user data changes
+  useEffect(() => {
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        personalInfo: {
+          ...prev.personalInfo,
+          firstName: user.firstName || '',
+          lastName: user.lastName || '',
+          email: user.email || ''
+        }
+      }));
+    }
+  }, [user]);
 
   // Load profile on mount
   useEffect(() => {
