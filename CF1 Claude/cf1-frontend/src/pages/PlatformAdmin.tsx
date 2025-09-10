@@ -376,6 +376,8 @@ const PlatformAdmin: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showUserDetails, setShowUserDetails] = useState<string | null>(null);
   const [showPlatformAutoCommunicationsModal, setShowPlatformAutoCommunicationsModal] = useState(false);
+  const [editingUser, setEditingUser] = useState<string | null>(null);
+  const [editingUserData, setEditingUserData] = useState<Partial<PlatformUser>>({});
 
   // Get current admin user from auth store
   const { user: currentAdminUser, accessToken } = useUnifiedAuthStore();
@@ -561,12 +563,21 @@ const PlatformAdmin: React.FC = () => {
     }
 
     try {
+      // Find the user to determine correct endpoint
+      const user = users.find(u => u.id === userId);
+      if (!user) {
+        error('User not found');
+        return;
+      }
+
       // Map actions to API update data
       const updateData = {
         accountStatus: action === 'activate' ? 'active' : 
                      action === 'suspend' ? 'suspended' : 
-                     action === 'ban' ? 'suspended' : undefined, // Using suspended for ban
-        kycStatus: action === 'verify' ? 'verified' : undefined
+                     action === 'ban' ? 'locked' : // Use 'locked' for banned users (backend doesn't support 'banned')
+                     action === 'verify' ? 'active' : undefined,
+        kycStatus: action === 'verify' ? 'approved' : undefined,
+        emailVerified: action === 'verify' ? true : undefined
       };
 
       // Filter out undefined values
@@ -574,17 +585,44 @@ const PlatformAdmin: React.FC = () => {
         Object.entries(updateData).filter(([_, value]) => value !== undefined)
       );
 
-      await adminAPI.updateUser(userId, cleanUpdateData);
+      // Use the correct endpoint based on user type
+      if (user.userType === 'admin') {
+        // For admin users, use admin endpoint
+        const endpoint = `${import.meta.env.VITE_API_BASE_URL}/api/admin/users/${userId}`;
+        const response = await fetch(endpoint, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`,
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            isActive: action === 'activate',
+            ...cleanUpdateData
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || 'Failed to update admin user');
+        }
+      } else {
+        // For regular users, use existing adminAPI
+        await adminAPI.updateUser(userId, cleanUpdateData);
+      }
       
       // Update local state to reflect changes
-      setUsers(prev => prev.map(user => 
-        user.id === userId 
+      setUsers(prev => prev.map(u => 
+        u.id === userId 
           ? { 
-              ...user, 
-              status: updateData.accountStatus || user.status,
-              kycStatus: updateData.kycStatus === 'verified' ? 'approved' : user.kycStatus
+              ...u, 
+              status: (action === 'ban' ? 'banned' : 
+                      updateData.accountStatus === 'locked' ? 'banned' :
+                      updateData.accountStatus || u.status) as 'active' | 'suspended' | 'banned' | 'pending',
+              kycStatus: updateData.kycStatus === 'approved' ? 'approved' : u.kycStatus,
+              verificationLevel: action === 'verify' ? 'verified' : u.verificationLevel
             }
-          : user
+          : u
       ));
       
       success(`User ${action}${action.endsWith('e') ? 'd' : action.endsWith('y') ? 'ied' : 'ned'} successfully`);
@@ -595,10 +633,20 @@ const PlatformAdmin: React.FC = () => {
   };
 
   const handleRoleChange = async (userId: string, newRole: string) => {
+    if (!combinedCheckPermission('manage_users')) {
+      error('Insufficient permissions to change user roles');
+      return;
+    }
+
     try {
       // Determine the correct endpoint based on user type
       const user = users.find(u => u.id === userId);
-      const endpoint = user?.userType === 'admin' 
+      if (!user) {
+        error('User not found');
+        return;
+      }
+
+      const endpoint = user.userType === 'admin' 
         ? `${import.meta.env.VITE_API_BASE_URL}/api/admin/users/${userId}`
         : `${import.meta.env.VITE_API_BASE_URL}/api/admin/users/regular/${userId}`;
       
@@ -614,7 +662,7 @@ const PlatformAdmin: React.FC = () => {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to update user role');
+        throw new Error(errorData.error || `Failed to update ${user.userType} user role`);
       }
 
       // Update local state to reflect the role change
@@ -622,10 +670,10 @@ const PlatformAdmin: React.FC = () => {
         u.id === userId ? { ...u, role: newRole } : u
       ));
 
-      success(`User role updated to ${newRole === 'super_admin' ? 'Super Admin' : newRole === 'platform_admin' ? 'Platform Admin' : newRole === 'creator_admin' ? 'Creator Admin' : newRole === 'investor' ? 'Investor' : 'None'} successfully`);
+      success(`User role updated to ${newRole === 'super_admin' ? 'Super Admin' : newRole === 'platform_admin' ? 'Platform Admin' : newRole === 'creator_admin' ? 'Creator Admin' : newRole === 'investor' ? 'Investor' : 'User'} successfully`);
     } catch (err) {
       console.error('Failed to update user role:', err);
-      error('Failed to update user role');
+      error(`Failed to update user role: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   };
 
@@ -684,8 +732,8 @@ const PlatformAdmin: React.FC = () => {
     switch (status) {
       case 'active': return 'text-green-600 bg-green-100 dark:bg-green-900/20';
       case 'suspended': return 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/20';
-      case 'banned': return 'text-red-600 bg-red-100 dark:bg-red-900/20';
-      case 'pending': return 'text-blue-600 bg-blue-100 dark:bg-blue-900/20';
+      case 'locked': case 'banned': return 'text-red-600 bg-red-100 dark:bg-red-900/20';
+      case 'pending': case 'pending_verification': return 'text-blue-600 bg-blue-100 dark:bg-blue-900/20';
       case 'approved': return 'text-green-600 bg-green-100 dark:bg-green-900/20';
       case 'rejected': return 'text-red-600 bg-red-100 dark:bg-red-900/20';
       case 'open': return 'text-blue-600 bg-blue-100 dark:bg-blue-900/20';
@@ -721,7 +769,10 @@ const PlatformAdmin: React.FC = () => {
       user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.address.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
+    const matchesStatus = statusFilter === 'all' || 
+      user.status === statusFilter ||
+      (statusFilter === 'banned' && (user.status === 'locked' || user.status === 'banned')) ||
+      (statusFilter === 'locked' && (user.status === 'locked' || user.status === 'banned'));
     
     return matchesSearch && matchesStatus;
   });
@@ -1139,7 +1190,9 @@ const PlatformAdmin: React.FC = () => {
                       <option value="active">Active</option>
                       <option value="suspended">Suspended</option>
                       <option value="banned">Banned</option>
+                      <option value="locked">Banned</option>
                       <option value="pending">Pending</option>
+                      <option value="pending_verification">Pending Verification</option>
                     </select>
                     
                     <button className="flex items-center space-x-2 px-4 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors">
@@ -1167,7 +1220,8 @@ const PlatformAdmin: React.FC = () => {
                                 {user.name || 'Anonymous User'}
                               </h3>
                               <span className={`px-2 py-1 rounded-lg text-xs font-medium ${getStatusColor(user.status)}`}>
-                                {user.status ? user.status.charAt(0).toUpperCase() + user.status.slice(1) : 'Unknown'}
+                                {user.status === 'locked' ? 'Banned' : 
+                                 user.status ? user.status.charAt(0).toUpperCase() + user.status.slice(1) : 'Unknown'}
                               </span>
                               <span className={`px-2 py-1 rounded-lg text-xs font-medium ${getStatusColor(user.kycStatus)}`}>
                                 KYC: {user.kycStatus ? user.kycStatus.replace('_', ' ').charAt(0).toUpperCase() + user.kycStatus.replace('_', ' ').slice(1) : 'Unknown'}
@@ -1255,6 +1309,22 @@ const PlatformAdmin: React.FC = () => {
                           <Eye className="w-4 h-4" />
                         </button>
                         
+                        <button
+                          onClick={() => {
+                            setEditingUser(user.id);
+                            setEditingUserData({
+                              name: user.name,
+                              email: user.email,
+                              phone: user.phone,
+                              role: user.role
+                            });
+                          }}
+                          className="p-2 text-purple-600 hover:bg-purple-100 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
+                          title="Edit User"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        
                         {user.status === 'active' && (
                           <button
                             onClick={() => handleUserAction(user.id, 'suspend')}
@@ -1275,27 +1345,212 @@ const PlatformAdmin: React.FC = () => {
                           </button>
                         )}
                         
-                        {user.kycStatus === 'pending' && (
+                        {(user.kycStatus === 'pending' || user.kycStatus === 'not_started' || user.status === 'pending') && (
                           <button
                             onClick={() => handleUserAction(user.id, 'verify')}
                             className="p-2 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/20 rounded-lg transition-colors"
-                            title="Approve KYC"
+                            title="Approve User/KYC"
                           >
                             <CheckCircle className="w-4 h-4" />
                           </button>
                         )}
                         
-                        {user.status !== 'banned' && (
+                        {user.status !== 'locked' && user.status !== 'banned' && (
                           <button
-                            onClick={() => handleUserAction(user.id, 'ban')}
+                            onClick={() => {
+                              if (confirm(`Are you sure you want to ban ${user.name || user.email}? This will prevent them from accessing the platform.`)) {
+                                handleUserAction(user.id, 'ban');
+                              }
+                            }}
                             className="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                             title="Ban User"
                           >
                             <Ban className="w-4 h-4" />
                           </button>
                         )}
+                        
+                        {(user.status === 'locked' || user.status === 'banned') && (
+                          <button
+                            onClick={() => handleUserAction(user.id, 'activate')}
+                            className="p-2 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/20 rounded-lg transition-colors"
+                            title="Unban User"
+                          >
+                            <UserCheck className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </div>
+                    
+                    {/* Edit User Modal */}
+                    {editingUser === user.id && (
+                      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md mx-4">
+                          <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                              Edit User Details
+                            </h3>
+                            <button
+                              onClick={() => {
+                                setEditingUser(null);
+                                setEditingUserData({});
+                              }}
+                              className="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                          
+                          <div className="space-y-4">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Name
+                              </label>
+                              <input
+                                type="text"
+                                value={editingUserData.name || ''}
+                                onChange={(e) => setEditingUserData(prev => ({ ...prev, name: e.target.value }))}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              />
+                            </div>
+                            
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Email
+                              </label>
+                              <input
+                                type="email"
+                                value={editingUserData.email || ''}
+                                onChange={(e) => setEditingUserData(prev => ({ ...prev, email: e.target.value }))}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              />
+                            </div>
+                            
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Phone
+                              </label>
+                              <input
+                                type="tel"
+                                value={editingUserData.phone || ''}
+                                onChange={(e) => setEditingUserData(prev => ({ ...prev, phone: e.target.value }))}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              />
+                            </div>
+                            
+                            {currentAdminUser?.role === 'super_admin' && (
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                  Role
+                                </label>
+                                <select
+                                  value={editingUserData.role || user.role || 'investor'}
+                                  onChange={(e) => setEditingUserData(prev => ({ ...prev, role: e.target.value }))}
+                                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                >
+                                  <option value="investor">Investor</option>
+                                  <option value="creator_admin">Creator Admin</option>
+                                  <option value="platform_admin">Platform Admin</option>
+                                  <option value="super_admin">Super Admin</option>
+                                </select>
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="flex items-center space-x-3 mt-6">
+                            <button
+                              onClick={async () => {
+                                try {
+                                  if (!combinedCheckPermission('manage_users')) {
+                                    error('Insufficient permissions to edit users');
+                                    return;
+                                  }
+
+                                  // Handle role change separately if role was changed
+                                  const roleChanged = editingUserData.role && editingUserData.role !== user.role;
+                                  if (roleChanged) {
+                                    await handleRoleChange(user.id, editingUserData.role!);
+                                    // Remove role from the general update data
+                                    const { role, ...otherData } = editingUserData;
+                                    
+                                    if (Object.keys(otherData).length > 0) {
+                                      // Update other fields if any
+                                      const endpoint = user.userType === 'admin'
+                                        ? `${import.meta.env.VITE_API_BASE_URL}/api/admin/users/${user.id}`
+                                        : `${import.meta.env.VITE_API_BASE_URL}/api/admin/users/regular/${user.id}`;
+                                      
+                                      const response = await fetch(endpoint, {
+                                        method: 'PUT',
+                                        headers: {
+                                          'Content-Type': 'application/json',
+                                          'Authorization': `Bearer ${accessToken}`,
+                                        },
+                                        credentials: 'include',
+                                        body: JSON.stringify(otherData),
+                                      });
+
+                                      if (!response.ok) {
+                                        const errorData = await response.json().catch(() => ({}));
+                                        throw new Error(errorData.error || 'Failed to update user data');
+                                      }
+                                      
+                                      // Update local state for other fields
+                                      setUsers(prev => prev.map(u => 
+                                        u.id === user.id ? { ...u, ...otherData } : u
+                                      ));
+                                    }
+                                  } else {
+                                    // No role change, update normally
+                                    const endpoint = user.userType === 'admin'
+                                      ? `${import.meta.env.VITE_API_BASE_URL}/api/admin/users/${user.id}`
+                                      : `${import.meta.env.VITE_API_BASE_URL}/api/admin/users/regular/${user.id}`;
+                                    
+                                    const response = await fetch(endpoint, {
+                                      method: 'PUT',
+                                      headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': `Bearer ${accessToken}`,
+                                      },
+                                      credentials: 'include',
+                                      body: JSON.stringify(editingUserData),
+                                    });
+
+                                    if (!response.ok) {
+                                      const errorData = await response.json().catch(() => ({}));
+                                      throw new Error(errorData.error || 'Failed to update user');
+                                    }
+
+                                    // Update local state
+                                    setUsers(prev => prev.map(u => 
+                                      u.id === user.id ? { ...u, ...editingUserData } : u
+                                    ));
+                                  }
+                                  
+                                  setEditingUser(null);
+                                  setEditingUserData({});
+                                  success('User updated successfully');
+                                } catch (err) {
+                                  console.error('Failed to update user:', err);
+                                  error(`Failed to update user: ${err instanceof Error ? err.message : 'Unknown error'}`);
+                                }
+                              }}
+                              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                            >
+                              Save Changes
+                            </button>
+                            
+                            <button
+                              onClick={() => {
+                                setEditingUser(null);
+                                setEditingUserData({});
+                              }}
+                              className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     
                     {/* User Details Expansion */}
                     {showUserDetails === user.id && (
