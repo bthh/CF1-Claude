@@ -176,7 +176,9 @@ export const adminAPI = {
         totalUsers: data.summary?.totalUsers || data.users?.length || 0,
         adminUsers: data.summary?.adminUsers || 0,
         regularUsers: data.summary?.regularUsers || 0,
-        userTypes: data.users?.map((u: any) => ({ email: u.email, userType: u.userType })) || []
+        userTypes: data.users?.map((u: any) => ({ email: u.email, userType: u.userType })) || [],
+        allUserEmails: data.users?.map((u: any) => u.email) || [],
+        rawResponseSample: data.users?.slice(0, 2) || []
       });
 
       // Transform users to match AdminUserResponse interface (data is already properly formatted by backend)
