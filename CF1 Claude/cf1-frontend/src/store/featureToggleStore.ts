@@ -213,6 +213,7 @@ export const useFeatureToggleStore = create<FeatureToggleState>()(
           const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
           // Feature toggles endpoint is at /feature-toggles (not under /api)
           const baseUrl = API_BASE.replace('/api', '');
+          console.log('🔧 Loading feature toggles from:', `${baseUrl}/feature-toggles`);
           const response = await fetch(`${baseUrl}/feature-toggles`, {
             headers: {
               ...getAuthHeaders()
@@ -220,8 +221,13 @@ export const useFeatureToggleStore = create<FeatureToggleState>()(
             credentials: 'include'
           });
           
+          console.log('🔧 Feature toggles response status:', response.status, response.statusText);
+          
           if (response.ok) {
             const data = await response.json();
+            console.log('🔧 Backend feature toggles data received:', Object.keys(data.features || {}).length, 'features');
+            console.log('🔧 Sample backend feature states:', Object.entries(data.features || {}).slice(0, 3).map(([k, v]: [string, any]) => `${k}: ${v.enabled}`));
+            
             // Backend is the source of truth - start with backend data
             const mergedFeatures: Record<string, any> = {};
             
@@ -239,9 +245,11 @@ export const useFeatureToggleStore = create<FeatureToggleState>()(
               }
             });
             
+            console.log('🔧 Final merged features count:', Object.keys(mergedFeatures).length);
+            console.log('🔧 Setting feature toggles in store...');
             set({ features: mergedFeatures });
           } else {
-            console.warn('Failed to load feature toggles from backend, using defaults');
+            console.warn('🔧 Failed to load feature toggles from backend, using defaults');
             // If backend unavailable, use defaults (don't preserve potentially stale local state)
             set({ features: defaultFeatures });
           }
