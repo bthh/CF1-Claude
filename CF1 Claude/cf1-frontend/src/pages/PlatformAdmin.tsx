@@ -448,6 +448,7 @@ const PlatformAdmin: React.FC = () => {
       const response = await adminAPI.getUsers({ limit: 100 });
       
       console.log('🔍 All users loaded from unified endpoint:', response.users.length);
+      console.log('🔍 Raw API response users:', response.users.map(u => ({ id: u.id, email: u.email, userType: u.userType })));
 
       // Process all users and preserve the userType from backend
       const allUsers: PlatformUser[] = response.users.map(user => {
@@ -711,16 +712,19 @@ const PlatformAdmin: React.FC = () => {
         u.id === userId ? { ...u, role: newRole } : u
       ));
 
-      // If the role change is for the currently logged-in user, refresh their session data
+      // Always refresh user session data for any role change (in case changed user is logged in elsewhere)
+      console.log('🔄 Role change successful, refreshing all user session data...');
+      try {
+        await refreshUserData();
+        console.log('✅ User session data refreshed successfully after role change');
+      } catch (refreshError) {
+        console.error('❌ Failed to refresh user session data:', refreshError);
+        // Don't show error to user as the role change was successful
+      }
+      
+      // Show additional message if this was the current user
       if (unifiedUser && isUnifiedAuthenticated && unifiedUser.id === userId) {
-        console.log('🔄 Role changed for current user, refreshing session data...');
-        try {
-          await refreshUserData();
-          console.log('✅ User session data refreshed successfully after role change');
-        } catch (refreshError) {
-          console.error('❌ Failed to refresh user session data:', refreshError);
-          // Don't show error to user as the role change was successful
-        }
+        success(`Your role has been updated! The changes will be reflected immediately.`);
       }
 
       success(`User role updated to ${newRole === 'super_admin' ? 'Super Admin' : newRole === 'platform_admin' ? 'Platform Admin' : newRole === 'creator_admin' ? 'Creator Admin' : newRole === 'investor' ? 'Investor' : 'User'} successfully`);

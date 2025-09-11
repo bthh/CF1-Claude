@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { getAuthHeaders } from './unifiedAuthStore';
 
 export interface FeatureToggle {
   id: string;
@@ -142,9 +142,9 @@ const defaultFeatures: Record<string, FeatureToggle> = {
 };
 
 export const useFeatureToggleStore = create<FeatureToggleState>()(
-  persist(
-    (set, get) => ({
-      features: defaultFeatures,
+  // No persist middleware - feature toggles should only come from backend
+  (set, get) => ({
+    features: defaultFeatures,
 
       isFeatureEnabled: (featureId: string) => {
         const feature = get().features[featureId];
@@ -153,10 +153,12 @@ export const useFeatureToggleStore = create<FeatureToggleState>()(
 
       updateFeatureToggle: async (featureId: string, enabled: boolean, modifiedBy: string) => {
         try {
-          const response = await fetch(`/feature-toggles/${featureId}`, {
+          const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+          const response = await fetch(`${API_BASE}/feature-toggles/${featureId}`, {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',
+              ...getAuthHeaders()
             },
             credentials: 'include', // Include cookies for CSRF token
             body: JSON.stringify({ enabled, modifiedBy })
@@ -205,40 +207,61 @@ export const useFeatureToggleStore = create<FeatureToggleState>()(
 
       loadFeatureToggles: async () => {
         try {
-          const response = await fetch('/feature-toggles');
+          const currentFeatures = get().features;
+          const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+          const response = await fetch(`${API_BASE}/feature-toggles`, {
+            headers: {
+              ...getAuthHeaders()
+            },
+            credentials: 'include'
+          });
+          
           if (response.ok) {
             const data = await response.json();
-            // Always merge backend data with latest defaults to ensure new features are included
-            const mergedFeatures = { ...defaultFeatures };
+            // Start with current user settings to preserve their changes
+            const mergedFeatures = { ...currentFeatures };
             
-            // Override with backend data where available
+            // Only add new features from backend that don't exist locally
             if (data.features) {
               Object.keys(data.features).forEach(key => {
-                if (mergedFeatures[key]) {
-                  mergedFeatures[key] = { ...mergedFeatures[key], ...data.features[key] };
+                if (!mergedFeatures[key]) {
+                  // This is a new feature from backend, add it
+                  mergedFeatures[key] = { ...data.features[key] };
+                } else {
+                  // Feature exists locally, check if backend has newer modifications
+                  const backendFeature = data.features[key];
+                  const localFeature = mergedFeatures[key];
+                  
+                  // If backend feature is newer (and not a default), update non-enabled properties
+                  if (backendFeature.lastModified > localFeature.lastModified && backendFeature.modifiedBy) {
+                    mergedFeatures[key] = {
+                      ...localFeature,
+                      // Keep user's enabled state but update metadata
+                      name: backendFeature.name,
+                      description: backendFeature.description,
+                      category: backendFeature.category,
+                      requiredRole: backendFeature.requiredRole
+                    };
+                  }
                 }
               });
             }
             
-            set({ features: mergedFeatures });
-          } else {
-            console.warn('Failed to load feature toggles from backend, using defaults');
-            // Fall back to local defaults if backend is unavailable
-            const currentFeatures = get().features;
-            const mergedFeatures = { ...defaultFeatures };
-            
-            // Preserve any existing enabled states, but ensure all new defaults are included
-            Object.keys(currentFeatures).forEach(key => {
-              if (mergedFeatures[key]) {
-                mergedFeatures[key].enabled = currentFeatures[key].enabled;
-                mergedFeatures[key].lastModified = currentFeatures[key].lastModified;
-                mergedFeatures[key].modifiedBy = currentFeatures[key].modifiedBy;
+            // Add any new features from defaults that don't exist in either backend or local
+            Object.keys(defaultFeatures).forEach(key => {
+              if (!mergedFeatures[key]) {
+                mergedFeatures[key] = { ...defaultFeatures[key] };
               }
             });
             
-            // Ensure any new features from defaults that aren't in current features get added
+            set({ features: mergedFeatures });
+          } else {
+            console.warn('Failed to load feature toggles from backend, using current state');
+            // If backend unavailable, just ensure we have all default features
+            const mergedFeatures = { ...currentFeatures };
+            
             Object.keys(defaultFeatures).forEach(key => {
-              if (!currentFeatures[key]) {
+              if (!mergedFeatures[key]) {
                 mergedFeatures[key] = { ...defaultFeatures[key] };
               }
             });
@@ -255,30 +278,5 @@ export const useFeatureToggleStore = create<FeatureToggleState>()(
       resetToDefaults: () => {
         set({ features: defaultFeatures });
       }
-    }),
-    {
-      name: 'cf1-feature-toggles',
-      version: 5,
-      migrate: (persistedState: any, version: number) => {
-        // Always merge with latest default features to ensure new features are included
-        const mergedFeatures = { ...defaultFeatures };
-        
-        if (persistedState?.features) {
-          // Preserve existing enabled states and modifications
-          Object.keys(persistedState.features).forEach((key: string) => {
-            if (mergedFeatures[key]) {
-              mergedFeatures[key].enabled = persistedState.features[key].enabled;
-              mergedFeatures[key].lastModified = persistedState.features[key].lastModified;
-              mergedFeatures[key].modifiedBy = persistedState.features[key].modifiedBy;
-            }
-          });
-        }
-        
-        return {
-          ...persistedState,
-          features: mergedFeatures
-        };
-      }
-    }
-  )
+    })
 );

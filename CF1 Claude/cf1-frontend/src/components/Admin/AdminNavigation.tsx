@@ -48,15 +48,16 @@ const AdminNavigation: React.FC = () => {
   const navigate = useNavigate();
 
   // Helper functions to check unified auth admin access
-  const isUnifiedAuthAdmin = unifiedUser && ['super_admin', 'owner', 'creator'].includes(unifiedUser.role);
-  const isUnifiedCreatorAdmin = unifiedUser && unifiedUser.role === 'creator';
+  const isUnifiedAuthAdmin = unifiedUser && ['super_admin', 'platform_admin', 'creator_admin', 'owner'].includes(unifiedUser.role);
+  const isUnifiedCreatorAdmin = unifiedUser && unifiedUser.role === 'creator_admin';
+  const isUnifiedPlatformAdmin = unifiedUser && unifiedUser.role === 'platform_admin';
   const isUnifiedSuperAdmin = unifiedUser && unifiedUser.role === 'super_admin';
   const isUnifiedOwner = unifiedUser && unifiedUser.role === 'owner';
   
   // Combined admin status (old system OR unified system)
   const combinedIsCreatorAdmin = isCreatorAdmin || isUnifiedCreatorAdmin;
   const combinedIsSuperAdmin = isSuperAdmin || isUnifiedSuperAdmin;
-  const combinedIsPlatformAdmin = isPlatformAdmin || isUnifiedSuperAdmin || isUnifiedOwner;
+  const combinedIsPlatformAdmin = isPlatformAdmin || isUnifiedPlatformAdmin || isUnifiedSuperAdmin || isUnifiedOwner;
   const combinedIsOwner = isOwner || isUnifiedOwner;
   
   // Combined access functions
@@ -71,7 +72,7 @@ const AdminNavigation: React.FC = () => {
     // Check old admin system first
     if (hasAccessToPlatformAdmin()) return true;
     // Then check unified auth system
-    return isUnifiedSuperAdmin || isUnifiedOwner;
+    return isUnifiedPlatformAdmin || isUnifiedSuperAdmin || isUnifiedOwner;
   };
   const [selectedAdminType, setSelectedAdminType] = useState<AdminType | null>(null);
 

@@ -679,7 +679,7 @@ const CreatorAdmin: React.FC = () => {
   // Combined access check for both old admin system and unified auth system
   const hasOldAdminAccess = currentAdmin && checkPermission('access_creator_admin');
   const hasUnifiedAdminAccess = unifiedUser && isUnifiedAuthenticated && 
-    (unifiedUser.role === 'creator' || unifiedUser.role === 'super_admin' || unifiedUser.role === 'owner');
+    (unifiedUser.role === 'creator_admin' || unifiedUser.role === 'super_admin' || unifiedUser.role === 'owner');
   
   if (!hasOldAdminAccess && !hasUnifiedAdminAccess) {
     return (

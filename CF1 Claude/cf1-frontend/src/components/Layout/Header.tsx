@@ -78,9 +78,9 @@ const Header: React.FC = () => {
   const [darkMode, setDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('darkMode');
-      return stored !== null ? stored === 'true' : true; // Default to dark mode
+      return stored !== null ? stored === 'true' : false; // Default to light mode
     }
-    return true; // Default to dark mode
+    return false; // Default to light mode
   });
   
   const toggleDarkMode = () => {
@@ -245,10 +245,10 @@ const Header: React.FC = () => {
   // Helper to check if user is platform or super admin
   // Check both old admin auth system and unified auth system
   const user = unifiedUser; // Rename for clarity
-  const unifiedAuthIsAdmin = user && (user.role === 'super_admin' || user.role === 'owner' || user.role === 'creator');
+  const unifiedAuthIsAdmin = user && (user.role === 'super_admin' || user.role === 'platform_admin' || user.role === 'creator_admin' || user.role === 'owner');
   const combinedIsAdmin = isAdmin || unifiedAuthIsAdmin;
-  const combinedAdminRole = adminRole || (user?.role === 'super_admin' ? 'super_admin' : user?.role === 'owner' ? 'owner' : user?.role === 'creator' ? 'creator' : null);
-  const isPlatformOrSuperAdmin = adminRole === 'platform_admin' || adminRole === 'super_admin' || user?.role === 'super_admin' || user?.role === 'owner';
+  const combinedAdminRole = adminRole || (user?.role === 'super_admin' ? 'super_admin' : user?.role === 'platform_admin' ? 'platform_admin' : user?.role === 'creator_admin' ? 'creator_admin' : user?.role === 'owner' ? 'owner' : null);
+  const isPlatformOrSuperAdmin = adminRole === 'platform_admin' || adminRole === 'super_admin' || user?.role === 'platform_admin' || user?.role === 'super_admin' || user?.role === 'owner';
   
   // Debug logging for production troubleshooting
   console.log('🔍 Header Debug Info:', {
@@ -439,12 +439,12 @@ const Header: React.FC = () => {
           )}
           {combinedIsAdmin && (
             <Link 
-              to="/admin"
+              to={combinedAdminRole === 'creator_admin' ? '/admin/creator' : '/admin'}
               className={`px-4 py-2 rounded-lg text-sm font-medium ${
-                location.pathname.startsWith('/admin') ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-300' : 'text-primary-600 hover:text-primary-900 dark:text-primary-300 dark:hover:text-primary-100'
+                location.pathname.startsWith('/admin') ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white'
               }`}
             >
-              Admin
+              {combinedAdminRole === 'creator_admin' ? 'Creator' : 'Admin'}
             </Link>
           )}
         </nav>
