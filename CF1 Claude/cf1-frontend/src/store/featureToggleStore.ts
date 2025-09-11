@@ -154,7 +154,9 @@ export const useFeatureToggleStore = create<FeatureToggleState>()(
       updateFeatureToggle: async (featureId: string, enabled: boolean, modifiedBy: string) => {
         try {
           const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
-          const response = await fetch(`${API_BASE}/feature-toggles/${featureId}`, {
+          // Feature toggles endpoint is at /feature-toggles (not under /api)
+          const baseUrl = API_BASE.replace('/api', '');
+          const response = await fetch(`${baseUrl}/feature-toggles/${featureId}`, {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',
@@ -209,7 +211,9 @@ export const useFeatureToggleStore = create<FeatureToggleState>()(
         try {
           const currentFeatures = get().features;
           const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
-          const response = await fetch(`${API_BASE}/feature-toggles`, {
+          // Feature toggles endpoint is at /feature-toggles (not under /api)
+          const baseUrl = API_BASE.replace('/api', '');
+          const response = await fetch(`${baseUrl}/feature-toggles`, {
             headers: {
               ...getAuthHeaders()
             },
