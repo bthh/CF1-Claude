@@ -646,11 +646,11 @@ const PlatformAdmin: React.FC = () => {
         return;
       }
 
-      const endpoint = user.userType === 'admin' 
-        ? `${import.meta.env.VITE_API_BASE_URL}/api/admin/users/${userId}`
-        : `${import.meta.env.VITE_API_BASE_URL}/api/admin/users/regular/${userId}`;
+      console.log(`🔍 Role change debug - User ID: ${userId}, UserType: ${user.userType}, Email: ${user.email}`);
       
-      const response = await fetch(endpoint, {
+      // Try regular user endpoint first (most users are regular users)
+      let endpoint = `${import.meta.env.VITE_API_BASE_URL}/api/admin/users/regular/${userId}`;
+      let response = await fetch(endpoint, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -660,9 +660,24 @@ const PlatformAdmin: React.FC = () => {
         body: JSON.stringify({ role: newRole }),
       });
 
+      // If regular user endpoint fails with 404, try admin endpoint
+      if (!response.ok && response.status === 404) {
+        console.log(`🔍 Regular user endpoint failed, trying admin endpoint for user ${userId}`);
+        endpoint = `${import.meta.env.VITE_API_BASE_URL}/api/admin/users/${userId}`;
+        response = await fetch(endpoint, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`,
+          },
+          credentials: 'include',
+          body: JSON.stringify({ role: newRole }),
+        });
+      }
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Failed to update ${user.userType} user role`);
+        throw new Error(errorData.error || `Failed to update user role via ${endpoint.includes('/regular/') ? 'regular' : 'admin'} endpoint`);
       }
 
       // Update local state to reflect the role change
@@ -1473,12 +1488,9 @@ const PlatformAdmin: React.FC = () => {
                                     const { role, ...otherData } = editingUserData;
                                     
                                     if (Object.keys(otherData).length > 0) {
-                                      // Update other fields if any
-                                      const endpoint = user.userType === 'admin'
-                                        ? `${import.meta.env.VITE_API_BASE_URL}/api/admin/users/${user.id}`
-                                        : `${import.meta.env.VITE_API_BASE_URL}/api/admin/users/regular/${user.id}`;
-                                      
-                                      const response = await fetch(endpoint, {
+                                      // Update other fields if any - try regular endpoint first
+                                      let endpoint = `${import.meta.env.VITE_API_BASE_URL}/api/admin/users/regular/${user.id}`;
+                                      let response = await fetch(endpoint, {
                                         method: 'PUT',
                                         headers: {
                                           'Content-Type': 'application/json',
@@ -1487,6 +1499,20 @@ const PlatformAdmin: React.FC = () => {
                                         credentials: 'include',
                                         body: JSON.stringify(otherData),
                                       });
+
+                                      // If regular user endpoint fails with 404, try admin endpoint
+                                      if (!response.ok && response.status === 404) {
+                                        endpoint = `${import.meta.env.VITE_API_BASE_URL}/api/admin/users/${user.id}`;
+                                        response = await fetch(endpoint, {
+                                          method: 'PUT',
+                                          headers: {
+                                            'Content-Type': 'application/json',
+                                            'Authorization': `Bearer ${accessToken}`,
+                                          },
+                                          credentials: 'include',
+                                          body: JSON.stringify(otherData),
+                                        });
+                                      }
 
                                       if (!response.ok) {
                                         const errorData = await response.json().catch(() => ({}));
@@ -1499,12 +1525,9 @@ const PlatformAdmin: React.FC = () => {
                                       ));
                                     }
                                   } else {
-                                    // No role change, update normally
-                                    const endpoint = user.userType === 'admin'
-                                      ? `${import.meta.env.VITE_API_BASE_URL}/api/admin/users/${user.id}`
-                                      : `${import.meta.env.VITE_API_BASE_URL}/api/admin/users/regular/${user.id}`;
-                                    
-                                    const response = await fetch(endpoint, {
+                                    // No role change, update normally - try regular endpoint first
+                                    let endpoint = `${import.meta.env.VITE_API_BASE_URL}/api/admin/users/regular/${user.id}`;
+                                    let response = await fetch(endpoint, {
                                       method: 'PUT',
                                       headers: {
                                         'Content-Type': 'application/json',
@@ -1513,6 +1536,20 @@ const PlatformAdmin: React.FC = () => {
                                       credentials: 'include',
                                       body: JSON.stringify(editingUserData),
                                     });
+
+                                    // If regular user endpoint fails with 404, try admin endpoint
+                                    if (!response.ok && response.status === 404) {
+                                      endpoint = `${import.meta.env.VITE_API_BASE_URL}/api/admin/users/${user.id}`;
+                                      response = await fetch(endpoint, {
+                                        method: 'PUT',
+                                        headers: {
+                                          'Content-Type': 'application/json',
+                                          'Authorization': `Bearer ${accessToken}`,
+                                        },
+                                        credentials: 'include',
+                                        body: JSON.stringify(editingUserData),
+                                      });
+                                    }
 
                                     if (!response.ok) {
                                       const errorData = await response.json().catch(() => ({}));
