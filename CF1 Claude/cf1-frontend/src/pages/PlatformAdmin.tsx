@@ -335,7 +335,7 @@ const PlatformAdmin: React.FC = () => {
     hasAccessToFeatureToggles, 
     hasAccessToSuperAdminManagement 
   } = useAdminAuthContext();
-  const { user: unifiedUser, isAuthenticated: isUnifiedAuthenticated } = useUnifiedAuthStore();
+  const { user: unifiedUser, isAuthenticated: isUnifiedAuthenticated, refreshUserData } = useUnifiedAuthStore();
   
   // Get admin role for permissions check
   const adminRole = currentAdmin?.role;
@@ -709,6 +709,18 @@ const PlatformAdmin: React.FC = () => {
       setUsers(prev => prev.map(u => 
         u.id === userId ? { ...u, role: newRole } : u
       ));
+
+      // If the role change is for the currently logged-in user, refresh their session data
+      if (unifiedUser && isUnifiedAuthenticated && unifiedUser.id === userId) {
+        console.log('🔄 Role changed for current user, refreshing session data...');
+        try {
+          await refreshUserData();
+          console.log('✅ User session data refreshed successfully');
+        } catch (refreshError) {
+          console.error('❌ Failed to refresh user session data:', refreshError);
+          // Don't show error to user as the role change was successful
+        }
+      }
 
       success(`User role updated to ${newRole === 'super_admin' ? 'Super Admin' : newRole === 'platform_admin' ? 'Platform Admin' : newRole === 'creator_admin' ? 'Creator Admin' : newRole === 'investor' ? 'Investor' : 'User'} successfully`);
     } catch (err) {

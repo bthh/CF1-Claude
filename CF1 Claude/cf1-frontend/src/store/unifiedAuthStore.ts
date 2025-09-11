@@ -21,6 +21,7 @@ export interface UnifiedUser {
   displayName?: string;
   profileImageUrl?: string;
   role: SessionRole;
+  permissions?: string[];
   authMethod: AuthMethod;
   emailVerified: boolean;
   accountStatus: AccountStatus;
@@ -66,6 +67,7 @@ interface UnifiedAuthState {
   loginWithWallet: (credentials: WalletCredentials) => Promise<void>;
   logout: () => Promise<void>;
   refreshToken: () => Promise<void>;
+  refreshUserData: () => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (token: string, password: string) => Promise<void>;
   verifyEmail: (token: string) => Promise<void>;
@@ -148,7 +150,8 @@ export const useUnifiedAuthStore = create<UnifiedAuthState>()(
                     id: adminData.user.id,
                     email: adminData.user.email,
                     displayName: adminData.user.name,
-                    role: 'super_admin', // Use super_admin for admin users
+                    role: adminData.user.role || 'super_admin', // Use the actual role from backend
+                    permissions: adminData.user.permissions || [], // Include permissions from backend
                     authMethod: 'email',
                     emailVerified: true,
                     accountStatus: 'active',
@@ -459,6 +462,59 @@ export const useUnifiedAuthStore = create<UnifiedAuthState>()(
               loading: false,
               error: error instanceof Error ? error.message : 'Wallet linking failed'
             });
+          }
+        },
+
+        refreshUserData: async () => {
+          const { accessToken, isAuthenticated } = get();
+          if (!isAuthenticated || !accessToken) {
+            return;
+          }
+
+          try {
+            set({ loading: true });
+
+            // Get updated user data from the backend
+            const response = await fetch(`${API_BASE}/auth/me`, {
+              method: 'GET',
+              headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+              },
+              credentials: 'include',
+            });
+
+            if (response.ok) {
+              const data = await response.json();
+              if (data.success && data.data?.user) {
+                console.log('🔄 User data refreshed with permissions:', data.data.user);
+                
+                // Update user with fresh data from backend including permissions
+                set({ 
+                  user: {
+                    ...get().user!,
+                    ...data.data.user,
+                    permissions: data.data.user.permissions || [],
+                    // Ensure role and permissions are up to date
+                    role: data.data.user.role,
+                    authMethod: data.data.user.authMethod
+                  },
+                  loading: false 
+                });
+
+                // Update API client token to ensure consistency
+                apiClient.setAuthToken(accessToken);
+              } else {
+                console.warn('Invalid response format from /auth/me:', data);
+                set({ loading: false });
+              }
+            } else {
+              console.warn('Failed to refresh user data, response not ok:', response.status);
+              set({ loading: false });
+            }
+          } catch (error) {
+            console.error('Error refreshing user data:', error);
+            set({ loading: false });
           }
         },
 

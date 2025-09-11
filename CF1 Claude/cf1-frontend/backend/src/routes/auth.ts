@@ -375,6 +375,7 @@ router.get('/me', authenticate, async (req: AuthenticatedRequest, res: Response)
           displayName: user.displayName,
           profileImageUrl: user.profileImageUrl,
           role: user.role,
+          permissions: user.permissions || [],
           authMethod: user.primaryAuthMethod,
           emailVerified: user.emailVerified,
           accountStatus: user.accountStatus,
