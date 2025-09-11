@@ -222,32 +222,13 @@ export const useFeatureToggleStore = create<FeatureToggleState>()(
           
           if (response.ok) {
             const data = await response.json();
-            // Start with current user settings to preserve their changes
-            const mergedFeatures = { ...currentFeatures };
+            // Backend is the source of truth - start with backend data
+            const mergedFeatures: Record<string, any> = {};
             
-            // Only add new features from backend that don't exist locally
+            // Use backend features as the primary source
             if (data.features) {
               Object.keys(data.features).forEach(key => {
-                if (!mergedFeatures[key]) {
-                  // This is a new feature from backend, add it
-                  mergedFeatures[key] = { ...data.features[key] };
-                } else {
-                  // Feature exists locally, check if backend has newer modifications
-                  const backendFeature = data.features[key];
-                  const localFeature = mergedFeatures[key];
-                  
-                  // If backend feature is newer (and not a default), update non-enabled properties
-                  if (backendFeature.lastModified > localFeature.lastModified && backendFeature.modifiedBy) {
-                    mergedFeatures[key] = {
-                      ...localFeature,
-                      // Keep user's enabled state but update metadata
-                      name: backendFeature.name,
-                      description: backendFeature.description,
-                      category: backendFeature.category,
-                      requiredRole: backendFeature.requiredRole
-                    };
-                  }
-                }
+                mergedFeatures[key] = { ...data.features[key] };
               });
             }
             
@@ -260,17 +241,9 @@ export const useFeatureToggleStore = create<FeatureToggleState>()(
             
             set({ features: mergedFeatures });
           } else {
-            console.warn('Failed to load feature toggles from backend, using current state');
-            // If backend unavailable, just ensure we have all default features
-            const mergedFeatures = { ...currentFeatures };
-            
-            Object.keys(defaultFeatures).forEach(key => {
-              if (!mergedFeatures[key]) {
-                mergedFeatures[key] = { ...defaultFeatures[key] };
-              }
-            });
-
-            set({ features: mergedFeatures });
+            console.warn('Failed to load feature toggles from backend, using defaults');
+            // If backend unavailable, use defaults (don't preserve potentially stale local state)
+            set({ features: defaultFeatures });
           }
         } catch (error) {
           console.error('Error loading feature toggles:', error);
