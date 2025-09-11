@@ -444,73 +444,48 @@ const PlatformAdmin: React.FC = () => {
 
   const loadUsers = async (): Promise<void> => {
     try {
-      // Fetch both admin users and regular users in parallel
-      const [adminResponse, regularResponse] = await Promise.allSettled([
-        adminAPI.getUsers({ limit: 50 }),
-        adminAPI.getRegularUsers({ limit: 50 })
-      ]);
+      // Use the unified endpoint that returns both admin and regular users with correct userType
+      const response = await adminAPI.getUsers({ limit: 100 });
+      
+      console.log('🔍 All users loaded from unified endpoint:', response.users.length);
 
-      const allUsers: PlatformUser[] = [];
-
-      // Process admin users
-      if (adminResponse.status === 'fulfilled') {
-        console.log('🔍 Admin users loaded:', adminResponse.value.users.length);
-        const adminUsers: PlatformUser[] = adminResponse.value.users.map(user => ({
+      // Process all users and preserve the userType from backend
+      const allUsers: PlatformUser[] = response.users.map(user => {
+        // The backend already sets userType correctly, so we use it directly
+        const isAdmin = user.userType === 'admin';
+        
+        console.log('🔍 Processing user:', {
           id: user.id,
-          address: user.walletAddress || `admin_${user.username}_${user.id.slice(0, 8)}...`,
           email: user.email,
-          name: user.name || user.username || 'Admin User',
+          userType: user.userType,
+          isAdmin,
+          role: user.role
+        });
+        
+        return {
+          id: user.id,
+          address: user.walletAddress || `${isAdmin ? 'admin' : 'user'}_${user.username}_${user.id.slice(0, 8)}...`,
+          email: user.email,
+          name: user.name || user.username || (isAdmin ? 'Admin User' : 'Platform User'),
           phone: user.phoneNumber || undefined,
           country: undefined,
-          verificationLevel: 'verified' as 'anonymous' | 'basic' | 'verified' | 'accredited',
+          verificationLevel: isAdmin ? 'verified' : (user.email ? 'basic' : 'anonymous') as 'anonymous' | 'basic' | 'verified' | 'accredited',
           status: user.isActive ? 'active' : 'suspended' as 'active' | 'suspended' | 'banned' | 'pending',
-          kycStatus: 'approved' as 'not_started' | 'pending' | 'approved' | 'rejected',
+          kycStatus: isAdmin ? 'approved' : (user.kycStatus || 'not_started') as 'not_started' | 'pending' | 'approved' | 'rejected',
           joinedAt: user.createdAt || new Date().toISOString(),
           lastActive: user.lastLoginAt || user.updatedAt || new Date().toISOString(),
           totalInvestments: 0,
           proposalsCreated: 0,
-          complianceScore: user.isActive ? 95 : 50,
-          riskLevel: user.role === 'super_admin' || user.role === 'owner' ? 'low' : 'medium' as 'low' | 'medium' | 'high',
-          supportTickets: 0,
-          role: user.role,
-          permissions: user.permissions,
-          userType: 'admin'
-        }));
-        allUsers.push(...adminUsers);
-      } else {
-        console.error('Failed to load admin users:', adminResponse.reason);
-      }
-
-      // Process regular users
-      if (regularResponse.status === 'fulfilled') {
-        console.log('🔍 Regular users loaded:', regularResponse.value.users.length);
-        const regularUsers: PlatformUser[] = regularResponse.value.users.map(user => ({
-          id: user.id,
-          address: user.walletAddress || `user_${user.username}_${user.id.slice(0, 8)}...`,
-          email: user.email,
-          name: user.name || user.username || 'Platform User',
-          phone: user.phoneNumber || undefined,
-          country: undefined,
-          verificationLevel: user.email ? 'basic' : 'anonymous' as 'anonymous' | 'basic' | 'verified' | 'accredited',
-          status: user.isActive ? 'active' : 'suspended' as 'active' | 'suspended' | 'banned' | 'pending',
-          kycStatus: 'not_started' as 'not_started' | 'pending' | 'approved' | 'rejected',
-          joinedAt: user.createdAt || new Date().toISOString(),
-          lastActive: user.lastLoginAt || user.updatedAt || new Date().toISOString(),
-          totalInvestments: 0,
-          proposalsCreated: 0,
-          complianceScore: user.isActive ? 75 : 25,
-          riskLevel: 'medium' as 'low' | 'medium' | 'high',
+          complianceScore: isAdmin ? 95 : (user.isActive ? 75 : 25),
+          riskLevel: (user.role === 'super_admin' || user.role === 'owner' ? 'low' : 'medium') as 'low' | 'medium' | 'high',
           supportTickets: 0,
           role: user.role || 'user',
           permissions: user.permissions || [],
-          userType: 'regular'
-        }));
-        allUsers.push(...regularUsers);
-      } else {
-        console.warn('Failed to load regular users:', regularResponse.reason);
-      }
+          userType: user.userType || 'regular' // Preserve userType from backend
+        };
+      });
 
-      console.log('🔍 Total users loaded:', allUsers.length, '(Admin + Regular)');
+      console.log('🔍 Total users processed:', allUsers.length, 'User types:', allUsers.map(u => ({ email: u.email, userType: u.userType })));
       setUsers(allUsers);
     } catch (error) {
       console.error('Failed to load users:', error);
@@ -632,8 +607,22 @@ const PlatformAdmin: React.FC = () => {
           throw new Error(errorData.error || 'Failed to update admin user');
         }
       } else {
-        // For regular users, use existing adminAPI
-        await adminAPI.updateUser(userId, cleanUpdateData);
+        // For regular users, use the correct status endpoint
+        const endpoint = `${import.meta.env.VITE_API_BASE_URL}/api/admin/users/regular/${userId}/status`;
+        const response = await fetch(endpoint, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`,
+          },
+          credentials: 'include',
+          body: JSON.stringify(cleanUpdateData),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || 'Failed to update regular user status');
+        }
       }
       
       // Update local state to reflect changes
@@ -649,6 +638,18 @@ const PlatformAdmin: React.FC = () => {
             }
           : u
       ));
+
+      // If the status change is for the currently logged-in user, refresh their session data
+      if (unifiedUser && isUnifiedAuthenticated && unifiedUser.id === userId) {
+        console.log(`🔄 Status changed for current user (${action}), refreshing session data...`);
+        try {
+          await refreshUserData();
+          console.log('✅ User session data refreshed successfully after status change');
+        } catch (refreshError) {
+          console.error('❌ Failed to refresh user session data:', refreshError);
+          // Don't show error to user as the status change was successful
+        }
+      }
       
       success(`User ${action}${action.endsWith('e') ? 'd' : action.endsWith('y') ? 'ied' : 'ned'} successfully`);
     } catch (err) {
@@ -715,7 +716,7 @@ const PlatformAdmin: React.FC = () => {
         console.log('🔄 Role changed for current user, refreshing session data...');
         try {
           await refreshUserData();
-          console.log('✅ User session data refreshed successfully');
+          console.log('✅ User session data refreshed successfully after role change');
         } catch (refreshError) {
           console.error('❌ Failed to refresh user session data:', refreshError);
           // Don't show error to user as the role change was successful

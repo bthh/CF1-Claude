@@ -20,6 +20,10 @@ export interface AdminUser {
   notes?: string;
   createdAt: string;
   updatedAt: string;
+  userType?: string; // 'admin' or 'regular'
+  accountStatus?: string;
+  kycStatus?: string;
+  emailVerified?: boolean;
 }
 
 export interface AdminUserResponse {
@@ -190,7 +194,11 @@ export const adminAPI = {
           phoneNumber: user.phoneNumber,
           notes: user.notes,
           createdAt: user.createdAt,
-          updatedAt: user.updatedAt
+          updatedAt: user.updatedAt,
+          userType: user.userType, // Preserve userType from backend
+          accountStatus: user.accountStatus,
+          kycStatus: user.kycStatus,
+          emailVerified: user.emailVerified
         })),
         pagination: {
           page: params?.page || 1,
