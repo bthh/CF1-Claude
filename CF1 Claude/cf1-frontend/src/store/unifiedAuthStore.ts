@@ -487,7 +487,14 @@ export const useUnifiedAuthStore = create<UnifiedAuthState>()(
             if (response.ok) {
               const data = await response.json();
               if (data.success && data.data?.user) {
-                console.log('🔄 User data refreshed with permissions:', data.data.user);
+                console.log('🔄 User data refreshed successfully:', {
+                  userId: data.data.user.id,
+                  email: data.data.user.email,
+                  newRole: data.data.user.role,
+                  newPermissions: data.data.user.permissions,
+                  oldRole: get().user?.role,
+                  oldPermissions: get().user?.permissions
+                });
                 
                 // Update user with fresh data from backend including permissions
                 set({ 
@@ -504,6 +511,8 @@ export const useUnifiedAuthStore = create<UnifiedAuthState>()(
 
                 // Update API client token to ensure consistency
                 apiClient.setAuthToken(accessToken);
+                
+                console.log('✅ User session updated with new permissions');
               } else {
                 console.warn('Invalid response format from /auth/me:', data);
                 set({ loading: false });
