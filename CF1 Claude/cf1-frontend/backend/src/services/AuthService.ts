@@ -491,7 +491,7 @@ export class AuthService {
   /**
    * Activate user account
    */
-  async activateUser(userId: string): Promise<void> {
+  async activateUser(userId: string): Promise<User> {
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) {
       throw new Error('User not found');
@@ -500,6 +500,55 @@ export class AuthService {
     user.accountStatus = 'active';
     user.emailVerified = true;
     await this.userRepository.save(user);
+    return user;
+  }
+
+  /**
+   * Suspend user account
+   */
+  async suspendUser(userId: string): Promise<User> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new Error('User not found');
+    }
+    
+    user.accountStatus = 'suspended';
+    await this.userRepository.save(user);
+    return user;
+  }
+
+  /**
+   * Update user account status
+   */
+  async updateUserStatus(userId: string, status: AccountStatus): Promise<User> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new Error('User not found');
+    }
+    
+    user.accountStatus = status;
+    
+    // If activating, also verify email
+    if (status === 'active') {
+      user.emailVerified = true;
+    }
+    
+    await this.userRepository.save(user);
+    return user;
+  }
+
+  /**
+   * Update user KYC status
+   */
+  async updateUserKycStatus(userId: string, kycStatus: KycStatus): Promise<User> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new Error('User not found');
+    }
+    
+    user.kycStatus = kycStatus;
+    await this.userRepository.save(user);
+    return user;
   }
 
   /**

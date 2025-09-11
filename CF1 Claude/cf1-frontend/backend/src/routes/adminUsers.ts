@@ -408,6 +408,88 @@ router.put('/regular/:id', requireSuperAdminOrOwner, async (req: AdminAuthentica
 });
 
 /**
+ * PUT /api/admin/users/regular/:id/status - Update regular user status (account status and KYC)
+ */
+router.put('/regular/:id/status', requireSuperAdminOrOwner, async (req: AdminAuthenticatedRequest, res) => {
+  try {
+    const { id } = req.params;
+    const { accountStatus, kycStatus } = req.body;
+    
+    const authService = new AuthService();
+    let updatedUser;
+    
+    // Validate and update account status if provided
+    if (accountStatus) {
+      const validStatuses = ['active', 'suspended', 'locked', 'pending_verification'];
+      if (!validStatuses.includes(accountStatus)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid account status. Must be one of: ' + validStatuses.join(', '),
+          code: 'INVALID_STATUS'
+        });
+      }
+      
+      updatedUser = await authService.updateUserStatus(id, accountStatus);
+    }
+    
+    // Validate and update KYC status if provided
+    if (kycStatus) {
+      const validKycStatuses = ['not_started', 'pending', 'verified', 'rejected'];
+      if (!validKycStatuses.includes(kycStatus)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid KYC status. Must be one of: ' + validKycStatuses.join(', '),
+          code: 'INVALID_KYC_STATUS'
+        });
+      }
+      
+      updatedUser = await authService.updateUserKycStatus(id, kycStatus);
+    }
+    
+    // If no updates were specified, return the current user
+    if (!updatedUser) {
+      updatedUser = await authService.getUserById(id);
+      if (!updatedUser) {
+        return res.status(404).json({
+          success: false,
+          error: 'User not found',
+          code: 'USER_NOT_FOUND'
+        });
+      }
+    }
+    
+    AuditLogger.logEvent(AuditEventType.USER_UPDATED, 'Regular user status updated', req, {
+      adminUser: req.adminUser?.username,
+      action: 'update_user_status',
+      updatedUserId: id,
+      newAccountStatus: accountStatus,
+      newKycStatus: kycStatus
+    });
+    
+    res.json({
+      success: true,
+      user: updatedUser
+    });
+  } catch (error: any) {
+    console.error('Error updating user status:', error);
+    
+    if (error.message.includes('not found')) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found',
+        code: 'USER_NOT_FOUND'
+      });
+    }
+    
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update user status',
+      code: 'UPDATE_ERROR'
+    });
+  }
+});
+
+/**
  * POST /api/admin/users/cleanup-mock - Remove mock/test users and fix real users
  */
 router.post('/cleanup-mock', requireSuperAdminOrOwner, async (req: AdminAuthenticatedRequest, res) => {
