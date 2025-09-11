@@ -39,6 +39,35 @@ const requireSuperAdminOrOwner = (req: AdminAuthenticatedRequest, res: express.R
   next();
 };
 
+// More permissive middleware for viewing users (allows platform_admin role)
+const requirePlatformAdminOrHigher = (req: AdminAuthenticatedRequest, res: express.Response, next: express.NextFunction) => {
+  if (!req.adminUser) {
+    return res.status(401).json({
+      success: false,
+      error: 'Authentication required',
+      code: 'NOT_AUTHENTICATED'
+    });
+  }
+
+  // Allow access for super_admin, owner, or manage_users permission
+  const hasPermission = req.adminUser.permissions.includes('manage_users') ||
+                       req.adminUser.permissions.includes('manage_admin_users') ||
+                       req.adminUser.permissions.includes('all') ||
+                       req.adminUser.permissions.includes('super_admin') ||
+                       req.adminUser.role === 'super_admin' ||
+                       req.adminUser.role === 'owner';
+
+  if (!hasPermission) {
+    return res.status(403).json({
+      success: false,
+      error: 'Insufficient permissions to view users',
+      code: 'INSUFFICIENT_PERMISSIONS'
+    });
+  }
+
+  next();
+};
+
 /**
  * GET /api/admin/users - List all admin users
  */
@@ -73,8 +102,14 @@ router.get('/', requireSuperAdminOrOwner, async (req: AdminAuthenticatedRequest,
 /**
  * GET /api/admin/all-users - List ALL users (both admin and regular users)
  */
-router.get('/all-users', requireSuperAdminOrOwner, async (req: AdminAuthenticatedRequest, res) => {
+router.get('/all-users', requirePlatformAdminOrHigher, async (req: AdminAuthenticatedRequest, res) => {
   try {
+    console.log('🔍 All-users endpoint accessed by:', {
+      adminUser: req.adminUser?.username,
+      role: req.adminUser?.role,
+      permissions: req.adminUser?.permissions
+    });
+
     const adminUserService = new AdminUserService();
     const authService = new AuthService();
     
@@ -83,6 +118,13 @@ router.get('/all-users', requireSuperAdminOrOwner, async (req: AdminAuthenticate
     
     // Fetch regular users 
     const regularUsers = await authService.getAllUsers();
+    
+    console.log('🔍 Users fetched from database:', {
+      adminUsersCount: adminUsers.length,
+      regularUsersCount: regularUsers.length,
+      regularUserEmails: regularUsers.map(u => u.email).slice(0, 5), // First 5 emails
+      adminUserEmails: adminUsers.map(u => u.email)
+    });
     
     // Transform admin users to unified format
     const transformedAdminUsers = adminUsers.map(user => ({
