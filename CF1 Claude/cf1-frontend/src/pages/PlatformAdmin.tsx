@@ -345,10 +345,35 @@ const PlatformAdmin: React.FC = () => {
     // Check old admin system first
     if (currentAdmin && checkPermission(permission)) return true;
     
-    // Check unified auth system - super_admin and owner have all permissions
-    if (unifiedUser && isUnifiedAuthenticated && 
-        (unifiedUser.role === 'super_admin' || unifiedUser.role === 'owner')) {
-      return true;
+    // Check unified auth system
+    if (unifiedUser && isUnifiedAuthenticated) {
+      // Super_admin and owner have all permissions
+      if (unifiedUser.role === 'super_admin' || unifiedUser.role === 'owner') {
+        return true;
+      }
+      
+      // Check if user has the specific permission in their permissions array
+      if (unifiedUser.permissions && unifiedUser.permissions.includes(permission)) {
+        return true;
+      }
+      
+      // Role-based permission checks for common admin permissions
+      if (unifiedUser.role === 'platform_admin') {
+        const platformAdminPermissions = [
+          'manage_users', 'view_admin_dashboard', 'manage_platform', 
+          'view_analytics', 'financial_operations', 'approve_proposals',
+          'manage_investments', 'execute_governance'
+        ];
+        return platformAdminPermissions.includes(permission);
+      }
+      
+      if (unifiedUser.role === 'creator_admin') {
+        const creatorAdminPermissions = [
+          'view_admin_dashboard', 'view_analytics', 'create_proposals', 
+          'edit_proposals', 'create_governance_proposals'
+        ];
+        return creatorAdminPermissions.includes(permission);
+      }
     }
     
     return false;

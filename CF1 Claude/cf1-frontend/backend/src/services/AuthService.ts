@@ -390,7 +390,77 @@ export class AuthService {
   }
 
   /**
-   * Update user role
+   * Get permissions for a given role
+   */
+  private getRolePermissions(role: string): string[] {
+    const rolePermissions: Record<string, string[]> = {
+      'investor': [
+        'view_proposals',
+        'make_investments', 
+        'view_investments',
+        'view_governance',
+        'vote_governance'
+      ],
+      'creator_admin': [
+        'view_proposals',
+        'create_proposals',
+        'edit_proposals',
+        'make_investments',
+        'view_investments',
+        'view_governance',
+        'vote_governance',
+        'create_governance_proposals',
+        'view_admin_dashboard',
+        'view_analytics'
+      ],
+      'platform_admin': [
+        'view_proposals',
+        'create_proposals',
+        'edit_proposals',
+        'approve_proposals',
+        'make_investments',
+        'view_investments',
+        'manage_investments',
+        'view_governance',
+        'vote_governance',
+        'create_governance_proposals',
+        'execute_governance',
+        'view_admin_dashboard',
+        'manage_users',
+        'manage_platform',
+        'view_analytics',
+        'financial_operations'
+      ],
+      'super_admin': [
+        'view_proposals',
+        'create_proposals',
+        'edit_proposals',
+        'approve_proposals',
+        'delete_proposals',
+        'instant_fund_proposals',
+        'make_investments',
+        'view_investments',
+        'manage_investments',
+        'view_governance',
+        'vote_governance',
+        'create_governance_proposals',
+        'execute_governance',
+        'view_admin_dashboard',
+        'manage_users',
+        'manage_platform',
+        'view_analytics',
+        'financial_operations',
+        'system_maintenance',
+        'audit_logs',
+        'security_settings'
+      ]
+    };
+
+    return rolePermissions[role] || rolePermissions['investor'];
+  }
+
+  /**
+   * Update user role and associated permissions
    */
   async updateUserRole(userId: string, role: string): Promise<User> {
     const user = await this.userRepository.findOne({ where: { id: userId } });
@@ -398,7 +468,12 @@ export class AuthService {
       throw new Error('User not found');
     }
 
+    // Update role
     user.role = role;
+    
+    // Update permissions based on role
+    user.permissions = this.getRolePermissions(role);
+    
     await this.userRepository.save(user);
     return user;
   }
