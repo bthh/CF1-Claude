@@ -330,7 +330,7 @@ const Header: React.FC = () => {
 
   return (
     <>
-      <header className="cf1-gradient-header border-b border-gray-200 dark:border-gray-700 h-16 flex items-center justify-between px-4 sm:px-6 relative z-10">
+      <header className="cf1-gradient-header border-b border-gray-200 dark:border-gray-700 h-16 flex items-center justify-between px-4 sm:px-6 relative z-[1002]">
         <div className="flex items-center space-x-4">
           
           {/* Mobile Menu Button */}
@@ -449,7 +449,7 @@ const Header: React.FC = () => {
           </button>
           
           {isQuickActionsOpen && (
-            <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50 cf1-animate-scale-in">
+            <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-[1003] cf1-animate-scale-in">
               {/* Welcome Header */}
               <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-600">
                 <h3 className="font-semibold text-gray-900 dark:text-white text-sm mb-1">
@@ -559,13 +559,15 @@ const Header: React.FC = () => {
             </button>
           
           {isProfileOpen && (
-            <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50 cf1-animate-scale-in">
+            <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-[1003] cf1-animate-scale-in">
               {profileActions.map((action, index) => (
                 <div key={index}>
                   {action.to ? (
                     <Link
                       to={action.to}
-                      onClick={() => setIsProfileOpen(false)}
+                      onClick={(e) => {
+                        setIsProfileOpen(false);
+                      }}
                       className="flex items-start space-x-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                     >
                       <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mt-0.5">
@@ -580,7 +582,9 @@ const Header: React.FC = () => {
                     </Link>
                   ) : (
                     <button
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
                         action.onClick?.();
                         setIsProfileOpen(false);
                       }}
