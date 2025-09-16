@@ -141,6 +141,32 @@ class ExternalSearchService {
       rateLimit: { requestsPerMinute: 30, requestsPerDay: 300 },
       categories: ['business']
     });
+
+    // Web Search API (Serper)
+    this.apiProviders.set('serper', {
+      name: 'Serper',
+      baseUrl: 'https://google.serper.dev/search',
+      apiKey: import.meta.env.VITE_SERPER_API_KEY,
+      rateLimit: { requestsPerMinute: 60, requestsPerDay: 2500 },
+      categories: ['general', 'web_search']
+    });
+
+    // Real Estate APIs (Additional)
+    this.apiProviders.set('realtymole', {
+      name: 'RealtyMole',
+      baseUrl: 'https://api.realtymole.com/v1',
+      apiKey: import.meta.env.VITE_REALTYMOLE_API_KEY,
+      rateLimit: { requestsPerMinute: 30, requestsPerDay: 1000 },
+      categories: ['real_estate']
+    });
+
+    this.apiProviders.set('zillow', {
+      name: 'Zillow',
+      baseUrl: 'https://api.bridgedataoutput.com/api/v2',
+      apiKey: import.meta.env.VITE_ZILLOW_API_KEY,
+      rateLimit: { requestsPerMinute: 10, requestsPerDay: 1000 },
+      categories: ['real_estate']
+    });
   }
 
   /**
@@ -190,7 +216,11 @@ class ExternalSearchService {
           break;
           
         default:
-          // Fallback to multi-category search
+          // Use Serper for general web search to find investment opportunities
+          const webResults = await this.searchSerper(query);
+          results.push(...webResults);
+
+          // Also include multi-category search as fallback
           const mixedResults = await this.searchMultiCategory(query);
           results.push(...mixedResults);
       }
@@ -231,6 +261,18 @@ class ExternalSearchService {
     if (this.apiProviders.has('mashvisor')) {
       const mashvisorResults = await this.searchMashvisor(query);
       results.push(...mashvisorResults);
+    }
+
+    // Try RealtyMole for property data
+    if (this.apiProviders.has('realtymole')) {
+      const realtyMoleResults = await this.searchRealtyMole(query);
+      results.push(...realtyMoleResults);
+    }
+
+    // Try Zillow for comprehensive property data
+    if (this.apiProviders.has('zillow')) {
+      const zillowResults = await this.searchZillow(query);
+      results.push(...zillowResults);
     }
 
     // If no API results, generate location-based mock data
@@ -275,6 +317,91 @@ class ExternalSearchService {
   private async searchMashvisor(query: ExternalSearchQuery): Promise<ExternalSearchResult[]> {
     // Similar implementation to AirDNA
     return this.generateRealEstateMockData(query);
+  }
+
+  /**
+   * Search RealtyMole for property data
+   */
+  private async searchRealtyMole(query: ExternalSearchQuery): Promise<ExternalSearchResult[]> {
+    const provider = this.apiProviders.get('realtymole')!;
+
+    if (!provider.apiKey) {
+      console.warn('RealtyMole API key not configured, using mock data');
+      return this.generateRealEstateMockData(query);
+    }
+
+    // Check rate limits
+    if (!this.checkRateLimit('realtymole')) {
+      console.warn('RealtyMole rate limit exceeded, using cached/mock data');
+      return this.generateRealEstateMockData(query);
+    }
+
+    try {
+      // In production, this would make actual API calls to RealtyMole
+      // For now, return enhanced mock data based on query
+      return this.generateRealEstateMockData(query);
+
+    } catch (error) {
+      console.error('RealtyMole API error:', error);
+      return this.generateRealEstateMockData(query);
+    }
+  }
+
+  /**
+   * Search Zillow for comprehensive property data
+   */
+  private async searchZillow(query: ExternalSearchQuery): Promise<ExternalSearchResult[]> {
+    const provider = this.apiProviders.get('zillow')!;
+
+    if (!provider.apiKey) {
+      console.warn('Zillow API key not configured, using mock data');
+      return this.generateRealEstateMockData(query);
+    }
+
+    // Check rate limits
+    if (!this.checkRateLimit('zillow')) {
+      console.warn('Zillow rate limit exceeded, using cached/mock data');
+      return this.generateRealEstateMockData(query);
+    }
+
+    try {
+      // In production, this would make actual API calls to Zillow/Bridge Data Output
+      // For now, return enhanced mock data based on query
+      return this.generateRealEstateMockData(query);
+
+    } catch (error) {
+      console.error('Zillow API error:', error);
+      return this.generateRealEstateMockData(query);
+    }
+  }
+
+  /**
+   * Search using Serper web search API
+   */
+  private async searchSerper(query: ExternalSearchQuery): Promise<ExternalSearchResult[]> {
+    const provider = this.apiProviders.get('serper')!;
+
+    if (!provider.apiKey) {
+      console.warn('Serper API key not configured, using mock data');
+      return this.generateGeneralMockData(query);
+    }
+
+    // Check rate limits
+    if (!this.checkRateLimit('serper')) {
+      console.warn('Serper rate limit exceeded, using cached/mock data');
+      return this.generateGeneralMockData(query);
+    }
+
+    try {
+      // In production, this would make actual API calls to Serper for web search
+      // Search for investment-related content using the query
+      // For now, return enhanced mock data based on query
+      return this.generateGeneralMockData(query);
+
+    } catch (error) {
+      console.error('Serper API error:', error);
+      return this.generateGeneralMockData(query);
+    }
   }
 
   /**
@@ -592,6 +719,39 @@ class ExternalSearchService {
         estimatedFundingRequired: 875000 // 25% equity requirement
       }
     ];
+  }
+
+  /**
+   * Generate mock general search data
+   */
+  private generateGeneralMockData(query: ExternalSearchQuery): ExternalSearchResult[] {
+    const searchTerm = query.query.toLowerCase();
+
+    // Return a mix of different investment types based on the search query
+    const results: ExternalSearchResult[] = [];
+
+    if (searchTerm.includes('real estate') || searchTerm.includes('property')) {
+      results.push(...this.generateRealEstateMockData(query).slice(0, 2));
+    }
+
+    if (searchTerm.includes('tech') || searchTerm.includes('stock') || searchTerm.includes('ai')) {
+      results.push(...this.generateStockMockData(query).slice(0, 1));
+    }
+
+    if (searchTerm.includes('business') || searchTerm.includes('acquisition')) {
+      results.push(...this.generateBusinessMockData(query).slice(0, 1));
+    }
+
+    if (searchTerm.includes('energy') || searchTerm.includes('solar')) {
+      results.push(...this.generateEnergyMockData(query).slice(0, 1));
+    }
+
+    // If no specific matches, return a general business opportunity
+    if (results.length === 0) {
+      results.push(...this.generateBusinessMockData(query).slice(0, 1));
+    }
+
+    return results;
   }
 
   /**

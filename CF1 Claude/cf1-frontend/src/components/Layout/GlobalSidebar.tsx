@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   Briefcase, 
   Gift, 
@@ -20,8 +20,17 @@ interface GlobalSidebarProps {
 
 const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+
   const [isCollapsed, setIsCollapsed] = useState(() => {
-    return localStorage.getItem('sidebar-collapsed') === 'true';
+    // Default to collapsed if we're on the dashboard page
+    const isDashboardPage = location.pathname === '/dashboard' || location.pathname === '/';
+    const savedState = localStorage.getItem('sidebar-collapsed');
+
+    if (isDashboardPage && savedState === null) {
+      return true; // Default collapsed for dashboard
+    }
+    return savedState === 'true';
   });
   const [sidebarWidth, setSidebarWidth] = useState(() => {
     const saved = localStorage.getItem('sidebar-width');
@@ -30,6 +39,17 @@ const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) => {
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLElement>(null);
   const resizeHandleRef = useRef<HTMLDivElement>(null);
+
+  // Update collapsed state when navigating to/from dashboard
+  useEffect(() => {
+    const isDashboardPage = location.pathname === '/dashboard' || location.pathname === '/';
+    const savedState = localStorage.getItem('sidebar-collapsed');
+
+    // If user hasn't explicitly set a preference and we're on dashboard, collapse it
+    if (isDashboardPage && savedState === null) {
+      setIsCollapsed(true);
+    }
+  }, [location.pathname]);
 
   const MIN_WIDTH = 240; // Minimum width where compact mode works well
   const MAX_WIDTH = 352; // 110% of original 320px

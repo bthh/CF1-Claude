@@ -257,34 +257,5 @@ export const useUIStore = create<UIState>()(
   )
 );
 
-// Initialize dark mode on load - Apply immediately to prevent flash
-if (typeof window !== 'undefined') {
-  // Clean up old localStorage key if it exists
-  const oldDarkMode = localStorage.getItem('darkMode');
-  if (oldDarkMode !== null) {
-    localStorage.removeItem('darkMode');
-  }
-
-  const storedDarkMode = localStorage.getItem('cf1-ui-storage');
-  let shouldUseDarkMode = true; // Default to dark mode
-
-  if (storedDarkMode) {
-    try {
-      const parsed = JSON.parse(storedDarkMode);
-      shouldUseDarkMode = parsed.state?.darkMode !== undefined ? parsed.state.darkMode : true;
-    } catch (e) {
-      // Ignore parsing errors, default to dark mode
-      shouldUseDarkMode = true;
-    }
-  } else if (oldDarkMode !== null) {
-    // Use migrated value from old key
-    shouldUseDarkMode = oldDarkMode === 'true';
-  }
-
-  // Apply immediately to prevent flash
-  if (shouldUseDarkMode) {
-    document.documentElement.classList.add('dark');
-  } else {
-    document.documentElement.classList.remove('dark');
-  }
-}
+// Note: Dark mode initialization is now handled in main.tsx
+// to prevent flash of unstyled content (FOUC)

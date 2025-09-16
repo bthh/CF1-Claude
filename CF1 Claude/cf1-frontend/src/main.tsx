@@ -1,6 +1,43 @@
 // Import polyfills first
 import './polyfills';
 
+// Initialize dark mode BEFORE React renders to prevent flash
+const initializeDarkMode = () => {
+  if (typeof window !== 'undefined') {
+    // Clean up old localStorage key if it exists
+    const oldDarkMode = localStorage.getItem('darkMode');
+    if (oldDarkMode !== null) {
+      localStorage.removeItem('darkMode');
+    }
+
+    const storedUIState = localStorage.getItem('cf1-ui-storage');
+    let shouldUseDarkMode = true; // Default to dark mode
+
+    if (storedUIState) {
+      try {
+        const parsed = JSON.parse(storedUIState);
+        shouldUseDarkMode = parsed.state?.darkMode !== undefined ? parsed.state.darkMode : true;
+      } catch (e) {
+        // Ignore parsing errors, default to dark mode
+        shouldUseDarkMode = true;
+      }
+    } else if (oldDarkMode !== null) {
+      // Use migrated value from old key
+      shouldUseDarkMode = oldDarkMode === 'true';
+    }
+
+    // Apply immediately to prevent flash
+    if (shouldUseDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }
+};
+
+// Initialize dark mode immediately
+initializeDarkMode();
+
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'

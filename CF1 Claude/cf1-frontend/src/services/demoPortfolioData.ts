@@ -122,86 +122,88 @@ const generateDemoPortfolio = (scenario: DemoScenario): { assets: PortfolioAsset
       };
 
     case 'sales_demo':
+      // Fixed consistent values for sales demo as per requirements
       const salesAssets: PortfolioAsset[] = [
         {
           id: 'port-sales-1',
           name: 'Austin Tech Hub Office Complex',
           type: 'Commercial Real Estate',
-          tokens: varyNumber(425, 0.02, 'sales_tokens_1'),
-          currentValue: `$${varyNumber(48000, 0.02, 'sales_current_1').toLocaleString()}`,
-          purchaseValue: `$${varyNumber(42000, 0.02, 'sales_purchase_1').toLocaleString()}`,
-          change: `+$${varyNumber(6000, 0.02, 'sales_change_1').toLocaleString()}`,
-          changePercent: `+${varyNumber(14, 0.1, 'sales_percent_1').toFixed(1)}%`,
+          tokens: 850,
+          currentValue: '$89,500',
+          purchaseValue: '$75,000',
+          change: '+$14,500',
+          changePercent: '+19.3%',
           isPositive: true,
-          apy: `${varyNumber(9, 0.1, 'sales_apy_1').toFixed(1)}%`,
+          apy: '9.2%',
           imageUrl: getScenarioOptimizedImage('Commercial Real Estate', scenario, 1)?.url || getAssetImage('Commercial Real Estate', 1)?.url || 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=100&h=100&fit=crop'
         },
         {
           id: 'port-sales-2',
           name: 'Diversified Precious Metals Fund',
           type: 'Precious Metals',
-          tokens: varyNumber(680, 0.02, 'sales_tokens_2'),
-          currentValue: `$${varyNumber(32000, 0.02, 'sales_current_2').toLocaleString()}`,
-          purchaseValue: `$${varyNumber(29000, 0.02, 'sales_purchase_2').toLocaleString()}`,
-          change: `+$${varyNumber(3000, 0.02, 'sales_change_2').toLocaleString()}`,
-          changePercent: `+${varyNumber(10, 0.1, 'sales_percent_2').toFixed(1)}%`,
+          tokens: 680,
+          currentValue: '$68,200',
+          purchaseValue: '$60,000',
+          change: '+$8,200',
+          changePercent: '+13.7%',
           isPositive: true,
-          apy: `${varyNumber(7, 0.1, 'sales_apy_2').toFixed(1)}%`,
+          apy: '7.5%',
           imageUrl: getScenarioOptimizedImage('Precious Metals', scenario, 1)?.url || getAssetImage('Precious Metals', 1)?.url || 'https://images.unsplash.com/photo-1610375461246-83df859d849d?w=100&h=100&fit=crop'
         },
         {
           id: 'port-sales-3',
           name: 'Contemporary Art Investment Portfolio',
           type: 'Fine Art',
-          tokens: varyNumber(125, 0.02, 'sales_tokens_3'),
-          currentValue: `$${varyNumber(28000, 0.02, 'sales_current_3').toLocaleString()}`,
-          purchaseValue: `$${varyNumber(25000, 0.02, 'sales_purchase_3').toLocaleString()}`,
-          change: `+$${varyNumber(3000, 0.02, 'sales_change_3').toLocaleString()}`,
-          changePercent: `+${varyNumber(12, 0.1, 'sales_percent_3').toFixed(1)}%`,
+          tokens: 125,
+          currentValue: '$58,300',
+          purchaseValue: '$50,000',
+          change: '+$8,300',
+          changePercent: '+16.6%',
           isPositive: true,
-          apy: `${varyNumber(11, 0.1, 'sales_apy_3').toFixed(1)}%`,
+          apy: '11.2%',
           imageUrl: getScenarioOptimizedImage('Fine Art', scenario, 0)?.url || getAssetImage('Fine Art', 0)?.url || 'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=100&h=100&fit=crop'
         },
         {
           id: 'port-sales-4',
           name: 'Clean Energy Infrastructure Fund',
           type: 'Renewable Energy',
-          tokens: varyNumber(350, 0.02, 'sales_tokens_4'),
-          currentValue: `$${varyNumber(42000, 0.02, 'sales_current_4').toLocaleString()}`,
-          purchaseValue: `$${varyNumber(38000, 0.02, 'sales_purchase_4').toLocaleString()}`,
-          change: `+$${varyNumber(4000, 0.02, 'sales_change_4').toLocaleString()}`,
-          changePercent: `+${varyNumber(11, 0.1, 'sales_percent_4').toFixed(1)}%`,
+          tokens: 350,
+          currentValue: '$42,900',
+          purchaseValue: '$38,000',
+          change: '+$4,900',
+          changePercent: '+12.9%',
           isPositive: true,
-          apy: `${varyNumber(10, 0.1, 'sales_apy_4').toFixed(1)}%`,
+          apy: '10.1%',
           imageUrl: getScenarioOptimizedImage('Renewable Energy', scenario, 1)?.url || getAssetImage('Renewable Energy', 1)?.url || 'https://images.unsplash.com/photo-1466611653911-95081537e5b7?w=100&h=100&fit=crop'
         },
         {
           id: 'port-sales-5',
           name: 'Luxury Vehicle Collection Fund',
           type: 'Luxury Vehicles',
-          tokens: varyNumber(200, 0.02, 'sales_tokens_5'),
-          currentValue: `$${varyNumber(35000, 0.02, 'sales_current_5').toLocaleString()}`,
-          purchaseValue: `$${varyNumber(32000, 0.02, 'sales_purchase_5').toLocaleString()}`,
-          change: `+$${varyNumber(3000, 0.02, 'sales_change_5').toLocaleString()}`,
-          changePercent: `+${varyNumber(9, 0.1, 'sales_percent_5').toFixed(1)}%`,
+          tokens: 200,
+          currentValue: '$62,900',
+          purchaseValue: '$53,909',
+          change: '+$8,991.5',
+          changePercent: '+16.7%',
           isPositive: true,
-          apy: `${varyNumber(8, 0.1, 'sales_apy_5').toFixed(1)}%`,
+          apy: '8.3%',
           imageUrl: getScenarioOptimizedImage('Luxury Vehicles', scenario, 0)?.url || getAssetImage('Luxury Vehicles', 0)?.url || 'https://images.unsplash.com/photo-1563720223185-11003d516935?w=100&h=100&fit=crop'
         }
       ];
 
-      const salesTotalValue = varyNumber(185000, 0.02, 'sales_total_value');
-      const salesTotalInvested = varyNumber(166000, 0.02, 'sales_total_invested');
-      const salesTotalGain = salesTotalValue - salesTotalInvested;
-      const salesGainPercent = ((salesTotalGain / salesTotalInvested) * 100);
+      // Fixed totals matching requirements: Portfolio Value = $321,800, Total Returns = $44,891.5 (+16.0%)
+      const salesTotalValue = 321800;
+      const salesTotalInvested = 276908.5; // 321800 - 44891.5
+      const salesTotalGain = 44891.5;
+      const salesGainPercent = 16.0;
 
       return {
         assets: salesAssets,
         summary: {
-          totalValue: `$${salesTotalValue.toLocaleString()}`,
-          totalInvested: `$${salesTotalInvested.toLocaleString()}`,
-          totalGain: `+$${salesTotalGain.toLocaleString()}`,
-          totalGainPercent: `+${salesGainPercent.toFixed(1)}%`,
+          totalValue: '$321,800',
+          totalInvested: '$276,909',
+          totalGain: '+$44,891.5',
+          totalGainPercent: '+16.0%',
           isPositive: true
         }
       };

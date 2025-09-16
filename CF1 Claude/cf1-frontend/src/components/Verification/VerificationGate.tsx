@@ -259,7 +259,7 @@ export const VerificationGate: React.FC<VerificationGateProps> = ({
                         ? 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20' 
                         : step.status === 'pending'
                         ? 'border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-900/20'
-                        : 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-750'
+                        : 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800'
                     }`}
                   >
                     <div className="flex items-start space-x-3">
@@ -298,7 +298,7 @@ export const VerificationGate: React.FC<VerificationGateProps> = ({
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-between p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-750">
+            <div className="flex items-center justify-between p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
               <div className="text-xs text-gray-500 dark:text-gray-400">
                 <p>* Required for this action</p>
                 <p>All data is encrypted and securely stored</p>

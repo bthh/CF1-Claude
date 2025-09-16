@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { TrendingUp, TrendingDown, Search, ArrowUpDown } from 'lucide-react';
+import { usePortfolioData } from '../services/portfolioDataService';
 
 interface Asset {
   id: string;
@@ -18,62 +19,26 @@ const PortfolioPerformance: React.FC = () => {
   const [filterType, setFilterType] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
 
-  const assets: Asset[] = [
-    {
-      id: '1',
-      name: 'Manhattan Office Complex',
-      type: 'Commercial Real Estate',
-      currentValue: 45230,
-      totalChange: 2350,
-      changePercent: 5.2,
-      locked: false
-    },
-    {
-      id: '2',
-      name: 'Gold Bullion Vault',
-      type: 'Precious Metals',
-      currentValue: 23450,
-      totalChange: 485,
-      changePercent: 2.1,
-      locked: true
-    },
-    {
-      id: '3',
-      name: 'Tesla Model S Collection',
-      type: 'Luxury Vehicles',
-      currentValue: 18900,
-      totalChange: -250,
-      changePercent: -1.3,
-      locked: false
-    },
-    {
-      id: '4',
-      name: 'Picasso Artwork',
-      type: 'Fine Art',
-      currentValue: 35120,
-      totalChange: 2820,
-      changePercent: 8.7,
-      locked: true
-    },
-    {
-      id: '5',
-      name: 'Miami Beach Resort',
-      type: 'Hospitality',
-      currentValue: 68450,
-      totalChange: 4230,
-      changePercent: 6.6,
-      locked: false
-    },
-    {
-      id: '6',
-      name: 'Tech Startup Equity',
-      type: 'Private Equity',
-      currentValue: 12800,
-      totalChange: 1200,
-      changePercent: 10.3,
-      locked: true
-    }
-  ];
+  // Use actual portfolio data instead of hardcoded values
+  const { assets: portfolioAssets, summary, isEmpty } = usePortfolioData();
+
+  // Convert portfolio assets to Asset format for consistency with existing component logic
+  const assets: Asset[] = portfolioAssets.map(asset => {
+    const currentValue = parseFloat(asset.currentValue.replace(/[$,]/g, ''));
+    const purchaseValue = parseFloat(asset.purchaseValue.replace(/[$,]/g, ''));
+    const totalChange = currentValue - purchaseValue;
+    const changePercent = parseFloat(asset.changePercent.replace(/[+%]/g, ''));
+
+    return {
+      id: asset.id,
+      name: asset.name,
+      type: asset.type,
+      currentValue,
+      totalChange,
+      changePercent,
+      locked: Math.random() > 0.5 // Random lock status for demo
+    };
+  });
 
   const handleSort = (field: keyof Asset) => {
     if (sortField === field) {
@@ -188,15 +153,15 @@ const PortfolioPerformance: React.FC = () => {
           </div>
           
           <div className="absolute top-2 left-4 flex flex-col justify-between h-48 text-xs text-gray-500 dark:text-gray-400">
-            <span>$140k</span>
-            <span>$130k</span>
-            <span>$120k</span>
-            <span>$110k</span>
-            <span>$100k</span>
+            <span>$350k</span>
+            <span>$300k</span>
+            <span>$250k</span>
+            <span>$200k</span>
+            <span>$150k</span>
           </div>
-          
+
           <div className="absolute top-4 right-4 bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300 px-3 py-1 rounded-full text-sm font-medium">
-            +12.5% ↗
+            {isEmpty ? '+0.0%' : summary.totalGainPercent} ↗
           </div>
         </div>
       </div>
@@ -348,7 +313,11 @@ const PortfolioPerformance: React.FC = () => {
 
         {filteredAndSortedAssets.length === 0 && (
           <div className="text-center py-8">
-            <p className="text-gray-500 dark:text-gray-400">No assets found matching your criteria.</p>
+            <p className="text-gray-500 dark:text-gray-400">
+              {isEmpty
+                ? "No portfolio assets available. Switch to demo mode or make your first investment."
+                : "No assets found matching your criteria."}
+            </p>
           </div>
         )}
       </div>

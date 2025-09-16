@@ -4,6 +4,7 @@ import { Search, X, Loader2 } from 'lucide-react';
 interface SearchInputProps {
   value: string;
   onChange: (value: string) => void;
+  onSubmit?: (value: string) => void;
   placeholder?: string;
   loading?: boolean;
   suggestions?: string[];
@@ -16,6 +17,7 @@ interface SearchInputProps {
 const SearchInput: React.FC<SearchInputProps> = ({
   value,
   onChange,
+  onSubmit,
   placeholder = 'Search...',
   loading = false,
   suggestions = [],
@@ -27,7 +29,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [debouncedValue, setDebouncedValue] = useState(value);
 
-  // Debounce the search value
+  // Debounce the search value but don't automatically call onChange
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedValue(value);
@@ -35,11 +37,6 @@ const SearchInput: React.FC<SearchInputProps> = ({
 
     return () => clearTimeout(timer);
   }, [value, debounceMs]);
-
-  // Call onChange with debounced value
-  useEffect(() => {
-    onChange(debouncedValue);
-  }, [debouncedValue, onChange]);
 
   const sizes = {
     small: 'h-8 text-sm',
@@ -64,6 +61,12 @@ const SearchInput: React.FC<SearchInputProps> = ({
     onSuggestionClick?.(suggestion);
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && onSubmit) {
+      onSubmit(value);
+    }
+  };
+
   return (
     <div className={`relative ${className}`}>
       <div className="relative">
@@ -79,6 +82,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          onKeyDown={handleKeyDown}
           onFocus={() => setShowSuggestions(suggestions.length > 0)}
           onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
           placeholder={placeholder}

@@ -44,7 +44,7 @@ const AIInvestmentInsights: React.FC = () => {
       return {
         id: `insight-${proposal.id}`,
         type: 'diversification_opportunity',
-        title: 'Diversification Opportunity',
+        title: proposal.title,
         description: diversificationReasons[index % diversificationReasons.length],
         confidence: 85 + Math.floor(Math.random() * 10), // 85-94% confidence
         asset: {
@@ -74,7 +74,7 @@ const AIInvestmentInsights: React.FC = () => {
   };
 
   const handleAssetClick = (assetId: string) => {
-    navigate(`/launchpad/${assetId}`);
+    navigate(`/launchpad/proposal/${assetId}`);
   };
 
   if (insights.length === 0) {
@@ -116,16 +116,7 @@ const AIInvestmentInsights: React.FC = () => {
               className="flex items-center justify-center space-x-2"
             >
               <Eye className="w-4 h-4" />
-              <span>View All Recommendations</span>
-            </Button>
-            <Button
-              onClick={handleDetailedAnalysis}
-              variant="outline"
-              size="small"
-              className="flex items-center justify-center space-x-2"
-            >
-              <Brain className="w-4 h-4" />
-              <span>Detailed Analysis</span>
+              <span>View All Assets</span>
             </Button>
           </div>
         </div>
@@ -144,7 +135,7 @@ const AIInvestmentInsights: React.FC = () => {
                 <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
                   <TrendingUp className="w-4 h-4 text-blue-600" />
                 </div>
-                <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
+                <h3 className="font-semibold text-gray-900 dark:text-white text-sm truncate max-w-[200px]" title={insight.title}>
                   {insight.title}
                 </h3>
               </div>
@@ -158,15 +149,12 @@ const AIInvestmentInsights: React.FC = () => {
               {insight.description}
             </p>
 
-            {/* Recommended Asset */}
+            {/* Investment Details */}
             <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 mb-4">
-              <h4 className="font-medium text-gray-900 dark:text-white text-sm mb-2">
-                Recommended Asset:
+              <h4 className="font-medium text-gray-900 dark:text-white text-sm mb-3">
+                Investment Details:
               </h4>
               <div className="space-y-2">
-                <p className="font-semibold text-gray-900 dark:text-white text-sm truncate">
-                  {insight.asset.title}
-                </p>
                 <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400">
                   <span>{insight.asset.category}</span>
                   <span className="text-green-600 dark:text-green-400 font-medium">

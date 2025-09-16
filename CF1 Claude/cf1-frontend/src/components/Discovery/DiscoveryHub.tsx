@@ -57,6 +57,7 @@ const DiscoveryHub: React.FC = memo(() => {
   const [externalResults, setExternalResults] = useState<ExternalSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchMode, setSearchMode] = useState<'internal' | 'external'>('external'); // Default to external
+  const [includeExternalSources, setIncludeExternalSources] = useState(true);
   const [showGuidedSearchSuggestion, setShowGuidedSearchSuggestion] = useState(false);
   
   // Refs for guided search timing
@@ -92,7 +93,7 @@ const DiscoveryHub: React.FC = memo(() => {
     setShowGuidedSearchSuggestion(false);
     
     try {
-      if (searchMode === 'external') {
+      if (searchMode === 'external' && includeExternalSources) {
         // External search using API - this searches real market opportunities
         const selectedCategory = searchFilters.category.length > 0 ? searchFilters.category[0] : 'general';
         
@@ -165,7 +166,7 @@ const DiscoveryHub: React.FC = memo(() => {
       setIsSearching(false);
       setShowGuidedSearchSuggestion(true);
     }
-  }, [searchableContent, searchFilters.category, searchMode]);
+  }, [searchableContent, searchFilters.category, searchMode, includeExternalSources]);
 
   // Debounced search effect
   useEffect(() => {
@@ -213,8 +214,8 @@ const DiscoveryHub: React.FC = memo(() => {
   const handleGuidedSearchComplete = useCallback(async () => {
     // Get guided answers for external search
     const guidedAnswers = guidedSearch.answers || [];
-    
-    if (searchMode === 'external' && guidedAnswers.length > 0) {
+
+    if (searchMode === 'external' && includeExternalSources && guidedAnswers.length > 0) {
       setIsSearching(true);
       
       // Extract location from guided answers
@@ -252,7 +253,7 @@ const DiscoveryHub: React.FC = memo(() => {
     }
     
     completeGuidedSearch();
-  }, [completeGuidedSearch, guidedSearch, searchMode]);
+  }, [completeGuidedSearch, guidedSearch, searchMode, includeExternalSources]);
 
   const handleGuidedSearchCancel = useCallback(() => {
     cancelGuidedSearch();
@@ -387,6 +388,25 @@ const DiscoveryHub: React.FC = memo(() => {
                   >
                     <List className="w-4 h-4" />
                   </Button>
+                </div>
+              </div>
+
+              {/* External Sources Toggle */}
+              <div className="flex items-center space-x-3 mb-4">
+                <label className="flex items-center space-x-2 text-sm text-gray-700 dark:text-gray-300">
+                  <input
+                    type="checkbox"
+                    checked={includeExternalSources}
+                    onChange={(e) => {
+                      setIncludeExternalSources(e.target.checked);
+                      setSearchMode(e.target.checked ? 'external' : 'internal');
+                    }}
+                    className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span>Include external sources (Serper, RealtyMole, Zillow)</span>
+                </label>
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  Search real market opportunities vs educational content only
                 </div>
               </div>
 

@@ -19,6 +19,7 @@ import Button from '../UI/Button';
 import SkylineHero from '../UI/SkylineHero';
 import { UserPathEntryModal } from '../Onboarding/UserPathEntryModal';
 import { OnboardingTourComponent } from '../Onboarding/OnboardingTour';
+import { OnboardingWelcome } from '../Onboarding/OnboardingWelcome';
 import AIInvestmentInsights from './AIInvestmentInsights';
 import { useState } from 'react';
 
@@ -31,6 +32,8 @@ const ModernDashboard: React.FC = memo(() => {
 
   const {
     startTour,
+    showWelcomeModal,
+    hideWelcomeModal,
     isActive,
     currentTour,
     currentStep,
@@ -42,7 +45,11 @@ const ModernDashboard: React.FC = memo(() => {
     clearHighlight,
     scrollToElement,
     navigateToPage,
-    waitForElement
+    waitForElement,
+    showWelcome,
+    completedTours,
+    userPreferences,
+    updatePreferences
   } = useOnboarding();
 
 
@@ -56,8 +63,8 @@ const ModernDashboard: React.FC = memo(() => {
   }, [navigate]);
 
   const handleLearnMore = useCallback(() => {
-    startTour('platform_overview');
-  }, [startTour]);
+    showWelcomeModal();
+  }, [showWelcomeModal]);
 
   const handleConnectWallet = useCallback(() => {
     showLogin();
@@ -276,6 +283,16 @@ const ModernDashboard: React.FC = memo(() => {
         scrollToElement={scrollToElement}
         navigateToPage={navigateToPage}
         waitForElement={waitForElement}
+      />
+
+      {/* Onboarding Welcome Modal */}
+      <OnboardingWelcome
+        isOpen={showWelcome}
+        onClose={hideWelcomeModal}
+        onStartTour={startTour}
+        completedTours={completedTours}
+        userPreferences={userPreferences}
+        onUpdatePreferences={updatePreferences}
       />
     </div>
   );

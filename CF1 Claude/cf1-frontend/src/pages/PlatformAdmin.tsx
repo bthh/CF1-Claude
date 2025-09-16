@@ -967,7 +967,7 @@ const PlatformAdmin: React.FC = () => {
               return (
                 <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 border border-gray-200 dark:border-gray-700 shadow-lg">
                   <div className="text-center">
-                    <Shield className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <Shield className="w-12 h-12 text-gray-500 dark:text-gray-400 mx-auto mb-4" />
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Roles & Permissions Error</h3>
                     <p className="text-gray-600 dark:text-gray-400">Failed to load roles management interface.</p>
                   </div>
@@ -985,7 +985,7 @@ const PlatformAdmin: React.FC = () => {
               return (
                 <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 border border-gray-200 dark:border-gray-700 shadow-lg">
                   <div className="text-center">
-                    <Settings className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <Settings className="w-12 h-12 text-gray-500 dark:text-gray-400 mx-auto mb-4" />
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Feature Toggles Error</h3>
                     <p className="text-gray-600 dark:text-gray-400 mb-4">Failed to load feature toggle interface.</p>
                     <p className="text-sm text-gray-500 dark:text-gray-500">Error: {error?.message}</p>
@@ -1010,7 +1010,7 @@ const PlatformAdmin: React.FC = () => {
               return (
                 <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 border border-gray-200 dark:border-gray-700 shadow-lg">
                   <div className="text-center">
-                    <Target className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <Target className="w-12 h-12 text-gray-500 dark:text-gray-400 mx-auto mb-4" />
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Launchpad Admin Error</h3>
                     <p className="text-gray-600 dark:text-gray-400 mb-4">Failed to load launchpad management interface.</p>
                     <p className="text-sm text-gray-500 dark:text-gray-500">Error: {error?.message}</p>
@@ -1035,7 +1035,7 @@ const PlatformAdmin: React.FC = () => {
               return (
                 <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 border border-gray-200 dark:border-gray-700 shadow-lg">
                   <div className="text-center">
-                    <Vote className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <Vote className="w-12 h-12 text-gray-500 dark:text-gray-400 mx-auto mb-4" />
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Governance Admin Error</h3>
                     <p className="text-gray-600 dark:text-gray-400 mb-4">Failed to load governance management interface.</p>
                     <p className="text-sm text-gray-500 dark:text-gray-500">Error: {error?.message}</p>
@@ -1055,7 +1055,7 @@ const PlatformAdmin: React.FC = () => {
               return (
                 <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 border border-gray-200 dark:border-gray-700 shadow-lg">
                   <div className="text-center">
-                    <Settings className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <Settings className="w-12 h-12 text-gray-500 dark:text-gray-400 mx-auto mb-4" />
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Platform Settings Error</h3>
                     <p className="text-gray-600 dark:text-gray-400">Failed to load platform configuration interface.</p>
                   </div>
@@ -1198,7 +1198,7 @@ const PlatformAdmin: React.FC = () => {
               return (
                 <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 border border-gray-200 dark:border-gray-700 shadow-lg">
                   <div className="text-center">
-                    <Mail className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <Mail className="w-12 h-12 text-gray-500 dark:text-gray-400 mx-auto mb-4" />
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                       Auto Communication Error
                     </h3>
@@ -1226,7 +1226,7 @@ const PlatformAdmin: React.FC = () => {
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
                   <div className="flex-1 max-w-lg">
                     <div className="relative">
-                      <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                      <Search className="absolute left-3 top-3 w-4 h-4 text-gray-500 dark:text-gray-400" />
                       <input
                         type="text"
                         placeholder="Search users by name, email, or address..."
@@ -1640,19 +1640,19 @@ const PlatformAdmin: React.FC = () => {
                             <div className="space-y-2 text-sm">
                               {user.email && (
                                 <div className="flex items-center space-x-2">
-                                  <Mail className="w-4 h-4 text-gray-400" />
+                                  <Mail className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                                   <span className="text-gray-700 dark:text-gray-300">{user.email}</span>
                                 </div>
                               )}
                               {user.phone && (
                                 <div className="flex items-center space-x-2">
-                                  <Phone className="w-4 h-4 text-gray-400" />
+                                  <Phone className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                                   <span className="text-gray-700 dark:text-gray-300">{user.phone}</span>
                                 </div>
                               )}
                               {user.country && (
                                 <div className="flex items-center space-x-2">
-                                  <Globe className="w-4 h-4 text-gray-400" />
+                                  <Globe className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                                   <span className="text-gray-700 dark:text-gray-300">{user.country}</span>
                                 </div>
                               )}

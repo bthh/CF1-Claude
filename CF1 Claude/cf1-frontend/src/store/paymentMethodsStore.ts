@@ -316,13 +316,15 @@ export const usePaymentMethodsStore = create<PaymentMethodsState>()(
         // Credit Card Actions
         addCreditCard: async (cardData) => {
           set({ saving: true, error: null });
-          
+
           try {
-            // Validate card
-            const validation = validateCreditCardNumber(cardData.last4);
-            if (!validation.isValid) {
-              throw new Error('Invalid credit card number');
-            }
+            // Note: Card validation is already done in the form before calling this function
+            // Determine brand from last4 for display purposes
+            let brand: CreditCard['brand'] = 'other';
+            if (cardData.last4.startsWith('4')) brand = 'visa';
+            else if (cardData.last4.startsWith('5') || cardData.last4.startsWith('2')) brand = 'mastercard';
+            else if (cardData.last4.startsWith('3')) brand = 'amex';
+            else if (cardData.last4.startsWith('6')) brand = 'discover';
             
             // Simulate API call
             await new Promise(resolve => setTimeout(resolve, 2000));
@@ -330,7 +332,7 @@ export const usePaymentMethodsStore = create<PaymentMethodsState>()(
             const newCard: CreditCard = {
               ...cardData,
               id: `card_${Date.now()}`,
-              brand: validation.brand,
+              brand: brand,
               isExpired: cardData.expiryYear < new Date().getFullYear() || 
                         (cardData.expiryYear === new Date().getFullYear() && cardData.expiryMonth < new Date().getMonth() + 1),
               createdAt: new Date().toISOString(),

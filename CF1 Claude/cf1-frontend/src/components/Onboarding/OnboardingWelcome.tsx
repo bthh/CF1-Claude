@@ -219,7 +219,7 @@ export const OnboardingWelcome: React.FC<OnboardingWelcomeProps> = ({
           </div>
 
           {/* Quick Stats */}
-          <div className="bg-gray-50 dark:bg-gray-750 rounded-lg p-4">
+          <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
             <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
               Your Progress
             </h4>
@@ -253,7 +253,7 @@ export const OnboardingWelcome: React.FC<OnboardingWelcomeProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-750">
+        <div className="flex items-center justify-between p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
           <div className="flex items-center space-x-4">
             <label className="flex items-center">
               <input

@@ -173,6 +173,20 @@ export const useOnboarding = (options: UseOnboardingOptions = {}) => {
     }));
   }, []);
 
+  const showWelcomeModal = useCallback(() => {
+    setState(prev => ({
+      ...prev,
+      showWelcome: true
+    }));
+  }, []);
+
+  const hideWelcomeModal = useCallback(() => {
+    setState(prev => ({
+      ...prev,
+      showWelcome: false
+    }));
+  }, []);
+
   const isStepCompleted = useCallback((stepId: string) => {
     return state.completedSteps.includes(stepId);
   }, [state.completedSteps]);
@@ -306,6 +320,8 @@ export const useOnboarding = (options: UseOnboardingOptions = {}) => {
     skipTour,
     resetOnboarding,
     updatePreferences,
+    showWelcomeModal,
+    hideWelcomeModal,
     isStepCompleted,
     isTourCompleted,
     getTourProgress,

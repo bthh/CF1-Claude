@@ -9,6 +9,7 @@ import {
 import { useAnalytics } from '../../hooks/useAnalytics';
 import { useRealTimeUpdates } from '../../hooks/useRealTimeUpdates';
 import { AnalyticsFilter } from '../../types/analytics';
+import { useLaunchpadData } from '../../services/launchpadDataService';
 import { MetricCard } from './MetricCard';
 import { ChartContainer } from './ChartContainer';
 import { PerformanceChart } from './PerformanceChart';
@@ -68,6 +69,9 @@ export const AdvancedAnalyticsDashboard: React.FC = () => {
   } = useAnalytics();
 
   const { checkForUpdates, simulateChange } = useRealTimeUpdates();
+
+  // Get real launchpad data for insights
+  const { proposals: launchpadProposals, stats: launchpadStats } = useLaunchpadData();
   
   // Mock real-time events for the analytics dashboard
   const realTimeEvents = [
@@ -216,90 +220,208 @@ export const AdvancedAnalyticsDashboard: React.FC = () => {
     }
   ], [dashboard, formatCurrency, formatPercentage]);
 
-  // Generate predictive insights using AI-like analysis
-  const predictiveInsights: PredictiveInsight[] = useMemo(() => [
-    {
-      id: 'growth_prediction',
-      type: 'prediction',
-      title: 'Platform Growth Acceleration',
-      description: 'Based on current trends, expect 35% growth in TVL over next quarter driven by renewable energy sector demand.',
-      confidence: 87,
-      impact: 'high',
-      timeframe: '3 months',
-      actionable: true,
-      priority: 1
-    },
-    {
-      id: 'market_opportunity',
-      type: 'opportunity',
-      title: 'Real Estate Market Opportunity',
-      description: 'Commercial real estate tokenization shows 40% higher success rates. Consider targeted marketing campaign.',
-      confidence: 73,
-      impact: 'medium',
-      timeframe: '6 weeks',
-      actionable: true,
-      priority: 2
-    },
-    {
-      id: 'risk_alert',
-      type: 'alert',
-      title: 'Concentration Risk Warning',
-      description: 'Technology sector now represents 45% of platform TVL. Diversification recommended to reduce sector risk.',
-      confidence: 91,
-      impact: 'medium',
-      timeframe: 'Immediate',
-      actionable: true,
-      priority: 3
-    },
-    {
-      id: 'optimization_rec',
-      type: 'recommendation',
-      title: 'Funding Process Optimization',
-      description: 'Implementing automated compliance checks could reduce average funding time by 15% and improve success rates.',
-      confidence: 82,
-      impact: 'high',
-      timeframe: '2 months',
-      actionable: true,
-      priority: 4
+  // Generate predictive insights based on real launchpad data
+  const predictiveInsights: PredictiveInsight[] = useMemo(() => {
+    if (!launchpadProposals || launchpadProposals.length === 0) {
+      return [
+        {
+          id: 'no_data',
+          type: 'alert',
+          title: 'No Active Proposals',
+          description: 'No launchpad proposals found. Switch to demo mode or add proposals to see AI-powered insights.',
+          confidence: 100,
+          impact: 'low',
+          timeframe: 'Immediate',
+          actionable: true,
+          priority: 1
+        }
+      ];
     }
-  ], []);
 
-  // Generate real-time events simulation
-  const simulatedRealTimeEvents: RealTimeEvent[] = useMemo(() => [
-    {
-      id: 'event_1',
-      timestamp: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
-      type: 'transaction',
-      title: 'Large Investment',
-      description: 'Solar Energy Project received $250K investment',
-      value: 250000,
-      status: 'success'
-    },
-    {
-      id: 'event_2',
-      timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-      type: 'proposal',
-      title: 'New Proposal Submitted',
-      description: 'Commercial Real Estate - Downtown Office Complex',
-      status: 'info'
-    },
-    {
-      id: 'event_3',
-      timestamp: new Date(Date.now() - 8 * 60 * 1000).toISOString(),
-      type: 'compliance',
-      title: 'Compliance Check Passed',
-      description: 'Wind Farm Project passed automated SEC compliance review',
-      status: 'success'
-    },
-    {
-      id: 'event_4',
-      timestamp: new Date(Date.now() - 12 * 60 * 1000).toISOString(),
-      type: 'market',
-      title: 'Market Movement',
-      description: 'Renewable energy sector up 3.2% today',
-      status: 'success'
+    const insights: PredictiveInsight[] = [];
+
+    // Analyze proposal categories
+    const categories = launchpadProposals.reduce((acc, proposal) => {
+      acc[proposal.category] = (acc[proposal.category] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const totalProposals = launchpadProposals.length;
+    const activeProposals = launchpadProposals.filter(p => p.status === 'active');
+    const fundedProposals = launchpadProposals.filter(p => p.status === 'funded');
+
+    // Category concentration analysis
+    const topCategory = Object.entries(categories).sort(([,a], [,b]) => b - a)[0];
+    if (topCategory && topCategory[1] >= totalProposals * 0.4) {
+      insights.push({
+        id: 'concentration_risk',
+        type: 'alert',
+        title: 'Sector Concentration Risk',
+        description: `${topCategory[0]} represents ${Math.round((topCategory[1] / totalProposals) * 100)}% of proposals. Consider diversifying to reduce sector-specific risks.`,
+        confidence: 85,
+        impact: 'medium',
+        timeframe: 'Immediate',
+        actionable: true,
+        priority: 1
+      });
     }
-  ], []);
+
+    // Success rate analysis
+    if (fundedProposals.length > 0 && activeProposals.length > 0) {
+      const successRate = (fundedProposals.length / (fundedProposals.length + activeProposals.length)) * 100;
+      if (successRate < 30) {
+        insights.push({
+          id: 'low_success_rate',
+          type: 'recommendation',
+          title: 'Funding Success Rate Optimization',
+          description: `Current success rate is ${Math.round(successRate)}%. Consider enhanced due diligence or proposal quality improvements.`,
+          confidence: 78,
+          impact: 'high',
+          timeframe: '6 weeks',
+          actionable: true,
+          priority: 2
+        });
+      } else if (successRate > 70) {
+        insights.push({
+          id: 'high_success_rate',
+          type: 'opportunity',
+          title: 'Strong Proposal Pipeline',
+          description: `Excellent ${Math.round(successRate)}% success rate indicates strong curation. Consider expanding proposal volume.`,
+          confidence: 88,
+          impact: 'high',
+          timeframe: '4 weeks',
+          actionable: true,
+          priority: 2
+        });
+      }
+    }
+
+    // Growth opportunity analysis
+    const highValueProposals = launchpadProposals.filter(p => {
+      const targetValue = parseFloat(p.targetAmount.replace(/[$,]/g, ''));
+      return targetValue >= 1000000; // $1M+
+    });
+
+    if (highValueProposals.length >= 2) {
+      insights.push({
+        id: 'institutional_growth',
+        type: 'prediction',
+        title: 'Institutional Interest Growth',
+        description: `${highValueProposals.length} high-value proposals (>$1M) suggest growing institutional adoption. Expect increased platform TVL.`,
+        confidence: 82,
+        impact: 'high',
+        timeframe: '3 months',
+        actionable: true,
+        priority: 3
+      });
+    }
+
+    // Market timing analysis
+    const nearingDeadline = activeProposals.filter(p => p.daysLeft <= 7);
+    if (nearingDeadline.length > 0) {
+      insights.push({
+        id: 'deadline_urgency',
+        type: 'alert',
+        title: 'Proposals Nearing Deadline',
+        description: `${nearingDeadline.length} active proposals have less than 7 days remaining. Consider promotional campaigns to boost funding.`,
+        confidence: 95,
+        impact: 'medium',
+        timeframe: 'Immediate',
+        actionable: true,
+        priority: 4
+      });
+    }
+
+    // If no specific insights, provide general optimization recommendation
+    if (insights.length === 0) {
+      insights.push({
+        id: 'general_optimization',
+        type: 'recommendation',
+        title: 'Platform Optimization Opportunity',
+        description: `${totalProposals} proposals show healthy platform activity. Consider adding AI-powered matching to improve investor targeting.`,
+        confidence: 75,
+        impact: 'medium',
+        timeframe: '8 weeks',
+        actionable: true,
+        priority: 5
+      });
+    }
+
+    return insights.slice(0, 4); // Limit to 4 insights for UI consistency
+  }, [launchpadProposals]);
+
+  // Generate real-time events based on launchpad data
+  const simulatedRealTimeEvents: RealTimeEvent[] = useMemo(() => {
+    const events: RealTimeEvent[] = [];
+
+    if (launchpadProposals && launchpadProposals.length > 0) {
+      // Create events from actual proposal data
+      launchpadProposals.slice(0, 3).forEach((proposal, index) => {
+        const minutesAgo = (index + 1) * 3;
+        const raisedValue = parseFloat(proposal.raisedAmount.replace(/[$,]/g, ''));
+
+        if (proposal.status === 'active' && raisedValue > 0) {
+          events.push({
+            id: `investment_${proposal.id}`,
+            timestamp: new Date(Date.now() - minutesAgo * 60 * 1000).toISOString(),
+            type: 'transaction',
+            title: 'Investment Activity',
+            description: `${proposal.title} received new funding - ${proposal.raisedPercentage}% funded`,
+            value: raisedValue,
+            status: 'success'
+          });
+        } else if (proposal.status === 'funded') {
+          events.push({
+            id: `funded_${proposal.id}`,
+            timestamp: new Date(Date.now() - minutesAgo * 60 * 1000).toISOString(),
+            type: 'proposal',
+            title: 'Funding Goal Reached',
+            description: `${proposal.title} successfully reached its funding target`,
+            status: 'success'
+          });
+        } else {
+          events.push({
+            id: `new_${proposal.id}`,
+            timestamp: new Date(Date.now() - minutesAgo * 60 * 1000).toISOString(),
+            type: 'proposal',
+            title: 'New Proposal Active',
+            description: `${proposal.title} is now accepting investments`,
+            status: 'info'
+          });
+        }
+      });
+
+      // Add a market insight event if we have category data
+      const categories = launchpadProposals.reduce((acc, proposal) => {
+        acc[proposal.category] = (acc[proposal.category] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      const topCategory = Object.entries(categories).sort(([,a], [,b]) => b - a)[0];
+      if (topCategory) {
+        events.push({
+          id: 'market_trend',
+          timestamp: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
+          type: 'market',
+          title: 'Sector Trend Analysis',
+          description: `${topCategory[0]} showing strong interest with ${topCategory[1]} active proposals`,
+          status: 'info'
+        });
+      }
+    } else {
+      // Fallback events when no data
+      events.push({
+        id: 'system_status',
+        timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+        type: 'system',
+        title: 'Platform Status',
+        description: 'Monitoring launchpad activity - switch to demo mode for sample data',
+        status: 'info'
+      });
+    }
+
+    return events.slice(0, 4); // Limit to 4 events for UI consistency
+  }, [launchpadProposals]);
 
   const filteredMetrics = selectedMetricCategory === 'all' 
     ? advancedMetrics 

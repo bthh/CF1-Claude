@@ -138,6 +138,15 @@ const defaultFeatures: Record<string, FeatureToggle> = {
     category: 'launchpad',
     requiredRole: 'platform_admin',
     lastModified: new Date().toISOString()
+  },
+  'modern_dashboard': {
+    id: 'modern_dashboard',
+    name: 'Modern Dashboard',
+    description: 'Enable modern professional dashboard with enhanced UI',
+    enabled: true,
+    category: 'dashboard',
+    requiredRole: 'platform_admin',
+    lastModified: new Date().toISOString()
   }
 };
 
