@@ -22,6 +22,7 @@ import { useCosmJS } from '../../hooks/useCosmJS';
 import { useVerificationStore } from '../../store/verificationStore';
 import { useFeatureToggleStore } from '../../store/featureToggleStore';
 import { useAdminAuthContext } from '../../hooks/useAdminAuth';
+import { useUIStore } from '../../store/uiStore';
 
 interface NavigationItem {
   label: string;
@@ -34,15 +35,11 @@ interface NavigationItem {
 interface MobileNavigationProps {
   isOpen: boolean;
   onClose: () => void;
-  darkMode: boolean;
-  onToggleDarkMode: () => void;
 }
 
 export const MobileNavigation: React.FC<MobileNavigationProps> = ({
   isOpen,
-  onClose,
-  darkMode,
-  onToggleDarkMode
+  onClose
 }) => {
   const location = useLocation();
   const navRef = useRef<HTMLElement>(null);
@@ -51,6 +48,12 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
   const { level } = useVerificationStore();
   const { isFeatureEnabled } = useFeatureToggleStore();
   const { isAdmin } = useAdminAuthContext();
+  const { darkMode, toggleDarkMode } = useUIStore();
+
+  // Local development: Show admin access ONLY for wallet connections on localhost
+  const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const walletAdminAccess = isLocalhost && isConnected && address; // Only wallet connections
+  const combinedIsAdmin = isAdmin || walletAdminAccess;
 
   // Focus management
   useEffect(() => {
@@ -100,7 +103,7 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
       icon: <PieChart className="w-5 h-5" />,
       description: 'Detailed platform analytics'
     }] : []),
-    ...(isAdmin ? [{
+    ...(combinedIsAdmin ? [{
       label: 'Admin',
       to: '/admin',
       icon: <Shield className="w-5 h-5" />,
@@ -248,7 +251,7 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
             </Link>
             
             <button
-              onClick={onToggleDarkMode}
+              onClick={toggleDarkMode}
               className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors"
             >
               {darkMode ? (

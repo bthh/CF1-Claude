@@ -371,6 +371,31 @@ export const useAdminAuth = (): AdminAuthContextType => {
     handleRoleChange();
   }, [address, isConnected, selectedRole, isRoleSelected]);
 
+  // Local development: Auto-assign super admin for wallet connections on localhost
+  useEffect(() => {
+    const assignLocalSuperAdmin = async () => {
+      // Only on localhost and only for wallet connections
+      const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      if (isLocalhost && isConnected && address && !currentAdmin) {
+        const localSuperAdmin: AdminUser = {
+          address,
+          role: 'super_admin',
+          permissions: rolePermissions.super_admin || [],
+          name: 'Local Super Admin',
+          email: 'local@dev.com',
+          createdAt: new Date().toISOString(),
+          lastActive: new Date().toISOString(),
+          isActive: true
+        };
+        setCurrentAdmin(localSuperAdmin);
+        await storeSecureSession(localSuperAdmin, SecurityUtils.generateSecureId());
+        console.log('🔓 Local development: Auto-assigned super admin role to wallet connection');
+      }
+    };
+
+    assignLocalSuperAdmin();
+  }, [address, isConnected, currentAdmin]);
+
   // Load admin session on mount with secure production handling
   useEffect(() => {
     const loadSession = async () => {

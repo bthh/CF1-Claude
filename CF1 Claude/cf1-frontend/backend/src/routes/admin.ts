@@ -6,7 +6,7 @@
 import express, { Request, Response } from 'express';
 import { AppDataSource } from '../config/database';
 import { User } from '../models/User';
-import { authenticate, AuthenticatedRequest } from '../middleware/unifiedAuth';
+import { authenticate } from '../middleware/unifiedAuth';
 import { requireAdminJWT } from '../middleware/adminAuth';
 import { body, query, validationResult } from 'express-validator';
 import { AuditLogger, AuditEventType } from '../middleware/auditLogger';
@@ -184,7 +184,7 @@ router.put('/users/:id',
       }
 
       // Prevent platform admins from editing super_admin or owner roles
-      const adminUser = (req as any).user || (req as any).adminUser;
+      // const _adminUser = (req as any).user || (req as any).adminUser;
       const isUnifiedAdmin = (req as any).user?.role;
       
       if (user.role === 'super_admin' || user.role === 'owner') {

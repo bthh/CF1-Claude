@@ -19,7 +19,7 @@ const upload = multer({
     fileSize: 10 * 1024 * 1024, // 10MB limit
     files: 1
   },
-  fileFilter: (req, file, cb) => {
+  fileFilter: (_req, file, cb) => {
     // Allow PDF files and text files for testing
     if (file.mimetype === 'application/pdf' || file.mimetype === 'text/plain') {
       cb(null, true);
@@ -161,7 +161,7 @@ router.post('/webhook',
  * GET /api/v1/ai-analysis/stats
  * Get analysis statistics
  */
-router.get('/stats', async (req: Request, res: Response) => {
+router.get('/stats', async (_req: Request, res: Response) => {
   try {
     const stats = await analysisService.getAnalysisStats();
     res.json(stats);

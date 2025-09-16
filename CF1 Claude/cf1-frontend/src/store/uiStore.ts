@@ -96,7 +96,7 @@ export const useUIStore = create<UIState>()(
         toggleDarkMode: () => {
           set(state => {
             const newDarkMode = !state.darkMode;
-            
+
             // Update document class for Tailwind dark mode
             if (typeof document !== 'undefined') {
               if (newDarkMode) {
@@ -105,7 +105,7 @@ export const useUIStore = create<UIState>()(
                 document.documentElement.classList.remove('dark');
               }
             }
-            
+
             return { darkMode: newDarkMode };
           });
         },
@@ -259,9 +259,15 @@ export const useUIStore = create<UIState>()(
 
 // Initialize dark mode on load - Apply immediately to prevent flash
 if (typeof window !== 'undefined') {
+  // Clean up old localStorage key if it exists
+  const oldDarkMode = localStorage.getItem('darkMode');
+  if (oldDarkMode !== null) {
+    localStorage.removeItem('darkMode');
+  }
+
   const storedDarkMode = localStorage.getItem('cf1-ui-storage');
   let shouldUseDarkMode = true; // Default to dark mode
-  
+
   if (storedDarkMode) {
     try {
       const parsed = JSON.parse(storedDarkMode);
@@ -270,8 +276,12 @@ if (typeof window !== 'undefined') {
       // Ignore parsing errors, default to dark mode
       shouldUseDarkMode = true;
     }
+  } else if (oldDarkMode !== null) {
+    // Use migrated value from old key
+    shouldUseDarkMode = oldDarkMode === 'true';
   }
-  
+
+  // Apply immediately to prevent flash
   if (shouldUseDarkMode) {
     document.documentElement.classList.add('dark');
   } else {

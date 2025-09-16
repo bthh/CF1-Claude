@@ -4,6 +4,7 @@ import './polyfills';
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
+import './styles/cf1-gradients.css'
 import App from './App.tsx'
 import { initializeMonitoring, initializePerformanceMonitoring, startSession } from './lib/monitoring'
 import { performanceMonitor } from './utils/performanceMonitoring'

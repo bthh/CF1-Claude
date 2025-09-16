@@ -17,49 +17,8 @@ const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH;
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
 
-// Additional admin users (Brock and Brian)
-const BROCK_PASSWORD_HASH = process.env.BROCK_PASSWORD_HASH;
-const BRIAN_PASSWORD_HASH = process.env.BRIAN_PASSWORD_HASH;
-
-// Define admin users with their credentials and permissions (supports both username and email)
-const ADMIN_USERS: { [key: string]: { passwordHash: string; permissions: string[]; role: string; displayName: string } } = {
-  cf1admin: {
-    passwordHash: ADMIN_PASSWORD_HASH!,
-    permissions: ['admin', 'governance', 'proposals', 'users', 'super_admin'],
-    role: 'super_admin',
-    displayName: 'CF1 Admin'
-  },
-  'admin@cf1platform.com': {
-    passwordHash: ADMIN_PASSWORD_HASH!,
-    permissions: ['admin', 'governance', 'proposals', 'users', 'super_admin'],
-    role: 'super_admin',
-    displayName: 'CF1 Admin'
-  },
-  brock: {
-    passwordHash: BROCK_PASSWORD_HASH || '',
-    permissions: ['admin', 'governance', 'proposals', 'users', 'super_admin'],
-    role: 'super_admin',
-    displayName: 'Brock'
-  },
-  'bthardwick@gmail.com': {
-    passwordHash: BROCK_PASSWORD_HASH || '',
-    permissions: ['admin', 'governance', 'proposals', 'users', 'super_admin'],
-    role: 'super_admin',
-    displayName: 'Brock'
-  },
-  brian: {
-    passwordHash: BRIAN_PASSWORD_HASH || '',
-    permissions: ['admin', 'governance', 'proposals', 'users', 'super_admin'],
-    role: 'super_admin',
-    displayName: 'Brian'
-  },
-  'brian.d.towner@gmail.com': {
-    passwordHash: BRIAN_PASSWORD_HASH || '',
-    permissions: ['admin', 'governance', 'proposals', 'users', 'super_admin'],
-    role: 'super_admin',
-    displayName: 'Brian'
-  }
-};
+// Legacy admin users - now using database service instead
+// Authentication is now handled by AdminUserService instead of hardcoded credentials
 
 // Validate required environment variables at startup
 if (!ADMIN_API_KEY) {
@@ -84,6 +43,7 @@ export interface AdminAuthenticatedRequest extends Request {
   adminUser?: {
     username: string;
     permissions: string[];
+    role?: string;
   };
 }
 
@@ -118,7 +78,8 @@ export const requireAdminApiKey = (req: AdminAuthenticatedRequest, res: Response
   // Set admin user context
   req.adminUser = {
     username: ADMIN_USERNAME,
-    permissions: ['admin', 'governance', 'proposals', 'users']
+    permissions: ['admin', 'governance', 'proposals', 'users'],
+    role: 'admin'
   };
   
   // Log successful admin authentication
@@ -176,7 +137,8 @@ export const requireAdminBasicAuth = async (req: AdminAuthenticatedRequest, res:
   // Set admin user context
   req.adminUser = {
     username: ADMIN_USERNAME,
-    permissions: ['admin', 'governance', 'proposals', 'users']
+    permissions: ['admin', 'governance', 'proposals', 'users'],
+    role: 'admin'
   };
   
   next();
@@ -214,7 +176,8 @@ export const requireAdminJWT = (req: AdminAuthenticatedRequest, res: Response, n
     // Set admin user context from JWT payload
     req.adminUser = {
       username: decoded.username,
-      permissions: decoded.permissions || ['admin', 'governance', 'proposals', 'users']
+      permissions: decoded.permissions || ['admin', 'governance', 'proposals', 'users'],
+      role: decoded.role || 'admin'
     };
     
     next();
@@ -288,7 +251,7 @@ export const adminLogin = async (req: Request, res: Response) => {
     }
     
     // Generate JWT token with user permissions
-    const token = generateAdminJWT(authenticatedUser.username, authenticatedUser.permissions);
+    const token = generateAdminJWT(authenticatedUser.username, authenticatedUser.permissions, authenticatedUser.role);
     
     // Log successful login with audit system
     auditAuth.loginSuccess(req, username);
@@ -325,14 +288,14 @@ export const adminRateLimit = (maxRequests: number = 100, windowMs: number = 600
   const requests = new Map<string, number[]>();
   
   return (req: AdminAuthenticatedRequest, res: Response, next: NextFunction) => {
-    const key = req.adminUser?.username || req.ip;
+    const key = req.adminUser?.username || req.ip || 'unknown';
     const now = Date.now();
     
     if (!requests.has(key)) {
       requests.set(key, []);
     }
     
-    const userRequests = requests.get(key)!;
+    const userRequests = requests.get(key) || [];
     // Remove old requests outside the window
     const validRequests = userRequests.filter(time => now - time < windowMs);
     
@@ -358,10 +321,11 @@ export const adminRateLimit = (maxRequests: number = 100, windowMs: number = 600
 /**
  * Generate JWT token for admin user
  */
-export const generateAdminJWT = (username: string, permissions: string[] = ['admin', 'governance', 'proposals', 'users']) => {
+export const generateAdminJWT = (username: string, permissions: string[] = ['admin', 'governance', 'proposals', 'users'], role: string = 'admin') => {
   const payload = {
     username,
     permissions,
+    role,
     iat: Math.floor(Date.now() / 1000),
     exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24 hours
   };
@@ -394,7 +358,7 @@ export const generateSecureApiKey = (): string => {
 /**
  * Logging middleware for admin operations
  */
-export const logAdminOperation = (req: AdminAuthenticatedRequest, res: Response, next: NextFunction) => {
+export const logAdminOperation = (req: AdminAuthenticatedRequest, _res: Response, next: NextFunction) => {
   const operation = `${req.method} ${req.path}`;
   const admin = req.adminUser?.username || 'unknown';
   

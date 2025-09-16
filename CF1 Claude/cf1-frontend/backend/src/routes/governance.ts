@@ -20,7 +20,7 @@ const votes = new Map<string, any[]>();
  * GET /api/v1/governance/proposals
  * Get all governance proposals
  */
-router.get('/proposals', (req: Request, res: Response) => {
+router.get('/proposals', (_req: Request, res: Response) => {
   const proposalsArray = Array.from(governanceProposals.values());
   
   res.json({
@@ -107,7 +107,7 @@ router.post('/proposals/:id/admin/simulate-pass',
       if (currentYesPercentage < majorityRequired) {
         // Calculate exact number of yes votes needed to reach majority requirement plus buffer
         const targetPercentage = majorityRequired + 5; // Add 5% buffer (65% total)
-        const currentNoVotes = proposal.voting.noVotes;
+        // const _currentNoVotes = proposal.voting.noVotes;
         
         // We need: yesVotes / totalVotes >= targetPercentage/100
         // Rearranging: yesVotes >= (targetPercentage/100) * totalVotes

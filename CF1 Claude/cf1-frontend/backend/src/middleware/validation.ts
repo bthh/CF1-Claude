@@ -120,7 +120,7 @@ export const validateRequest = (schema: { body?: Joi.ObjectSchema, params?: Joi.
 /**
  * General error handler for validation
  */
-export const handleValidationError = (error: Error, req: Request, res: Response, next: NextFunction) => {
+export const handleValidationError = (error: Error, _req: Request, res: Response, next: NextFunction) => {
   if (error.message === 'Only PDF files are allowed') {
     return res.status(400).json({
       error: 'Only PDF files are supported',

@@ -34,10 +34,10 @@ const NavItem: React.FC<NavItemProps> = ({ icon, label, to, badge }) => {
   return (
     <Link
       to={to}
-      className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors ${
+      className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left cf1-nav-item transition-all duration-200 hover:transform hover:translate-x-1 ${
         isActive 
-          ? 'bg-primary-50 text-primary-700 border-r-2 border-primary-600' 
-          : 'text-secondary-600 hover:bg-secondary-50 hover:text-secondary-900'
+          ? 'bg-white/20 text-blue-900 dark:bg-white/10 dark:text-blue-100 active' 
+          : 'text-slate-700 dark:text-slate-300 hover:bg-white/10 hover:text-slate-900 dark:hover:text-slate-100'
       }`}
     >
       <span className="flex-shrink-0">{icon}</span>
@@ -57,7 +57,7 @@ const Sidebar: React.FC = () => {
   const { isAdmin } = useAdminAuthContext();
   
   return (
-    <aside className="w-64 bg-blue-100 border-r border-secondary-200 h-full flex flex-col">
+    <aside className="w-64 cf1-gradient-sidebar border-r border-secondary-200 h-full flex flex-col relative">
       <div className="p-6 space-y-1">
         <nav className="space-y-1">
           <NavItem
@@ -140,13 +140,13 @@ const Sidebar: React.FC = () => {
         </div>
       </div>
 
-      <div className="mt-auto p-6">
-        <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
-          <h4 className="text-sm font-semibold text-primary-900 mb-1">
+      <div className="mt-auto p-6 relative z-10">
+        <div className="cf1-portfolio-widget p-4">
+          <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-1">
             Portfolio Value
           </h4>
-          <p className="text-2xl font-bold text-primary-700">$124,523</p>
-          <p className="text-sm text-success-600 mt-1">+12.5% this month</p>
+          <p className="text-2xl font-bold text-blue-800 dark:text-blue-200">$124,523</p>
+          <p className="text-sm text-emerald-600 dark:text-emerald-400 mt-1">+12.5% this month</p>
         </div>
       </div>
     </aside>

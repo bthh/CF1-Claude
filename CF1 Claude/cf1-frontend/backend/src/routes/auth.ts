@@ -5,8 +5,10 @@
 
 import express, { Request, Response } from 'express';
 import { AuthService } from '../services/AuthService';
-import { authenticate, optionalAuth, rateLimit, AuthenticatedRequest } from '../middleware/unifiedAuth';
+import { authenticate, rateLimit, AuthenticatedRequest } from '../middleware/unifiedAuth';
 import { body, validationResult } from 'express-validator';
+// import { validateBody } from '../validation/validation-middleware';
+// import { LoginRequestSchema, RegisterRequestSchema } from '../validation/request-schemas';
 
 const router = express.Router();
 const authService = new AuthService();
@@ -211,7 +213,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
  * POST /api/auth/logout
  * Logout user and clear cookies
  */
-router.post('/logout', async (req: Request, res: Response) => {
+router.post('/logout', async (_req: Request, res: Response) => {
   try {
     // Clear refresh token cookie
     res.clearCookie('refreshToken');

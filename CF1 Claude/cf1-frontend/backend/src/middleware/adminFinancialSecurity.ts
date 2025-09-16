@@ -3,7 +3,7 @@
  * Advanced security controls for admin financial operations
  */
 
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import crypto from 'crypto';
 import { AdminAuthenticatedRequest } from './adminAuth';
 import { AuditLogger, auditFinancial, AuditEventType } from './auditLogger';
@@ -191,7 +191,7 @@ class AdminFinancialSecurityManager {
    */
   static checkRegulatoryCompliance(
     amount: number,
-    proposalId?: string
+    _proposalId?: string
   ): { compliant: boolean; requirements: string[] } {
     const requirements: string[] = [];
     let compliant = true;

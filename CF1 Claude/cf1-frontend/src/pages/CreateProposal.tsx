@@ -15,13 +15,15 @@ import {
   Clock,
   Save,
   AlertTriangle,
-  Brain
+  Brain,
+  X,
+  Plus
 } from 'lucide-react';
 import { useSubmissionStore } from '../store/submissionStore';
 import { usePlatformConfigStore } from '../store/platformConfigStore';
 import { useNotifications } from '../hooks/useNotifications';
 import { useSessionStore } from '../store/sessionStore';
-import { useWalletStore } from '../store/walletStore';
+import { useCosmJS } from '../hooks/useCosmJS';
 import { useProposalNotifications } from '../hooks/useProposalNotifications';
 import { TouchInput, TouchSelect, TouchTextarea } from '../components/TouchOptimized';
 import AIProposalAssistant from '../components/AIProposalAssistant/AIProposalAssistant';
@@ -45,6 +47,7 @@ interface FormData {
   customCategory: string;
   location: string;
   description: string;
+  assetVotingType: 'open' | 'closed';
   
   // Financial Terms
   targetAmount: string;
@@ -58,6 +61,16 @@ interface FormData {
   legalDocuments: File | null;
   assetValuation: File | null;
   
+  // Cost & Services
+  services: Array<{
+    id: string;
+    serviceName: string;
+    personName: string;
+    cost: string;
+    paymentMethod: string;
+    description: string;
+  }>;
+  
   // Additional Info
   riskFactors: string;
   useOfFunds: string;
@@ -70,7 +83,7 @@ const CreateProposal: React.FC = () => {
   const { validateAPY } = usePlatformConfigStore();
   const { success, error: showError, info } = useNotifications();
   const { selectedRole } = useSessionStore();
-  const { connection } = useWalletStore();
+  const { isConnected, address } = useCosmJS();
   const { scheduleNotificationsForProposal, hasConfiguredNotifications } = useProposalNotifications();
   const [currentStep, setCurrentStep] = useState(1);
   const [isEditingDraft, setIsEditingDraft] = useState(false);
@@ -92,6 +105,7 @@ const CreateProposal: React.FC = () => {
     customCategory: '',
     location: '',
     description: '',
+    assetVotingType: 'open',
     targetAmount: '',
     tokenPrice: '',
     expectedAPY: '',
@@ -100,14 +114,25 @@ const CreateProposal: React.FC = () => {
     financialProjections: null,
     legalDocuments: null,
     assetValuation: null,
+    services: [],
     riskFactors: '',
     useOfFunds: ''
   });
 
   // Check authentication - require wallet connection or user session
   useEffect(() => {
-    const isAuthenticated = connection?.address || selectedRole;
-    if (!isAuthenticated) {
+    const isAuthenticated = address || selectedRole;
+    console.log('🔍 Authentication check:', { 
+      hasConnection: isConnected, 
+      connectionAddress: address,
+      hasSelectedRole: !!selectedRole,
+      selectedRole,
+      isAuthenticated 
+    });
+    
+    // Temporarily allow wallet connection even if backend auth fails
+    const hasWalletConnection = address;
+    if (!isAuthenticated && !hasWalletConnection) {
       showError(
         'Authentication Required',
         'You must connect your wallet or log in to create proposals. Please connect your wallet from the header menu.'
@@ -115,7 +140,7 @@ const CreateProposal: React.FC = () => {
       navigate('/launchpad');
       return;
     }
-  }, [connection, selectedRole, navigate, showError]);
+  }, [isConnected, address, selectedRole, navigate, showError]);
 
   // Load draft or submission for editing
   useEffect(() => {
@@ -126,6 +151,13 @@ const CreateProposal: React.FC = () => {
     if (submissionId) {
       const submission = getSubmissionById(submissionId);
       if (submission && (submission.status === 'draft' || submission.status === 'changes_requested')) {
+        // Check if this draft belongs to the current wallet address
+        if (submission.createdBy && submission.createdBy !== address) {
+          showError('Access Denied', 'This draft belongs to a different wallet address.');
+          navigate('/launchpad');
+          return;
+        }
+        
         setIsEditingDraft(true);
         setDraftId(submissionId);
         setCurrentSubmission(submission);
@@ -161,6 +193,7 @@ const CreateProposal: React.FC = () => {
           customCategory: submission.customCategory || '',
           location: submission.location,
           description: submission.description,
+          assetVotingType: submission.assetVotingType || 'open',
           targetAmount: submission.targetAmount,
           tokenPrice: submission.tokenPrice,
           expectedAPY: submission.expectedAPY,
@@ -169,14 +202,15 @@ const CreateProposal: React.FC = () => {
           financialProjections: storedFiles.financialProjections,
           legalDocuments: storedFiles.legalDocuments,
           assetValuation: storedFiles.assetValuation,
+          services: submission.services || [],
           riskFactors: submission.riskFactors,
           useOfFunds: submission.useOfFunds
         });
       }
     }
-  }, [searchParams, getSubmissionById]);
+  }, [searchParams, getSubmissionById, address, navigate, showError]);
 
-  const totalSteps = 4;
+  const totalSteps = 5;
 
   const steps = [
     { 
@@ -199,6 +233,12 @@ const CreateProposal: React.FC = () => {
     },
     { 
       number: 4, 
+      title: 'Cost & Services', 
+      description: 'Services and associated costs',
+      icon: <Users className="w-5 h-5" />
+    },
+    { 
+      number: 5, 
       title: 'Review & Submit', 
       description: 'Final review of your proposal',
       icon: <CheckCircle className="w-5 h-5" />
@@ -326,7 +366,7 @@ const CreateProposal: React.FC = () => {
     switch (step) {
       case 1:
         const categoryValid = formData.category && (formData.category !== 'Other' || formData.customCategory.trim());
-        return !!(formData.assetName && formData.assetType && categoryValid && formData.location && formData.description);
+        return !!(formData.assetName && formData.assetType && categoryValid && formData.location && formData.description && formData.assetVotingType);
       case 2:
         const hasRequiredFields = !!(formData.targetAmount && formData.tokenPrice && formData.expectedAPY && formData.fundingDays);
         const hasValidTokenPrice = !tokenPriceError && parseNumericValue(formData.tokenPrice) >= platformConfig.minTokenPrice;
@@ -335,6 +375,11 @@ const CreateProposal: React.FC = () => {
       case 3:
         return !!(formData.businessPlan && formData.financialProjections && formData.legalDocuments);
       case 4:
+        // For services step - at least one service is required
+        return formData.services.length > 0 && formData.services.every(service => 
+          service.serviceName.trim() && service.personName.trim() && service.cost.trim() && service.paymentMethod.trim()
+        );
+      case 5:
         return !!(formData.riskFactors && formData.useOfFunds);
       default:
         return false;
@@ -406,6 +451,7 @@ const CreateProposal: React.FC = () => {
       customCategory: formData.customCategory,
       location: formData.location,
       description: formData.description,
+      assetVotingType: formData.assetVotingType,
       targetAmount: formData.targetAmount,
       tokenPrice: formData.tokenPrice,
       minimumInvestment: calculatedValues.minimumInvestment.toString(), // Use calculated value
@@ -415,8 +461,10 @@ const CreateProposal: React.FC = () => {
       financialProjections: formData.financialProjections?.name,
       legalDocuments: formData.legalDocuments?.name,
       assetValuation: formData.assetValuation?.name,
+      services: formData.services,
       riskFactors: formData.riskFactors,
-      useOfFunds: formData.useOfFunds
+      useOfFunds: formData.useOfFunds,
+      createdBy: address // Add wallet address to associate draft with user
     };
 
     let currentDraftId = draftId;
@@ -478,6 +526,7 @@ const CreateProposal: React.FC = () => {
       customCategory: formData.customCategory,
       location: formData.location,
       description: formData.description,
+      assetVotingType: formData.assetVotingType,
       targetAmount: formData.targetAmount,
       tokenPrice: formData.tokenPrice,
       minimumInvestment: calculatedValues.minimumInvestment.toString(), // Use calculated value
@@ -488,6 +537,7 @@ const CreateProposal: React.FC = () => {
       financialProjections: formData.financialProjections?.name || '',
       legalDocuments: formData.legalDocuments?.name || '',
       assetValuation: formData.assetValuation?.name || '',
+      services: formData.services,
       riskFactors: formData.riskFactors,
       useOfFunds: formData.useOfFunds
     };
@@ -666,6 +716,7 @@ const CreateProposal: React.FC = () => {
         customCategory: formData.customCategory,
         location: formData.location,
         description: formData.description,
+        assetVotingType: formData.assetVotingType,
         targetAmount: formData.targetAmount,
         tokenPrice: formData.tokenPrice,
         minimumInvestment: calculatedValues.minimumInvestment.toString(),
@@ -675,6 +726,7 @@ const CreateProposal: React.FC = () => {
         financialProjections: formData.financialProjections?.name,
         legalDocuments: formData.legalDocuments?.name,
         assetValuation: formData.assetValuation?.name,
+        services: formData.services,
         riskFactors: formData.riskFactors,
         useOfFunds: formData.useOfFunds
       };
@@ -753,6 +805,38 @@ const CreateProposal: React.FC = () => {
     // The generated content will be applied via handleAISuggestionApply
   };
 
+  // Service management functions
+  const addService = () => {
+    const newService = {
+      id: Date.now().toString(),
+      serviceName: '',
+      personName: '',
+      cost: '',
+      paymentMethod: '',
+      description: ''
+    };
+    setFormData(prev => ({
+      ...prev,
+      services: [...prev.services, newService]
+    }));
+  };
+
+  const removeService = (serviceId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      services: prev.services.filter(service => service.id !== serviceId)
+    }));
+  };
+
+  const updateService = (serviceId: string, field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      services: prev.services.map(service =>
+        service.id === serviceId ? { ...service, [field]: value } : service
+      )
+    }));
+  };
+
   // Keep the old mock submission as fallback
   const handleMockSubmit = () => {
     if (validateStep(currentStep)) {
@@ -768,6 +852,7 @@ const CreateProposal: React.FC = () => {
         customCategory: formData.customCategory,
         location: formData.location,
         description: formData.description,
+        assetVotingType: formData.assetVotingType,
         targetAmount: formData.targetAmount,
         tokenPrice: formData.tokenPrice,
         minimumInvestment: calculatedValues.minimumInvestment.toString(), // Use calculated value
@@ -777,6 +862,7 @@ const CreateProposal: React.FC = () => {
         financialProjections: formData.financialProjections?.name,
         legalDocuments: formData.legalDocuments?.name,
         assetValuation: formData.assetValuation?.name,
+        services: formData.services,
         riskFactors: formData.riskFactors,
         useOfFunds: formData.useOfFunds
       };
@@ -959,6 +1045,20 @@ const CreateProposal: React.FC = () => {
         maxLength={2000}
         clearable
         onClear={() => handleInputChange('description', '')}
+      />
+
+      <TouchSelect
+        label="Asset Voting Type *"
+        value={formData.assetVotingType}
+        onChange={(value) => handleInputChange('assetVotingType', value as string)}
+        options={[
+          { value: 'open', label: 'Open Asset' },
+          { value: 'closed', label: 'Closed Asset' }
+        ]}
+        placeholder="Select voting type"
+        size="lg"
+        helper="Open: Shareholders can submit voting proposals. Closed: Only creator/owner can submit voting proposals."
+        required
       />
     </div>
   );
@@ -1185,6 +1285,138 @@ const CreateProposal: React.FC = () => {
     </div>
   );
 
+  const renderCostServices = () => (
+    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 sm:p-8 space-y-6">
+      <div className="mb-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 flex items-center">
+          <Users className="w-5 h-5 mr-2" />
+          Cost & Services
+        </h3>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Outline all services that will be provided by the asset creator, associated coworkers, or employees. 
+          Include service details, personnel information, costs, and payment methods.
+        </p>
+      </div>
+
+      {formData.services.map((service, index) => (
+        <div key={service.id} className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-6 relative">
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="text-md font-medium text-gray-900 dark:text-white">
+              Service {index + 1}
+            </h4>
+            {formData.services.length > 1 && (
+              <button
+                onClick={() => removeService(service.id)}
+                className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                title="Remove service"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <TouchInput
+              label="Service Name *"
+              type="text"
+              value={service.serviceName}
+              onChange={(e) => updateService(service.id, 'serviceName', e.target.value)}
+              placeholder="e.g., Property Management, Financial Consulting"
+              size="lg"
+              required
+            />
+
+            <TouchInput
+              label="Person/Team Name *"
+              type="text"
+              value={service.personName}
+              onChange={(e) => updateService(service.id, 'personName', e.target.value)}
+              placeholder="e.g., John Smith, Management Team"
+              size="lg"
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+            <TouchInput
+              label="Cost *"
+              type="text"
+              value={service.cost}
+              onChange={(e) => updateService(service.id, 'cost', formatCurrency(e.target.value))}
+              placeholder="e.g., $5,000, 2% of revenue"
+              size="lg"
+              leftIcon={<DollarSign />}
+              helper="Include currency and specify if it's a flat fee, percentage, etc."
+              required
+            />
+
+            <TouchSelect
+              label="Payment Method *"
+              value={service.paymentMethod}
+              onChange={(value) => updateService(service.id, 'paymentMethod', value as string)}
+              options={[
+                { value: 'monthly', label: 'Monthly' },
+                { value: 'quarterly', label: 'Quarterly' },
+                { value: 'annually', label: 'Annually' },
+                { value: 'one-time', label: 'One-time Payment' },
+                { value: 'per-transaction', label: 'Per Transaction' },
+                { value: 'percentage', label: 'Percentage of Revenue' },
+                { value: 'milestone', label: 'Milestone-based' }
+              ]}
+              placeholder="Select payment method"
+              size="lg"
+              required
+            />
+          </div>
+
+          <div className="mt-6">
+            <TouchTextarea
+              label="Service Description"
+              value={service.description}
+              onChange={(e) => updateService(service.id, 'description', e.target.value)}
+              placeholder="Detailed description of the service, responsibilities, and deliverables..."
+              size="lg"
+              autoResize
+              maxHeight={150}
+              showCharCount
+              maxLength={500}
+              helper="Optional: Provide additional details about this service"
+            />
+          </div>
+        </div>
+      ))}
+
+      <div className="flex items-center justify-center">
+        <button
+          onClick={addService}
+          className="inline-flex items-center space-x-2 px-4 py-2 border border-blue-300 dark:border-blue-600 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Add Another Service</span>
+        </button>
+      </div>
+
+      {formData.services.length === 0 && (
+        <div className="text-center py-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
+          <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+            No Services Added
+          </h4>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            Add at least one service to continue with your proposal.
+          </p>
+          <button
+            onClick={addService}
+            className="inline-flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 py-2 font-medium transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add First Service</span>
+          </button>
+        </div>
+      )}
+    </div>
+  );
+
   const renderReviewSubmit = () => (
     <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6 sm:p-8 space-y-8">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -1280,6 +1512,23 @@ const CreateProposal: React.FC = () => {
     </div>
   );
 
+  // Don't render the component if user is not authenticated
+  const isAuthenticated = address || selectedRole;
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            Authentication Required
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400">
+            Please connect your wallet to create proposals.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between mb-6">
@@ -1372,7 +1621,8 @@ const CreateProposal: React.FC = () => {
           {currentStep === 1 && renderAssetDetails()}
           {currentStep === 2 && renderFinancialTerms()}
           {currentStep === 3 && renderDocumentation()}
-          {currentStep === 4 && renderReviewSubmit()}
+          {currentStep === 4 && renderCostServices()}
+          {currentStep === 5 && renderReviewSubmit()}
         </div>
 
         <div className="flex items-center justify-between pt-8 border-t border-gray-200 dark:border-gray-600">

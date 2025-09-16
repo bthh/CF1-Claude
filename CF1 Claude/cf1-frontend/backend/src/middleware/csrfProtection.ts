@@ -245,7 +245,7 @@ export const customCSRFValidation = (req: CSRFRequest): boolean => {
 /**
  * Express error handler for CSRF failures
  */
-export const csrfErrorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
+export const csrfErrorHandler = (err: any, _req: Request, res: Response, next: NextFunction) => {
   if (err.code === 'EBADCSRFTOKEN') {
     return res.status(403).json({
       success: false,

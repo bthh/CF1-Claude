@@ -9,11 +9,11 @@ import { ProposalAnalysis, AnalysisStatus } from '../models/ProposalAnalysis';
 import axios, { AxiosResponse } from 'axios';
 import crypto from 'crypto';
 
-interface AIAnalysisRequest {
-  proposalId: string;
-  documentFile: Buffer;
-  webhookUrl: string;
-}
+// interface _AIAnalysisRequest {
+//   proposalId: string;
+//   documentFile: Buffer;
+//   webhookUrl: string;
+// }
 
 interface AIAnalysisResponse {
   proposalId: string;
@@ -641,7 +641,7 @@ Could you provide more specific details about what aspect you'd like help with? 
   /**
    * Get AI suggestions from service
    */
-  private async getAISuggestions(assetType: string, context?: any, requestType?: string): Promise<string[]> {
+  private async getAISuggestions(_assetType: string, _context?: any, _requestType?: string): Promise<string[]> {
     // This would call the AI service for suggestions
     // For now, return smart fallbacks
     throw new Error('AI suggestions service not implemented yet');
@@ -650,7 +650,7 @@ Could you provide more specific details about what aspect you'd like help with? 
   /**
    * Get fallback suggestions based on asset type and request type
    */
-  private getFallbackSuggestions(assetType: string, requestType?: string): string[] {
+  private getFallbackSuggestions(assetType: string, _requestType?: string): string[] {
     const suggestions: { [key: string]: string[] } = {
       'real_estate': [
         'Provide detailed property appraisals and market analysis',

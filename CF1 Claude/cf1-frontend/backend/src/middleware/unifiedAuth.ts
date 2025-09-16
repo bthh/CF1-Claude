@@ -87,7 +87,7 @@ export class UnifiedAuthMiddleware {
   /**
    * Optional authentication - doesn't fail if no auth provided
    */
-  optionalAuth = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+  optionalAuth = async (req: AuthenticatedRequest, _res: Response, next: NextFunction): Promise<void> => {
     try {
       const authHeader = req.headers.authorization;
       if (authHeader && authHeader.startsWith('Bearer ')) {
@@ -109,7 +109,7 @@ export class UnifiedAuthMiddleware {
           }
         } catch (error) {
           // Ignore token errors for optional auth
-          console.log('Optional auth token error:', error.message);
+          console.log('Optional auth token error:', (error as Error).message);
         }
       }
 
@@ -203,14 +203,14 @@ export class UnifiedAuthMiddleware {
     const requestCounts = new Map<string, { count: number; resetTime: number }>();
 
     return (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
-      const userId = req.user?.id || req.ip;
+      const userId = req.user?.id || req.ip || 'unknown';
       const now = Date.now();
       
-      const userRequests = requestCounts.get(userId);
+      const userRequests = requestCounts.get(userId || 'unknown');
       
       if (!userRequests || now > userRequests.resetTime) {
         // Reset or initialize counter
-        requestCounts.set(userId, {
+        requestCounts.set(userId || 'unknown', {
           count: 1,
           resetTime: now + windowMs
         });

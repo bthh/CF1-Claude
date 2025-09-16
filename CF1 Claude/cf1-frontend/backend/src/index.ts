@@ -98,7 +98,7 @@ app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use(generateCSRFToken);
 
 // Health check endpoint
-app.get('/health', (req, res) => {
+app.get('/health', (_req, res) => {
   res.json({
     status: 'healthy',
     service: 'cf1-backend',
@@ -160,7 +160,7 @@ app.post('/admin-login', async (req, res) => {
 app.use('/api/admin/auth', adminAuthRoutes);
 
 // Manual database setup endpoint for production troubleshooting  
-app.get('/setup-database', async (req, res) => {
+app.get('/setup-database', async (_req, res) => {
   try {
     console.log('🔧 Manual database setup requested');
     
@@ -243,7 +243,7 @@ app.use('/feature-toggles', featureToggleRoutes);
 app.use('/api', serverSideAuthorization);
 
 // Test endpoint to verify authorization is disabled
-app.get('/api/test-auth', (req, res) => {
+app.get('/api/test-auth', (_req, res) => {
   res.json({
     success: true,
     message: 'Authorization bypassed successfully',

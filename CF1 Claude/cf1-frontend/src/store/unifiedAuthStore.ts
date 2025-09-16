@@ -110,8 +110,58 @@ export const useUnifiedAuthStore = create<UnifiedAuthState>()(
           set({ loading: true, error: null });
           
           try {
-            // First try regular user login
-            let response = await fetch(`${API_BASE}/auth/login`, {
+            // Try admin login first since that's what works in local
+            console.log('Trying admin login first...');
+            const adminUrl = `${API_BASE}/admin/auth/login`;
+            
+            let response = await fetch(adminUrl, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              credentials: 'include',
+              body: JSON.stringify({
+                username: credentials.email,
+                password: credentials.password
+              }),
+            });
+
+            let data = await response.json();
+
+            // If admin login succeeds
+            if (response.ok) {
+              console.log('Admin login successful');
+              // Handle admin login success
+              set({
+                isAuthenticated: true,
+                user: {
+                  id: data.user.id,
+                  email: data.user.email,
+                  displayName: data.user.name,
+                  role: data.user.role || 'super_admin', // Use the actual role from backend
+                  permissions: data.user.permissions || [], // Include permissions from backend
+                  authMethod: 'email',
+                  emailVerified: true,
+                  accountStatus: 'active',
+                  kycStatus: 'verified',
+                  canPerformBlockchainOperations: true,
+                  createdAt: new Date().toISOString(),
+                  lastLoginAt: data.user.lastLoginAt
+                },
+                accessToken: data.token,
+                loading: false,
+                error: null,
+                showAuthModal: false, // Close the auth modal
+              });
+              
+              // Set API client auth token for admin requests
+              apiClient.setAuthToken(data.token);
+              return;
+            }
+
+            // If admin login fails, try regular user login
+            console.log('Admin login failed, trying regular user login...');
+            response = await fetch(`${API_BASE}/auth/login`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -120,75 +170,38 @@ export const useUnifiedAuthStore = create<UnifiedAuthState>()(
               body: JSON.stringify(credentials),
             });
 
-            let data = await response.json();
-
-            // If regular login fails, try admin login
-            if (!response.ok) {
-              console.log('Regular login failed, trying admin login...');
-              const adminUrl = `${API_BASE}/admin/auth/login`;
-              
-              const adminResponse = await fetch(adminUrl, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
+            data = await response.json();
+            
+            if (response.ok) {
+              // Handle regular user login success
+              set({
+                isAuthenticated: true,
+                user: {
+                  id: data.user.id,
+                  email: data.user.email,
+                  displayName: data.user.displayName || data.user.name,
+                  role: data.user.role || 'investor',
+                  permissions: data.user.permissions || [],
+                  authMethod: 'email',
+                  emailVerified: data.user.emailVerified || false,
+                  accountStatus: data.user.accountStatus || 'active',
+                  kycStatus: data.user.kycStatus || 'not_started',
+                  canPerformBlockchainOperations: data.user.canPerformBlockchainOperations || false,
+                  createdAt: data.user.createdAt || new Date().toISOString(),
+                  lastLoginAt: data.user.lastLoginAt
                 },
-                credentials: 'include',
-                body: JSON.stringify({
-                  username: credentials.email,
-                  password: credentials.password
-                }),
+                accessToken: data.token,
+                loading: false,
+                error: null,
+                showAuthModal: false,
               });
-
-              const adminData = await adminResponse.json();
-
-              if (adminResponse.ok) {
-                console.log('Admin login successful');
-                // Handle admin login success
-                set({
-                  isAuthenticated: true,
-                  user: {
-                    id: adminData.user.id,
-                    email: adminData.user.email,
-                    displayName: adminData.user.name,
-                    role: adminData.user.role || 'super_admin', // Use the actual role from backend
-                    permissions: adminData.user.permissions || [], // Include permissions from backend
-                    authMethod: 'email',
-                    emailVerified: true,
-                    accountStatus: 'active',
-                    kycStatus: 'verified',
-                    canPerformBlockchainOperations: true,
-                    createdAt: new Date().toISOString(),
-                    lastLoginAt: adminData.user.lastLoginAt
-                  },
-                  accessToken: adminData.token,
-                  loading: false,
-                  error: null,
-                  showAuthModal: false, // Close the auth modal
-                });
-                
-                // Set API client auth token for admin requests
-                apiClient.setAuthToken(adminData.token);
-                return;
-              } else {
-                // Both regular and admin login failed
-                throw new Error(data.message || adminData.message || 'Login failed');
-              }
+              
+              apiClient.setAuthToken(data.token);
+              return;
+            } else {
+              // Both admin and regular login failed
+              throw new Error(data.message || 'Login failed');
             }
-
-            // Regular login was successful
-            // Set API client auth token for authenticated requests
-            apiClient.setAuthToken(data.data.accessToken);
-
-            set({
-              isAuthenticated: true,
-              user: data.data.user,
-              accessToken: data.data.accessToken,
-              loading: false,
-              error: null,
-              showAuthModal: false,
-            });
-
-            console.log('Email login successful:', data.data.user);
           } catch (error) {
             console.error('Email login error:', error);
             set({

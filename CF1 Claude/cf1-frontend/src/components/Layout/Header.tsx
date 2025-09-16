@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ChevronDown, Zap, Plus, Vote, Eye, User, Settings, LogOut, Moon, Sun, Bell, Wallet, HelpCircle, PlayCircle, Menu, Shield, Crown, Users, Info, Mail, MessageSquare } from 'lucide-react';
+import CF1Button from '../UI/CF1Button';
 import { MobileNavigation } from './MobileNavigation';
 import { useCosmJS } from '../../hooks/useCosmJS';
 import { useOnboardingContext } from '../Onboarding/OnboardingProvider';
@@ -18,6 +19,7 @@ import { useNotifications } from '../../hooks/useNotifications';
 import { useDataMode } from '../../store/dataModeStore';
 import { PortfolioTestingPanel } from '../Debug/PortfolioTestingPanel';
 import { useAdminViewStore } from '../../store/adminViewStore';
+import { useUIStore } from '../../store/uiStore';
 import { UserPathController } from '../Onboarding/UserPathController';
 import { OnboardingWelcome } from '../Onboarding/OnboardingWelcome';
 import SupportTicketModal from '../Support/SupportTicketModal';
@@ -73,35 +75,9 @@ const Header: React.FC = () => {
   
   // Admin view management
   const { currentView, toggleView, setAdminView, exitAdminView } = useAdminViewStore();
-  
-  // Simple local state for theme and notifications
-  const [darkMode, setDarkMode] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('darkMode');
-      return stored !== null ? stored === 'true' : false; // Default to light mode
-    }
-    return false; // Default to light mode
-  });
-  
-  const toggleDarkMode = () => {
-    const newMode = !darkMode;
-    setDarkMode(newMode);
-    localStorage.setItem('darkMode', newMode.toString());
-    if (newMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  };
 
-  // Apply dark mode class whenever darkMode state changes
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [darkMode]);
+  // UI store for centralized dark mode management
+  const { darkMode, toggleDarkMode } = useUIStore();
   
   // Initialize user verification when wallet connects
   useEffect(() => {
@@ -246,14 +222,21 @@ const Header: React.FC = () => {
   // Check both old admin auth system and unified auth system
   const user = unifiedUser; // Rename for clarity
   const unifiedAuthIsAdmin = user && (user.role === 'super_admin' || user.role === 'platform_admin' || user.role === 'creator_admin' || user.role === 'owner');
-  const combinedIsAdmin = isAdmin || unifiedAuthIsAdmin;
-  const combinedAdminRole = adminRole || (user?.role === 'super_admin' ? 'super_admin' : user?.role === 'platform_admin' ? 'platform_admin' : user?.role === 'creator_admin' ? 'creator_admin' : user?.role === 'owner' ? 'owner' : null);
-  const isPlatformOrSuperAdmin = adminRole === 'platform_admin' || adminRole === 'super_admin' || user?.role === 'platform_admin' || user?.role === 'super_admin' || user?.role === 'owner';
+
+  // Local development: Show admin access ONLY for wallet connections on localhost
+  const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const walletAdminAccess = isLocalhost && isConnected && address; // Only wallet connections
+
+  const combinedIsAdmin = isAdmin || unifiedAuthIsAdmin || walletAdminAccess;
+  const combinedAdminRole = adminRole || (user?.role === 'super_admin' ? 'super_admin' : user?.role === 'platform_admin' ? 'platform_admin' : user?.role === 'creator_admin' ? 'creator_admin' : user?.role === 'owner' ? 'owner' : walletAdminAccess ? 'platform_admin' : null);
+  const isPlatformOrSuperAdmin = adminRole === 'platform_admin' || adminRole === 'super_admin' || user?.role === 'platform_admin' || user?.role === 'super_admin' || user?.role === 'owner' || walletAdminAccess;
   
   // Debug logging for production troubleshooting
   console.log('🔍 Header Debug Info:', {
     oldAdminAuth: { isAdmin, adminRole },
     unifiedAuth: { isAuthenticated: isUnifiedAuthenticated, userRole: user?.role },
+    wallet: { isConnected, address: address?.slice(0, 8) },
+    localDev: { isLocalhost, walletAdminAccess },
     combined: { combinedIsAdmin, combinedAdminRole, isPlatformOrSuperAdmin },
     currentMode: currentMode,
     location: location.pathname
@@ -347,7 +330,7 @@ const Header: React.FC = () => {
 
   return (
     <>
-      <header className="bg-blue-500 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 h-16 flex items-center justify-between px-4 sm:px-6">
+      <header className="cf1-gradient-header border-b border-gray-200 dark:border-gray-700 h-16 flex items-center justify-between px-4 sm:px-6 relative z-10">
         <div className="flex items-center space-x-4">
           
           {/* Mobile Menu Button */}
@@ -466,7 +449,7 @@ const Header: React.FC = () => {
           </button>
           
           {isQuickActionsOpen && (
-            <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
+            <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50 cf1-animate-scale-in">
               {/* Welcome Header */}
               <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-600">
                 <h3 className="font-semibold text-gray-900 dark:text-white text-sm mb-1">
@@ -484,7 +467,8 @@ const Header: React.FC = () => {
                       key={index}
                       to={action.to}
                       onClick={() => setIsQuickActionsOpen(false)}
-                      className="flex items-start space-x-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors w-full text-left"
+                      className="flex items-start space-x-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 w-full text-left cf1-animate-fade-in-up"
+                      style={{ animationDelay: `${index * 50}ms` }}
                     >
                       <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mt-0.5">
                         <div className="text-blue-600">
@@ -505,7 +489,8 @@ const Header: React.FC = () => {
                         action.action?.();
                         setIsQuickActionsOpen(false);
                       }}
-                      className="flex items-start space-x-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors w-full text-left"
+                      className="flex items-start space-x-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 w-full text-left cf1-animate-fade-in-up"
+                      style={{ animationDelay: `${index * 50}ms` }}
                     >
                       <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mt-0.5">
                         <div className="text-blue-600">
@@ -531,14 +516,17 @@ const Header: React.FC = () => {
 
         {/* Sign In / User Profile */}
         {!isUnifiedAuthenticated && !isConnected ? (
-          <button 
+          <CF1Button
             data-tour="sign-in"
             onClick={handleSignIn}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition-colors flex items-center space-x-2"
+            variant="primary"
+            size="sm"
+            icon={User}
+            iconPosition="left"
+            className="text-sm font-semibold"
           >
-            <User className="w-4 h-4" />
-            <span>Sign In</span>
-          </button>
+            Sign In
+          </CF1Button>
         ) : (
           <div className="relative" ref={profileRef} data-tour="profile-menu">
             <button
@@ -571,7 +559,7 @@ const Header: React.FC = () => {
             </button>
           
           {isProfileOpen && (
-            <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
+            <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50 cf1-animate-scale-in">
               {profileActions.map((action, index) => (
                 <div key={index}>
                   {action.to ? (
@@ -651,8 +639,6 @@ const Header: React.FC = () => {
       <MobileNavigation
         isOpen={isMobileNavOpen}
         onClose={() => setIsMobileNavOpen(false)}
-        darkMode={darkMode}
-        onToggleDarkMode={toggleDarkMode}
       />
 
       {/* Role Selector Modal */}

@@ -43,7 +43,7 @@ router.post('/asset-updates', async (req, res) => {
   }
 });
 
-router.get('/asset-updates', async (req, res) => {
+router.get('/asset-updates', async (_req, res) => {
   try {
     res.json({
       success: true,
@@ -93,7 +93,7 @@ router.post('/communications', async (req, res) => {
   }
 });
 
-router.get('/communications', async (req, res) => {
+router.get('/communications', async (_req, res) => {
   try {
     res.json({
       success: true,
@@ -139,7 +139,7 @@ router.post('/assistants', async (req, res) => {
   }
 });
 
-router.get('/assistants', async (req, res) => {
+router.get('/assistants', async (_req, res) => {
   try {
     res.json({
       success: true,
@@ -219,7 +219,7 @@ router.delete('/assistants/:id', async (req, res) => {
 });
 
 // Shareholders endpoint (for fetching shareholder data)
-router.get('/shareholders', async (req, res) => {
+router.get('/shareholders', async (_req, res) => {
   try {
     // Mock shareholder data
     const mockShareholders = [

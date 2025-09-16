@@ -119,7 +119,7 @@ const initializeDefaultFeatures = async () => {
 };
 
 // GET /api/feature-toggles - Get all feature toggles (public endpoint)
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', async (_req: Request, res: Response) => {
   try {
     await initializeDefaultFeatures();
     
@@ -203,7 +203,7 @@ router.put('/:id',
 router.post('/reset',
   requireAdmin,
   requirePermission('admin'),
-  async (req: AdminAuthenticatedRequest, res: Response) => {
+  async (_req: AdminAuthenticatedRequest, res: Response) => {
     try {
       const repository = AppDataSource.getRepository(FeatureToggle);
       

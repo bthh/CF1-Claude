@@ -7,7 +7,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { AppDataSource } from '../config/database';
-import { User, AuthMethod, AccountStatus } from '../models/User';
+import { User, AuthMethod, AccountStatus, KycStatus, UserRole } from '../models/User';
 import { Repository } from 'typeorm';
 
 export interface LoginResponse {
@@ -184,7 +184,7 @@ export class AuthService {
   /**
    * Wallet authentication (for existing wallet users)
    */
-  async authenticateWallet(walletAddress: string, signature?: string): Promise<LoginResponse> {
+  async authenticateWallet(walletAddress: string, _signature?: string): Promise<LoginResponse> {
     if (!walletAddress) {
       throw new Error('Wallet address is required');
     }
@@ -275,8 +275,8 @@ export class AuthService {
 
     // Update user
     user.passwordHash = passwordHash;
-    user.passwordResetToken = null;
-    user.passwordResetExpiry = null;
+    user.passwordResetToken = undefined;
+    user.passwordResetExpiry = undefined;
     user.resetFailedLogins(); // Clear any failed attempts
 
     await this.userRepository.save(user);
@@ -295,8 +295,8 @@ export class AuthService {
     }
 
     user.emailVerified = true;
-    user.emailVerificationToken = null;
-    user.emailVerificationExpiry = null;
+    user.emailVerificationToken = undefined;
+    user.emailVerificationExpiry = undefined;
     
     // Activate account if it was pending verification
     if (user.accountStatus === 'pending_verification') {
@@ -469,7 +469,7 @@ export class AuthService {
     }
 
     // Update role
-    user.role = role;
+    user.role = role as UserRole;
     
     // Update permissions based on role
     user.permissions = this.getRolePermissions(role);

@@ -13,7 +13,7 @@ export type AccountStatus = 'active' | 'suspended' | 'pending_verification' | 'l
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   // Authentication Methods
   @Column({ type: 'text', nullable: true })
@@ -28,7 +28,7 @@ export class User {
   walletAddress?: string;
 
   @Column({ type: 'text', default: 'email' })
-  primaryAuthMethod: AuthMethod;
+  primaryAuthMethod!: AuthMethod;
 
   // Profile Information
   @Column({ type: 'text', nullable: true })
@@ -48,7 +48,7 @@ export class User {
 
   // Verification and Status
   @Column({ type: 'boolean', default: false })
-  emailVerified: boolean;
+  emailVerified!: boolean;
 
   @Column({ type: 'text', nullable: true })
   emailVerificationToken?: string;
@@ -57,14 +57,14 @@ export class User {
   emailVerificationExpiry?: Date;
 
   @Column({ type: 'text', default: 'not_started' })
-  kycStatus: KycStatus;
+  kycStatus!: KycStatus;
 
   @Column({ type: 'text', default: 'pending_verification' })
-  accountStatus: AccountStatus;
+  accountStatus!: AccountStatus;
 
   // Role and Permissions
   @Column({ type: 'text', default: 'investor' })
-  role: UserRole;
+  role!: UserRole;
 
   @Column({ type: 'json', nullable: true })
   permissions?: string[];
@@ -78,7 +78,7 @@ export class User {
 
   // Security
   @Column({ type: 'integer', default: 0 })
-  failedLoginAttempts: number;
+  failedLoginAttempts!: number;
 
   @Column({ type: 'datetime', nullable: true })
   accountLockedUntil?: Date;
@@ -97,7 +97,7 @@ export class User {
   referredBy?: string;
 
   @Column({ type: 'boolean', default: false })
-  acceptedTerms: boolean;
+  acceptedTerms!: boolean;
 
   @Column({ type: 'datetime', nullable: true })
   termsAcceptedAt?: Date;
@@ -107,14 +107,14 @@ export class User {
   connectedWallets?: string; // JSON array of connected wallet addresses
 
   @Column({ type: 'boolean', default: false })
-  walletVerified: boolean;
+  walletVerified!: boolean;
 
   // Timestamps
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 
   // Computed Properties
   get fullName(): string {
@@ -173,7 +173,7 @@ export class User {
 
   resetFailedLogins(): void {
     this.failedLoginAttempts = 0;
-    this.accountLockedUntil = null;
+    this.accountLockedUntil = undefined;
   }
 
   updateLastLogin(ip?: string): void {

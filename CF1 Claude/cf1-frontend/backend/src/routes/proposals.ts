@@ -119,7 +119,7 @@ function validateProposalFinancials(proposal: {
  * GET /api/v1/proposals
  * List all proposals
  */
-router.get('/', (req: Request, res: Response) => {
+router.get('/', (_req: Request, res: Response) => {
   try {
     const proposalList = Array.from(proposals.values());
     
@@ -474,7 +474,7 @@ router.get('/:id/investments', (req: Request, res: Response) => {
  * GET /api/v1/platform-config
  * Get platform configuration
  */
-router.get('/config', (req: Request, res: Response) => {
+router.get('/config', (_req: Request, res: Response) => {
   res.json({
     success: true,
     data: PLATFORM_CONFIG
