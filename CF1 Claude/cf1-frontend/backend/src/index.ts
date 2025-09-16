@@ -40,7 +40,7 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      connectSrc: ["'self'", "https://rwa2.netlify.app", "wss://rwa2.netlify.app"],
+      connectSrc: ["'self'", "https://rwa2.netlify.app", "wss://rwa2.netlify.app", "https://68c95aa850920f69596abcd1--rwa2.netlify.app"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       scriptSrc: ["'self'"],
       imgSrc: ["'self'", "data:", "https:"],
@@ -56,17 +56,26 @@ const allowedOrigins = [
   'https://app.cf1platform.com',
   'https://cf1platform.com',
   'http://localhost:5173',
-  'http://localhost:3000'
+  'http://localhost:3000',
+  // Staging environment - Netlify branch deploy
+  'https://68c95aa850920f69596abcd1--rwa2.netlify.app'
 ];
 
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (mobile apps, Postman, etc.)
     if (!origin) return callback(null, true);
-    
+
+    // Check allowed origins
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
-    } else {
+    }
+    // Allow Netlify deploy preview URLs (branch deployments)
+    else if (origin && origin.match(/^https:\/\/[a-z0-9]+-[a-z0-9]+-rwa2\.netlify\.app$/)) {
+      console.log(`CORS allowing Netlify deploy preview: ${origin}`);
+      callback(null, true);
+    }
+    else {
       console.warn(`CORS blocked origin: ${origin}`);
       callback(new Error('Not allowed by CORS'));
     }
