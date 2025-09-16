@@ -16,13 +16,16 @@ from typing import Dict, List, Optional, Union
 import aiofiles
 import aiofiles.os
 import aiohttp
+import redis.asyncio as redis
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 import pymupdf  # PyMuPDF for PDF extraction
 import pdfplumber  # Fallback PDF processor
 from anthropic import Anthropic
+from asyncio_throttle import Throttler
 
 # Configure logging
 logging.basicConfig(
@@ -35,8 +38,12 @@ logger = logging.getLogger(__name__)
 CLAUDE_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 CF1_BACKEND_URL = os.getenv("CF1_BACKEND_URL", "http://localhost:3001")
 WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET", "cf1-ai-webhook-secret-key")
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
 SUPPORTED_FORMATS = {".pdf", ".txt", ".docx"}
+CACHE_TTL = 3600 * 24  # 24 hours cache TTL
+MAX_CONTENT_LENGTH = 8000  # Token chunking limit
+CONCURRENT_CLAUDE_CALLS = 3  # Rate limiting for Claude API
 
 if not CLAUDE_API_KEY:
     logger.error("ANTHROPIC_API_KEY environment variable not set")
@@ -45,6 +52,29 @@ if not CLAUDE_API_KEY:
 # Initialize Anthropic client
 claude_client = Anthropic(api_key=CLAUDE_API_KEY)
 
+# Initialize Redis client
+redis_client = None
+claude_throttler = Throttler(rate_limit=CONCURRENT_CLAUDE_CALLS, period=1.0)
+
+async def init_redis():
+    """Initialize Redis connection"""
+    global redis_client
+    try:
+        redis_client = redis.from_url(REDIS_URL, decode_responses=True)
+        # Test connection
+        await redis_client.ping()
+        logger.info("Redis connection established successfully")
+    except Exception as e:
+        logger.warning(f"Redis connection failed: {e}. Caching will be disabled.")
+        redis_client = None
+
+async def close_redis():
+    """Close Redis connection"""
+    global redis_client
+    if redis_client:
+        await redis_client.close()
+        logger.info("Redis connection closed")
+
 # FastAPI app
 app = FastAPI(
     title="CF1 AI Analyzer",
@@ -52,7 +82,8 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS configuration
+# Middleware configuration
+app.add_middleware(GZipMiddleware, minimum_size=1000)  # Response compression
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Configure appropriately for production
@@ -93,6 +124,154 @@ class HealthResponse(BaseModel):
     version: str
     timestamp: str
     claude_api_status: str
+    redis_status: str
+
+# Cache utility functions
+async def get_cache_key(content: str) -> str:
+    """Generate SHA256 cache key for content"""
+    return f"analysis:{hashlib.sha256(content.encode()).hexdigest()}"
+
+async def get_cached_analysis(content: str) -> Optional[Dict]:
+    """Retrieve cached analysis result"""
+    if not redis_client:
+        return None
+
+    try:
+        cache_key = await get_cache_key(content)
+        cached_data = await redis_client.get(cache_key)
+        if cached_data:
+            logger.info(f"Cache hit for key: {cache_key[:16]}...")
+            return json.loads(cached_data)
+    except Exception as e:
+        logger.warning(f"Cache retrieval failed: {e}")
+    return None
+
+async def cache_analysis(content: str, analysis_result: Dict) -> bool:
+    """Cache analysis result with TTL"""
+    if not redis_client:
+        return False
+
+    try:
+        cache_key = await get_cache_key(content)
+        await redis_client.setex(
+            cache_key,
+            CACHE_TTL,
+            json.dumps(analysis_result)
+        )
+        logger.info(f"Analysis cached with key: {cache_key[:16]}...")
+        return True
+    except Exception as e:
+        logger.warning(f"Cache storage failed: {e}")
+        return False
+
+async def chunk_content(content: str, max_length: int = MAX_CONTENT_LENGTH) -> List[str]:
+    """Intelligently chunk content for processing"""
+    if len(content) <= max_length:
+        return [content]
+
+    chunks = []
+    current_chunk = ""
+
+    # Split by paragraphs first, then sentences if needed
+    paragraphs = content.split('\n\n')
+
+    for paragraph in paragraphs:
+        if len(current_chunk) + len(paragraph) <= max_length:
+            current_chunk += paragraph + '\n\n'
+        else:
+            if current_chunk:
+                chunks.append(current_chunk.strip())
+                current_chunk = paragraph + '\n\n'
+            else:
+                # Paragraph is too long, split by sentences
+                sentences = paragraph.split('. ')
+                for sentence in sentences:
+                    if len(current_chunk) + len(sentence) <= max_length:
+                        current_chunk += sentence + '. '
+                    else:
+                        if current_chunk:
+                            chunks.append(current_chunk.strip())
+                        current_chunk = sentence + '. '
+
+    if current_chunk:
+        chunks.append(current_chunk.strip())
+
+    logger.info(f"Content chunked into {len(chunks)} pieces")
+    return chunks
+
+async def process_chunks_concurrently(chunks: List[str], proposal_id: str) -> List[Dict]:
+    """Process multiple content chunks concurrently with rate limiting"""
+    async def process_single_chunk(chunk: str, chunk_index: int) -> Dict:
+        async with claude_throttler:
+            logger.info(f"Processing chunk {chunk_index + 1}/{len(chunks)} for proposal {proposal_id}")
+            return await analyze_with_claude_raw(chunk, f"{proposal_id}_chunk_{chunk_index}")
+
+    # Create tasks for concurrent processing
+    tasks = [
+        process_single_chunk(chunk, i)
+        for i, chunk in enumerate(chunks)
+    ]
+
+    # Execute with controlled concurrency
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+
+    # Filter out exceptions and return valid results
+    valid_results = []
+    for i, result in enumerate(results):
+        if isinstance(result, Exception):
+            logger.error(f"Chunk {i} processing failed: {result}")
+        else:
+            valid_results.append(result)
+
+    return valid_results
+
+async def merge_chunk_analyses(chunk_results: List[Dict], proposal_id: str) -> Dict:
+    """Merge multiple chunk analysis results into a single comprehensive result"""
+    if not chunk_results:
+        raise ValueError("No valid chunk results to merge")
+
+    if len(chunk_results) == 1:
+        return chunk_results[0]
+
+    # Combine all strengths and considerations
+    all_strengths = []
+    all_considerations = []
+    all_summaries = []
+
+    for result in chunk_results:
+        if result.get('potential_strengths'):
+            all_strengths.extend(result['potential_strengths'])
+        if result.get('areas_for_consideration'):
+            all_considerations.extend(result['areas_for_consideration'])
+        if result.get('summary'):
+            all_summaries.append(result['summary'])
+
+    # Remove duplicates while preserving order
+    unique_strengths = list(dict.fromkeys(all_strengths))
+    unique_considerations = list(dict.fromkeys(all_considerations))
+
+    # Create merged summary
+    merged_summary = f"Multi-section analysis completed. Key findings: {'; '.join(all_summaries[:3])}..."
+
+    # Calculate average complexity score
+    complexity_scores = [r.get('complexity_score', 5) for r in chunk_results]
+    avg_complexity = round(sum(complexity_scores) / len(complexity_scores))
+
+    # Calculate total processing time
+    total_time = sum(r.get('processing_time_seconds', 0) for r in chunk_results)
+
+    return {
+        'proposal_id': proposal_id,
+        'status': 'completed',
+        'summary': merged_summary,
+        'potential_strengths': unique_strengths[:5],  # Limit to top 5
+        'areas_for_consideration': unique_considerations[:5],  # Limit to top 5
+        'complexity_score': avg_complexity,
+        'processing_time_seconds': round(total_time, 2),
+        'chunks_processed': len(chunk_results),
+        'document_hash': hashlib.sha256(json.dumps(chunk_results).encode()).hexdigest()[:16],
+        'timestamp': datetime.now(timezone.utc).isoformat()
+    }
 
 # Claude 3 Opus Analysis Prompts
 ANALYSIS_PROMPT_TEMPLATE = """
@@ -210,14 +389,14 @@ async def extract_text_content(file_path: str, file_extension: str) -> str:
         logger.error(f"Error extracting text content: {e}")
         raise HTTPException(status_code=500, detail="Failed to extract document content")
 
-async def analyze_with_claude(content: str, proposal_id: str) -> Dict:
-    """Analyze document content using Claude 3 Opus"""
+async def analyze_with_claude_raw(content: str, proposal_id: str) -> Dict:
+    """Raw Claude analysis without caching (used for chunks)"""
     try:
         start_time = time.time()
-        
+
         # Prepare the prompt
         prompt = ANALYSIS_PROMPT_TEMPLATE.format(document_content=content[:15000])  # Limit content length
-        
+
         # Call Claude 3 Opus API
         response = claude_client.messages.create(
             model="claude-3-opus-20240229",
@@ -230,25 +409,25 @@ async def analyze_with_claude(content: str, proposal_id: str) -> Dict:
                 }
             ]
         )
-        
+
         processing_time = time.time() - start_time
-        
+
         # Parse the response
         analysis_text = response.content[0].text
-        
+
         # Try to extract JSON from the response
         try:
             # Find JSON in the response
             start_idx = analysis_text.find('{')
             end_idx = analysis_text.rfind('}') + 1
-            
+
             if start_idx != -1 and end_idx != 0:
                 json_str = analysis_text[start_idx:end_idx]
                 analysis_data = json.loads(json_str)
             else:
                 # Fallback to structured parsing if JSON not found
                 raise json.JSONDecodeError("JSON not found", analysis_text, 0)
-                
+
         except json.JSONDecodeError:
             logger.warning("Failed to parse JSON from Claude response, using fallback structure")
             analysis_data = {
@@ -258,29 +437,85 @@ async def analyze_with_claude(content: str, proposal_id: str) -> Dict:
                 "complexity_score": 5,
                 "key_metrics": {}
             }
-        
+
         # Create document hash for deduplication
         document_hash = hashlib.sha256(content.encode()).hexdigest()[:16]
-        
+
         # Build result
-        result = AnalysisResult(
-            proposal_id=proposal_id,
-            status="completed",
-            summary=analysis_data.get("summary", "Analysis completed"),
-            potential_strengths=analysis_data.get("potential_strengths", []),
-            areas_for_consideration=analysis_data.get("areas_for_consideration", []),
-            complexity_score=analysis_data.get("complexity_score", 5),
-            processing_time_seconds=round(processing_time, 2),
-            document_hash=document_hash,
-            timestamp=datetime.now(timezone.utc).isoformat()
-        )
-        
+        result = {
+            "proposal_id": proposal_id,
+            "status": "completed",
+            "summary": analysis_data.get("summary", "Analysis completed"),
+            "potential_strengths": analysis_data.get("potential_strengths", []),
+            "areas_for_consideration": analysis_data.get("areas_for_consideration", []),
+            "complexity_score": analysis_data.get("complexity_score", 5),
+            "processing_time_seconds": round(processing_time, 2),
+            "document_hash": document_hash,
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+
         logger.info(f"Claude analysis completed for proposal {proposal_id} in {processing_time:.2f}s")
-        return result.dict()
-        
+        return result
+
     except Exception as e:
         logger.error(f"Claude analysis failed for proposal {proposal_id}: {e}")
-        
+
+        # Return error result
+        return {
+            "proposal_id": proposal_id,
+            "status": "failed",
+            "summary": f"Analysis failed: {str(e)}",
+            "potential_strengths": [],
+            "areas_for_consideration": ["Analysis could not be completed"],
+            "complexity_score": 1,
+            "processing_time_seconds": 0,
+            "document_hash": "",
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+
+async def analyze_with_claude(content: str, proposal_id: str) -> Dict:
+    """Analyze document content using Claude 3 Opus with caching and chunking"""
+    try:
+        start_time = time.time()
+
+        # Check cache first
+        cached_result = await get_cached_analysis(content)
+        if cached_result:
+            # Update metadata for cached result
+            cached_result['proposal_id'] = proposal_id
+            cached_result['processing_time_seconds'] = 0.1  # Cache hit time
+            cached_result['timestamp'] = datetime.now(timezone.utc).isoformat()
+            logger.info(f"Cache hit for proposal {proposal_id}")
+            return cached_result
+
+        # Check if content needs chunking
+        if len(content) > MAX_CONTENT_LENGTH:
+            logger.info(f"Content too large ({len(content)} chars), using chunking strategy")
+
+            # Chunk the content
+            chunks = await chunk_content(content)
+
+            # Process chunks concurrently
+            chunk_results = await process_chunks_concurrently(chunks, proposal_id)
+
+            # Merge results
+            result = await merge_chunk_analyses(chunk_results, proposal_id)
+        else:
+            # Process single content piece
+            result = await analyze_with_claude_raw(content, proposal_id)
+
+        # Cache the result
+        await cache_analysis(content, result)
+
+        processing_time = time.time() - start_time
+        result['processing_time_seconds'] = round(processing_time, 2)
+
+        logger.info(f"Claude analysis completed for proposal {proposal_id} in {processing_time:.2f}s")
+        return result
+
+    except Exception as e:
+        logger.error(f"Claude analysis failed for proposal {proposal_id}: {e}")
+
         # Return error result
         return {
             "proposal_id": proposal_id,
@@ -447,11 +682,20 @@ async def health_check():
     except:
         claude_status = "unhealthy"
     
+    # Test Redis connectivity
+    redis_status = "healthy" if redis_client else "disabled"
+    if redis_client:
+        try:
+            await redis_client.ping()
+        except:
+            redis_status = "unhealthy"
+
     return HealthResponse(
         status="healthy",
         version="1.0.0",
         timestamp=datetime.now(timezone.utc).isoformat(),
-        claude_api_status=claude_status
+        claude_api_status=claude_status,
+        redis_status=redis_status
     )
 
 @app.post("/api/v1/analyze-proposal-async")
@@ -570,6 +814,18 @@ async def chat_with_ai(request: ChatRequest):
 @app.get("/api/v1/stats")
 async def get_service_stats():
     """Get service statistics"""
+    # Get cache stats if Redis is available
+    cache_stats = {"cache_enabled": bool(redis_client)}
+    if redis_client:
+        try:
+            info = await redis_client.info()
+            cache_stats.update({
+                "cache_keys": info.get('db0', {}).get('keys', 0),
+                "cache_memory": info.get('used_memory_human', 'N/A')
+            })
+        except:
+            cache_stats["cache_status"] = "error"
+
     return JSONResponse(
         content={
             "service": "CF1 AI Analyzer",
@@ -577,17 +833,41 @@ async def get_service_stats():
             "uptime": "N/A",
             "total_analyses": "N/A",
             "claude_model": "claude-3-opus-20240229",
-            "supported_formats": list(SUPPORTED_FORMATS)
+            "supported_formats": list(SUPPORTED_FORMATS),
+            "optimization_features": {
+                "redis_caching": bool(redis_client),
+                "content_chunking": True,
+                "concurrent_processing": True,
+                "streaming_pdf": True,
+                "response_compression": True,
+                "max_workers": "4 (configured)"
+            },
+            "cache_stats": cache_stats
         }
     )
 
+# Application lifecycle events
+@app.on_event("startup")
+async def startup_event():
+    """Initialize connections on startup"""
+    logger.info("Starting CF1 AI Analyzer with performance optimizations...")
+    await init_redis()
+    logger.info("Startup complete - Redis caching, chunking, and concurrent processing enabled")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Cleanup connections on shutdown"""
+    logger.info("Shutting down CF1 AI Analyzer...")
+    await close_redis()
+    logger.info("Shutdown complete")
+
 if __name__ == "__main__":
     import uvicorn
-    
+
     # Set up logging
     uvicorn_log_config = uvicorn.config.LOGGING_CONFIG
     uvicorn_log_config["formatters"]["default"]["fmt"] = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    
+
     uvicorn.run(
         "main:app",
         host="0.0.0.0",

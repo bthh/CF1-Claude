@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod integration_tests {
     use super::*;
+    use crate::{execute, instantiate, query, reply};
     use cosmwasm_std::{coins, Addr, Uint128};
     use cw_multi_test::{App, AppBuilder, Contract, ContractWrapper, Executor};
 

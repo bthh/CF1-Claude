@@ -6,8 +6,8 @@ import type { Keplr } from "@keplr-wallet/types";
 const NEUTRON_TESTNET_CONFIG = {
   chainId: import.meta.env.VITE_CHAIN_ID || "pion-1",
   chainName: import.meta.env.VITE_CHAIN_NAME || "Neutron Testnet",
-  rpc: import.meta.env.VITE_RPC_URL || "https://rpc-palvus.pion-1.ntrn.tech",
-  rest: import.meta.env.VITE_REST_URL || "https://rest-palvus.pion-1.ntrn.tech",
+  rpc: import.meta.env.VITE_RPC_URL || "https://rpc-falcron.pion-1.ntrn.tech",
+  rest: import.meta.env.VITE_REST_URL || "https://rest-falcron.pion-1.ntrn.tech",
   bip44: {
     coinType: 118,
   },

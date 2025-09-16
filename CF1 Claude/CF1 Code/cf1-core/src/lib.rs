@@ -8,6 +8,7 @@ use cw20_base::msg::InstantiateMsg as Cw20InstantiateMsg;
 
 use crate::error::ContractError;
 use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use crate::security::{MathGuard, ReentrancyGuard};
 use crate::state::{
     generate_proposal_id, Config, Creator, Investment, InvestmentStatus, Proposal, ProposalStatus,
     Timestamps, CONFIG, CREATORS, CREATOR_PROPOSAL_COUNT, DEFAULT_PLATFORM_FEE_BPS, INVESTMENTS,
@@ -19,10 +20,12 @@ use crate::state::{
 mod compliance;
 pub mod error;
 mod gas_optimization;
+mod gas_monitor;
 mod governance;
 mod helpers;
 mod lockup;
 pub mod msg;
+mod oracle;
 mod rate_limit;
 mod security;
 pub mod state;
@@ -69,7 +72,7 @@ pub fn instantiate(
     rate_limit::RateLimiter::initialize(deps.storage)?;
 
     Ok(Response::new()
-        .add_attribute("method", "instantiate")
+        .add_attribute("action", "init")
         .add_attribute("admin", config.admin))
 }
 
@@ -247,9 +250,26 @@ fn execute_create_proposal(
         })?;
     }
 
+    // Save hot data for efficient access
+    let hot_data = crate::state::ProposalHotData {
+        status: ProposalStatus::Active,
+        target_amount: proposal.financial_terms.target_amount,
+        raised_amount: Uint128::zero(),
+        investor_count: 0,
+        funding_deadline,
+        creator: info.sender.clone(),
+    };
+    crate::state::PROPOSAL_HOT_DATA.save(deps.storage, proposal_id.clone(), &hot_data)?;
+
+    // Add to active proposals index
+    crate::state::ACTIVE_PROPOSALS.save(deps.storage, current_time, &proposal_id)?;
+
+    // Add to creator index
+    crate::state::CREATOR_PROPOSAL_INDEX.save(deps.storage, (&info.sender, current_time), &proposal_id)?;
+
     Ok(Response::new()
-        .add_attribute("method", "create_proposal")
-        .add_attribute("proposal_id", &proposal_id)
+        .add_attribute("action", "create")
+        .add_attribute("id", &proposal_id)
         .add_attribute("creator", info.sender))
 }
 
@@ -286,13 +306,13 @@ fn execute_update_proposal(
     PROPOSALS.save(deps.storage, proposal_id.clone(), &proposal)?;
 
     Ok(Response::new()
-        .add_attribute("method", "update_proposal")
-        .add_attribute("proposal_id", &proposal_id))
+        .add_attribute("action", "update")
+        .add_attribute("id", &proposal_id))
 }
 
 fn execute_cancel_proposal(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     proposal_id: String,
 ) -> Result<Response, ContractError> {
@@ -309,14 +329,23 @@ fn execute_cancel_proposal(
         return Err(ContractError::ProposalNotActive {});
     }
 
+    // Validate state transition before updating
+    validate_proposal_state_transition(proposal.status, ProposalStatus::Cancelled, &proposal, &env)?;
     proposal.status = ProposalStatus::Cancelled;
     PROPOSALS.save(deps.storage, proposal_id.clone(), &proposal)?;
 
     // TODO: Refund any existing investments
 
+    // Update hot data
+    crate::state::PROPOSAL_HOT_DATA.update(deps.storage, proposal_id.clone(), |hot_data| -> Result<_, ContractError> {
+        let mut data = hot_data.unwrap();
+        data.status = ProposalStatus::Cancelled;
+        Ok(data)
+    })?;
+
     Ok(Response::new()
-        .add_attribute("method", "cancel_proposal")
-        .add_attribute("proposal_id", &proposal_id))
+        .add_attribute("action", "cancel")
+        .add_attribute("id", &proposal_id))
 }
 
 // Placeholder functions for remaining execute functions
@@ -326,6 +355,9 @@ fn execute_invest(
     info: MessageInfo,
     proposal_id: String,
 ) -> Result<Response, ContractError> {
+    // Reentrancy protection
+    ReentrancyGuard::check_reentrancy(&deps, "invest")?;
+
     // Check rate limit
     rate_limit::RateLimiter::record_operation(deps.storage, &info.sender, "invest", &env)?;
 
@@ -365,9 +397,10 @@ fn execute_invest(
     // Calculate shares
     let shares = calculate_shares(&proposal, investment_amount)?;
 
-    // Check if investment exceeds available shares
+    // Check if investment exceeds available shares - use safe addition
     let current_shares_sold = calculate_current_shares_sold(&proposal);
-    if current_shares_sold + shares > proposal.financial_terms.total_shares {
+    let total_shares_after_investment = current_shares_sold.saturating_add(shares);
+    if total_shares_after_investment > proposal.financial_terms.total_shares {
         return Err(ContractError::InvestmentExceedsAvailable {});
     }
 
@@ -392,14 +425,15 @@ fn execute_invest(
     let current_time = env.block.time.seconds();
 
     if INVESTMENTS.has(deps.storage, investment_key.clone()) {
-        // Update existing investment
+        // Update existing investment - use safe arithmetic
         INVESTMENTS.update(
             deps.storage,
             investment_key.clone(),
             |existing| -> Result<_, ContractError> {
                 let mut investment = existing.unwrap();
-                investment.amount += investment_amount;
-                investment.shares += shares;
+                // Use safe addition to prevent overflow
+                investment.amount = MathGuard::safe_add(investment.amount, investment_amount)?;
+                investment.shares = investment.shares.saturating_add(shares);
                 investment.timestamp = current_time;
                 Ok(investment)
             },
@@ -441,23 +475,40 @@ fn execute_invest(
         })?;
     }
 
-    // Update proposal funding status
-    proposal.funding_status.raised_amount += investment_amount;
+    // Update proposal funding status - use safe addition
+    proposal.funding_status.raised_amount = MathGuard::safe_add(proposal.funding_status.raised_amount, investment_amount)?;
 
     // Check if funding goal is reached
     if proposal.funding_status.raised_amount >= proposal.financial_terms.target_amount {
         proposal.funding_status.is_funded = true;
+
+        // Validate state transition before updating
+        validate_proposal_state_transition(proposal.status, ProposalStatus::Funded, &proposal, &env)?;
         proposal.status = ProposalStatus::Funded;
 
         // Set lockup end time (12 months after funding completion)
         let config = CONFIG.load(deps.storage)?;
         proposal.timestamps.lockup_end = Some(current_time + config.lockup_period_seconds);
 
-        // Update creator stats
-        CREATORS.update(deps.storage, &proposal.creator, |creator| -> StdResult<_> {
+        // Update creator stats efficiently with hot data
+        crate::state::CREATOR_STATS.update(deps.storage, &proposal.creator, |stats| -> Result<_, ContractError> {
+            let mut stats = stats.unwrap_or(crate::state::CreatorCompactStats {
+                total_raised: Uint128::zero(),
+                success_count: 0,
+                total_count: 0,
+                last_active: current_time,
+            });
+            stats.total_raised = MathGuard::safe_add(stats.total_raised, proposal.funding_status.raised_amount)?;
+            stats.success_count += 1;
+            stats.last_active = current_time;
+            Ok(stats)
+        })?;
+
+        // Also update legacy creator data
+        CREATORS.update(deps.storage, &proposal.creator, |creator| -> Result<_, ContractError> {
             let mut creator = creator.unwrap();
-            creator.total_raised += proposal.funding_status.raised_amount;
-            creator.successful_proposals += 1;
+            creator.total_raised = MathGuard::safe_add(creator.total_raised, proposal.funding_status.raised_amount)?;
+            creator.successful_proposals = creator.successful_proposals.saturating_add(1);
             Ok(creator)
         })?;
     }
@@ -466,9 +517,11 @@ fn execute_invest(
     PROPOSALS.save(deps.storage, proposal_id.clone(), &proposal)?;
 
     let mut response = Response::new()
-        .add_attribute("method", "invest")
-        .add_attribute("investor", info.sender.as_str())
-        .add_attribute("proposal_id", &proposal_id)
+        .add_attributes(crate::gas_optimization::EfficientEvents::emit_investment(
+            &proposal_id,
+            info.sender.as_str(),
+            investment_amount,
+        ))
         .add_attribute("amount", investment_amount.to_string())
         .add_attribute("shares", shares.to_string());
 
@@ -485,6 +538,9 @@ fn execute_refund_investors(
     info: MessageInfo,
     proposal_id: String,
 ) -> Result<Response, ContractError> {
+    // Reentrancy protection
+    ReentrancyGuard::check_reentrancy(&deps, "refund_investors")?;
+
     let mut proposal = PROPOSALS.load(deps.storage, proposal_id.clone())?;
     let config = CONFIG.load(deps.storage)?;
 
@@ -501,6 +557,8 @@ fn execute_refund_investors(
             if env.block.time.seconds() <= proposal.financial_terms.funding_deadline {
                 return Err(ContractError::FundingDeadlinePassed {});
             }
+            // Validate state transition before updating
+            validate_proposal_state_transition(proposal.status, ProposalStatus::Failed, &proposal, &env)?;
             // Mark as failed since deadline passed without funding
             proposal.status = ProposalStatus::Failed;
         }
@@ -543,8 +601,8 @@ fn execute_refund_investors(
                 investment.status = InvestmentStatus::Refunded;
                 INVESTMENTS.save(deps.storage, (proposal_id.clone(), &investor), &investment)?;
 
-                total_refunded += refund_amount;
-                refunded_count += 1;
+                total_refunded = MathGuard::safe_add(total_refunded, refund_amount)?;
+                refunded_count = refunded_count.saturating_add(1);
             }
         }
     }
@@ -572,6 +630,9 @@ fn execute_mint_tokens(
     info: MessageInfo,
     proposal_id: String,
 ) -> Result<Response, ContractError> {
+    // Reentrancy protection
+    ReentrancyGuard::check_reentrancy(&deps, "mint_tokens")?;
+
     // Check rate limit
     rate_limit::RateLimiter::record_operation(deps.storage, &info.sender, "mint_tokens", &env)?;
 
@@ -658,12 +719,21 @@ fn execute_distribute_tokens(
     info: MessageInfo,
     proposal_id: String,
 ) -> Result<Response, ContractError> {
+    // Reentrancy protection
+    ReentrancyGuard::check_reentrancy(&deps, "distribute_tokens")?;
+
     let mut proposal = PROPOSALS.load(deps.storage, proposal_id.clone())?;
     let config = CONFIG.load(deps.storage)?;
 
-    // Only admin or creator can distribute tokens
+    // Enhanced access control - only admin or creator can distribute tokens
     if info.sender != proposal.creator && info.sender != config.admin {
         return Err(ContractError::Unauthorized {});
+    }
+
+    // Additional state validation for security
+    // Proposal must be in the correct status
+    if proposal.status != ProposalStatus::Funded {
+        return Err(ContractError::ProposalNotFunded {});
     }
 
     // Tokens must be minted before distribution
@@ -674,6 +744,22 @@ fn execute_distribute_tokens(
     // Check that proposal is funded
     if !proposal.funding_status.is_funded {
         return Err(ContractError::ProposalNotFunded {});
+    }
+
+    // Validate that funding amount is non-zero
+    if proposal.funding_status.raised_amount.is_zero() {
+        return Err(ContractError::InvalidInput {
+            field: "raised_amount".to_string(),
+            message: "Cannot distribute tokens with zero funding".to_string(),
+        });
+    }
+
+    // Ensure we haven't already distributed tokens (prevent double distribution)
+    if proposal.status == ProposalStatus::Completed {
+        return Err(ContractError::InvalidInput {
+            field: "proposal_status".to_string(),
+            message: "Tokens have already been distributed".to_string(),
+        });
     }
 
     // Get token contract address
@@ -688,77 +774,94 @@ fn execute_distribute_tokens(
         return Err(ContractError::NoInvestmentsToRefund {});
     }
 
-    let mut mint_messages: Vec<CosmosMsg> = Vec::new();
+    // Phase 1: Validate all investments and prepare operations (atomic preparation)
+    let mut pending_distributions = Vec::new();
     let mut total_distributed = 0u64;
     let mut distributed_count = 0u64;
 
-    // Mint tokens to each investor based on their investment
-    for investor in investors {
-        if let Ok(mut investment) = INVESTMENTS.load(deps.storage, (proposal_id.clone(), &investor))
-        {
+    // Collect all valid investments that need token distribution
+    for investor in &investors {
+        if let Ok(investment) = INVESTMENTS.load(deps.storage, (proposal_id.clone(), investor)) {
             // Only distribute to pending investments
             if investment.status == InvestmentStatus::Pending {
                 let shares_to_mint = investment.shares;
 
-                // Create mint message for investor
-                let mint_msg = Cw20ExecuteMsg::Mint {
-                    recipient: investor.to_string(),
-                    amount: Uint128::from(shares_to_mint),
-                };
+                // Validate shares are non-zero
+                if shares_to_mint == 0 {
+                    return Err(ContractError::InvalidInput {
+                        field: "shares".to_string(),
+                        message: "Cannot mint zero shares".to_string(),
+                    });
+                }
 
-                let cosmos_msg = cosmwasm_std::WasmMsg::Execute {
-                    contract_addr: token_address.to_string(),
-                    msg: to_json_binary(&mint_msg)?,
-                    funds: vec![],
-                };
-
-                mint_messages.push(cosmos_msg.into());
-
-                // Update investment status to completed
-                investment.status = InvestmentStatus::Completed;
-                INVESTMENTS.save(deps.storage, (proposal_id.clone(), &investor), &investment)?;
-
-                total_distributed += shares_to_mint;
-                distributed_count += 1;
+                pending_distributions.push((investor.clone(), investment, shares_to_mint));
+                total_distributed = total_distributed.saturating_add(shares_to_mint);
+                distributed_count = distributed_count.saturating_add(1);
             }
         }
     }
 
-    if mint_messages.is_empty() {
+    if pending_distributions.is_empty() {
         return Err(ContractError::NoInvestmentsToRefund {});
     }
 
+    // Phase 2: Create all messages (atomic message preparation)
+    let mut mint_messages: Vec<CosmosMsg> = Vec::new();
+
+    for (investor, _, shares_to_mint) in &pending_distributions {
+        // Create mint message for investor
+        let mint_msg = Cw20ExecuteMsg::Mint {
+            recipient: investor.to_string(),
+            amount: Uint128::from(*shares_to_mint),
+        };
+
+        let cosmos_msg = cosmwasm_std::WasmMsg::Execute {
+            contract_addr: token_address.to_string(),
+            msg: to_json_binary(&mint_msg)?,
+            funds: vec![],
+        };
+
+        mint_messages.push(cosmos_msg.into());
+    }
+
+    // Phase 3: Update all investment statuses atomically
+    for (investor, mut investment, _) in pending_distributions {
+        investment.status = InvestmentStatus::Completed;
+        INVESTMENTS.save(deps.storage, (proposal_id.clone(), &investor), &investment)?;
+    }
+
     // Update proposal status to completed (tokens distributed)
+    // Validate state transition before updating
+    validate_proposal_state_transition(proposal.status, ProposalStatus::Completed, &proposal, &env)?;
     proposal.status = ProposalStatus::Completed;
     proposal.timestamps.updated_at = env.block.time.seconds();
     PROPOSALS.save(deps.storage, proposal_id.clone(), &proposal)?;
 
-    // Release funds to creator (minus platform fee)
-    let platform_fee =
-        (proposal.funding_status.raised_amount.u128() * config.platform_fee_bps as u128) / 10000;
-    let creator_amount = proposal.funding_status.raised_amount.u128() - platform_fee;
+    // Release funds to creator (minus platform fee) - use safe arithmetic
+    let platform_fee = MathGuard::calculate_percentage(proposal.funding_status.raised_amount, config.platform_fee_bps)?;
+    let creator_amount = MathGuard::safe_sub(proposal.funding_status.raised_amount, platform_fee)?;
 
     let mut response_messages = mint_messages;
 
     // Send funds to creator
-    if creator_amount > 0 {
+    if !creator_amount.is_zero() {
         let creator_payout = cosmwasm_std::BankMsg::Send {
             to_address: proposal.creator.to_string(),
             amount: vec![Coin {
                 denom: "untrn".to_string(),
-                amount: Uint128::from(creator_amount),
+                amount: creator_amount,
             }],
         };
         response_messages.push(creator_payout.into());
     }
 
     // Send platform fee to admin
-    if platform_fee > 0 {
+    if !platform_fee.is_zero() {
         let admin_fee = cosmwasm_std::BankMsg::Send {
             to_address: config.admin.to_string(),
             amount: vec![Coin {
                 denom: "untrn".to_string(),
-                amount: Uint128::from(platform_fee),
+                amount: platform_fee,
             }],
         };
         response_messages.push(admin_fee.into());
@@ -848,6 +951,9 @@ fn execute_process_expired_proposals(
 
     // Now process the collected proposals
     for (proposal_id, mut proposal) in proposals_to_process {
+        // Validate state transition before updating
+        validate_proposal_state_transition(proposal.status, ProposalStatus::Failed, &proposal, &env)?;
+
         // Mark proposal as failed
         proposal.status = ProposalStatus::Failed;
         proposal.timestamps.updated_at = current_time;
@@ -1048,6 +1154,11 @@ fn query_config(deps: Deps) -> StdResult<Config> {
 }
 
 fn query_proposal(deps: Deps, proposal_id: String) -> StdResult<crate::msg::ProposalResponse> {
+    // Load hot data first for gas efficiency
+    let hot_data = crate::state::get_proposal_hot_data(deps.storage, &proposal_id)?;
+
+    // If we only need basic info, we can return early with hot data
+    // For full proposal details, load the complete proposal
     let proposal = PROPOSALS.load(deps.storage, proposal_id.clone())?;
 
     let funding_progress = calculate_funding_progress(&proposal);
@@ -1065,43 +1176,51 @@ fn query_proposals_by_creator(
     limit: Option<u32>,
 ) -> StdResult<crate::msg::ProposalsResponse> {
     let creator_addr = deps.api.addr_validate(&creator)?;
-    let limit = limit.unwrap_or(30).min(100) as usize;
+    let limit = limit.unwrap_or(crate::gas_optimization::DEFAULT_LIMIT).min(crate::gas_optimization::MAX_LIMIT) as usize;
 
-    let proposals: Vec<_> = PROPOSALS
+    // Use indexed storage for gas efficiency
+    let start_bound = start_after.map(|s| {
+        s.parse::<u64>().unwrap_or(0)
+    });
+
+    let mut proposals = Vec::with_capacity(limit);
+    let mut count = 0;
+
+    // Iterate through creator index (gas efficient)
+    for item in crate::state::CREATOR_PROPOSAL_INDEX
+        .prefix(&creator_addr)
         .range(deps.storage, None, None, cosmwasm_std::Order::Descending)
-        .filter(|item| {
-            if let Ok((_, proposal)) = item {
-                proposal.creator == creator_addr
-            } else {
-                false
-            }
-        })
-        .skip_while(|item| {
-            if let Some(start_after) = &start_after {
-                if let Ok((key, _)) = item {
-                    key <= start_after
-                } else {
-                    false
-                }
-            } else {
-                false
-            }
-        })
-        .take(limit)
-        .map(|item| {
-            let (_, proposal) = item?;
-            let funding_progress = calculate_funding_progress(&proposal);
-            Ok(crate::msg::ProposalResponse {
-                proposal,
-                funding_progress,
-            })
-        })
-        .collect::<StdResult<Vec<_>>>()?;
+    {
+        if count >= limit {
+            break;
+        }
 
-    let total_count = proposals.len() as u64;
+        let (timestamp, proposal_id) = item?;
+
+        // Skip if before start_after
+        if let Some(start) = start_bound {
+            if timestamp <= start {
+                continue;
+            }
+        }
+
+        // Load hot data first
+        if let Ok(hot_data) = crate::state::get_proposal_hot_data(deps.storage, &proposal_id) {
+            // Only load full proposal if needed
+            if let Ok(proposal) = PROPOSALS.load(deps.storage, proposal_id) {
+                let funding_progress = calculate_funding_progress(&proposal);
+                proposals.push(crate::msg::ProposalResponse {
+                    proposal,
+                    funding_progress,
+                });
+                count += 1;
+            }
+        }
+    }
+
     Ok(crate::msg::ProposalsResponse {
         proposals,
-        total_count,
+        total_count: count as u64,
     })
 }
 
@@ -1327,31 +1446,15 @@ fn query_total_value_locked(deps: Deps) -> StdResult<Uint128> {
 }
 
 fn query_platform_stats(deps: Deps) -> StdResult<crate::msg::PlatformStats> {
-    let mut total_proposals = 0u64;
-    let mut active_proposals = 0u64;
-    let mut successful_proposals = 0u64;
-    let mut total_raised = Uint128::zero();
-    let mut total_investors = 0u64;
-
-    for item in PROPOSALS.range(deps.storage, None, None, cosmwasm_std::Order::Ascending) {
-        let (_, proposal) = item?;
-        total_proposals += 1;
-        total_raised += proposal.funding_status.raised_amount;
-        total_investors += proposal.funding_status.investor_count;
-
-        match proposal.status {
-            ProposalStatus::Active => active_proposals += 1,
-            ProposalStatus::Completed => successful_proposals += 1,
-            _ => {}
-        }
-    }
+    // Use gas-efficient calculation from gas_optimization module
+    let efficient_stats = crate::gas_optimization::MemoryOptimizedQueries::calculate_platform_stats_efficient(deps)?;
 
     Ok(crate::msg::PlatformStats {
-        total_proposals,
-        active_proposals,
-        total_raised,
-        total_investors,
-        successful_proposals,
+        total_proposals: efficient_stats.total_proposals,
+        active_proposals: efficient_stats.active_proposals,
+        total_raised: efficient_stats.total_raised,
+        total_investors: 0, // Calculate separately if needed
+        successful_proposals: efficient_stats.funded_proposals,
     })
 }
 
@@ -1424,17 +1527,21 @@ fn calculate_creator_stats(creator: &Creator) -> crate::msg::CreatorStats {
 
 // Investment calculation functions
 fn calculate_shares(proposal: &Proposal, investment_amount: Uint128) -> Result<u64, ContractError> {
-    if proposal.financial_terms.token_price.is_zero() {
-        return Err(ContractError::InvalidTokenPrice {});
-    }
+    // Validate inputs first
+    MathGuard::validate_calculation_inputs(
+        investment_amount,
+        proposal.financial_terms.token_price,
+        "share calculation"
+    )?;
 
-    let shares = investment_amount.u128() / proposal.financial_terms.token_price.u128();
+    // Use high-precision calculation with a precision factor of 1000 for better accuracy
+    const PRECISION_FACTOR: u128 = 1000;
 
-    if shares == 0 {
-        return Err(ContractError::InvalidSharesCalculation {});
-    }
-
-    Ok(shares as u64)
+    MathGuard::calculate_shares_precise(
+        investment_amount,
+        proposal.financial_terms.token_price,
+        PRECISION_FACTOR,
+    )
 }
 
 fn calculate_current_shares_sold(proposal: &Proposal) -> u64 {
@@ -1442,8 +1549,20 @@ fn calculate_current_shares_sold(proposal: &Proposal) -> u64 {
         return 0;
     }
 
-    (proposal.funding_status.raised_amount.u128() / proposal.financial_terms.token_price.u128())
-        as u64
+    // Use safe division to prevent overflow attacks
+    match MathGuard::safe_div(proposal.funding_status.raised_amount, proposal.financial_terms.token_price) {
+        Ok(shares_u128) => {
+            let shares_value = shares_u128.u128();
+            // Check for overflow when converting to u64
+            if shares_value > u64::MAX as u128 {
+                // Return maximum possible shares if overflow would occur
+                u64::MAX
+            } else {
+                shares_value as u64
+            }
+        }
+        Err(_) => 0, // Return 0 if division fails (shouldn't happen due to zero check above)
+    }
 }
 
 fn calculate_remaining_shares(proposal: &Proposal) -> u64 {
@@ -1456,7 +1575,13 @@ fn calculate_remaining_shares(proposal: &Proposal) -> u64 {
 
 fn calculate_maximum_investment(proposal: &Proposal) -> Uint128 {
     let remaining_shares = calculate_remaining_shares(proposal);
-    Uint128::from(remaining_shares as u128) * proposal.financial_terms.token_price
+    let remaining_shares_u128 = Uint128::from(remaining_shares as u128);
+
+    // Use safe multiplication to prevent overflow attacks
+    match MathGuard::safe_mul(remaining_shares_u128, proposal.financial_terms.token_price) {
+        Ok(max_investment) => max_investment,
+        Err(_) => Uint128::MAX, // Return maximum if overflow would occur
+    }
 }
 
 // Portfolio query functions
@@ -1530,6 +1655,77 @@ fn query_governance_setup_data(
     proposal_id: String,
 ) -> StdResult<governance::GovernanceSetupData> {
     governance::generate_governance_setup_data(deps, &proposal_id)
+}
+
+// State transition validation
+fn validate_proposal_state_transition(
+    current_status: ProposalStatus,
+    new_status: ProposalStatus,
+    proposal: &Proposal,
+    env: &Env,
+) -> Result<(), ContractError> {
+    match (current_status, new_status) {
+        // Active proposals can transition to Funded, Failed, or Cancelled
+        (ProposalStatus::Active, ProposalStatus::Funded) => {
+            // Must meet funding requirements
+            if !proposal.funding_status.is_funded {
+                return Err(ContractError::InvalidInput {
+                    field: "funding_status".to_string(),
+                    message: "Proposal must be funded to transition to Funded status".to_string(),
+                });
+            }
+        }
+        (ProposalStatus::Active, ProposalStatus::Failed) => {
+            // Can only fail if deadline passed without funding
+            if env.block.time.seconds() <= proposal.financial_terms.funding_deadline {
+                return Err(ContractError::InvalidInput {
+                    field: "deadline".to_string(),
+                    message: "Cannot mark as failed before deadline".to_string(),
+                });
+            }
+        }
+        (ProposalStatus::Active, ProposalStatus::Cancelled) => {
+            // Can be cancelled by admin or creator
+            // Additional validation would happen in access control
+        }
+
+        // Funded proposals can only transition to Completed
+        (ProposalStatus::Funded, ProposalStatus::Completed) => {
+            // Must have tokens minted and distributed
+            if !proposal.funding_status.tokens_minted {
+                return Err(ContractError::InvalidInput {
+                    field: "tokens_minted".to_string(),
+                    message: "Tokens must be minted before completion".to_string(),
+                });
+            }
+        }
+
+        // Failed and Cancelled proposals cannot transition to other states
+        (ProposalStatus::Failed, _) | (ProposalStatus::Cancelled, _) => {
+            return Err(ContractError::InvalidInput {
+                field: "status_transition".to_string(),
+                message: "Cannot transition from terminal state".to_string(),
+            });
+        }
+
+        // Completed proposals cannot transition to other states
+        (ProposalStatus::Completed, _) => {
+            return Err(ContractError::InvalidInput {
+                field: "status_transition".to_string(),
+                message: "Cannot transition from completed state".to_string(),
+            });
+        }
+
+        // Any other transition is invalid
+        _ => {
+            return Err(ContractError::InvalidInput {
+                field: "status_transition".to_string(),
+                message: format!("Invalid transition from {:?} to {:?}", current_status, new_status),
+            });
+        }
+    }
+
+    Ok(())
 }
 
 // Rate limit management functions

@@ -1,6 +1,19 @@
 version: '3.8'
 
 services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   cf1-ai-analyzer:
     build: .
     ports:
@@ -9,13 +22,19 @@ services:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - CF1_BACKEND_URL=${CF1_BACKEND_URL:-http://host.docker.internal:3001}
       - WEBHOOK_SECRET=${WEBHOOK_SECRET:-cf1-ai-webhook-secret-key}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
     volumes:
       - ./temp:/app/temp
       - ./logs:/app/logs
     restart: unless-stopped
+    depends_on:
+      - redis
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
+
+volumes:
+  redis_data:

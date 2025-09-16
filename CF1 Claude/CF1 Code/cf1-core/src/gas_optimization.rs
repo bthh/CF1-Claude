@@ -6,9 +6,10 @@ use crate::state::{Investment, Proposal, ProposalStatus, INVESTMENTS, PROPOSALS}
 use cosmwasm_std::{Deps, DepsMut, Env, MessageInfo, Order, Response, StdResult, Storage, Uint128};
 use cw_storage_plus::{Bound, Item, Map};
 
-/// Gas-efficient pagination constants
-pub const DEFAULT_LIMIT: u32 = 10;
-pub const MAX_LIMIT: u32 = 100;
+/// Gas-efficient pagination constants - optimized values
+pub const DEFAULT_LIMIT: u32 = 20; // Increased for better UX while maintaining gas efficiency
+pub const MAX_LIMIT: u32 = 50; // Reduced from 100 to prevent gas limit issues
+pub const BATCH_SIZE: u32 = 25; // Optimal batch size for bulk operations
 
 /// Storage access patterns optimized for gas efficiency
 pub struct GasOptimizedStorage;
@@ -317,49 +318,49 @@ impl GasLimitManager {
     }
 }
 
-/// Efficient event emission for gas optimization
+// Mathematical operations moved to security module to avoid duplication
+// Use crate::security::MathGuard for all mathematical operations
+
+/// Efficient event emission for gas optimization (ultra-minimal attributes)
 pub struct EfficientEvents;
 
 impl EfficientEvents {
-    /// Emit minimal events to save gas
+    /// Emit minimal events to save gas (3 attributes max)
     pub fn emit_proposal_created(proposal_id: &str, creator: &str) -> Vec<cosmwasm_std::Attribute> {
         vec![
-            cosmwasm_std::attr("action", "proposal_created"),
-            cosmwasm_std::attr("proposal_id", proposal_id),
+            cosmwasm_std::attr("action", "create"),
+            cosmwasm_std::attr("id", proposal_id),
             cosmwasm_std::attr("creator", creator),
         ]
     }
 
-    /// Emit investment events efficiently
+    /// Emit investment events efficiently (3 attributes)
     pub fn emit_investment(
         proposal_id: &str,
         investor: &str,
         amount: Uint128,
     ) -> Vec<cosmwasm_std::Attribute> {
         vec![
-            cosmwasm_std::attr("action", "investment"),
-            cosmwasm_std::attr("proposal_id", proposal_id),
+            cosmwasm_std::attr("action", "invest"),
             cosmwasm_std::attr("investor", investor),
             cosmwasm_std::attr("amount", amount.to_string()),
         ]
     }
 
-    /// Batch events for multiple operations
+    /// Ultra-minimal batch events (2 attributes max)
     pub fn emit_batch_events(
         operation: &str,
         count: u32,
-        total_amount: Option<Uint128>,
     ) -> Vec<cosmwasm_std::Attribute> {
-        let mut attrs = vec![
+        vec![
             cosmwasm_std::attr("action", operation),
-            cosmwasm_std::attr("batch_count", count.to_string()),
-        ];
+            cosmwasm_std::attr("count", count.to_string()),
+        ]
+    }
 
-        if let Some(amount) = total_amount {
-            attrs.push(cosmwasm_std::attr("total_amount", amount.to_string()));
-        }
-
-        attrs
+    /// Single attribute for simple operations
+    pub fn emit_simple(action: &str) -> Vec<cosmwasm_std::Attribute> {
+        vec![cosmwasm_std::attr("action", action)]
     }
 }
 

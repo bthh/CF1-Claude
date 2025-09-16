@@ -214,7 +214,7 @@ impl ReentrancyGuard {
     }
 }
 
-/// Mathematical overflow protection
+/// Mathematical overflow protection with enhanced precision handling
 pub struct MathGuard;
 
 impl MathGuard {
@@ -232,9 +232,16 @@ impl MathGuard {
         })
     }
 
-    /// Safe multiplication with overflow check
+    /// Safe multiplication with overflow check - supports both Uint128 and u128 parameters
     pub fn safe_mul(a: Uint128, b: Uint128) -> Result<Uint128, ContractError> {
         a.checked_mul(b).map_err(|_| ContractError::Overflow {
+            operation: "multiplication".to_string(),
+        })
+    }
+
+    /// Safe multiplication with u128 parameter
+    pub fn safe_mul_u128(a: Uint128, b: u128) -> Result<Uint128, ContractError> {
+        a.checked_mul(Uint128::from(b)).map_err(|_| ContractError::Overflow {
             operation: "multiplication".to_string(),
         })
     }
@@ -244,10 +251,22 @@ impl MathGuard {
         if b.is_zero() {
             return Err(ContractError::DivisionByZero {});
         }
-        Ok(a / b)
+        a.checked_div(b).map_err(|_| ContractError::Overflow {
+            operation: "division".to_string(),
+        })
     }
 
-    /// Calculate percentage with precision
+    /// Safe division with u128 parameter
+    pub fn safe_div_u128(a: Uint128, b: u128) -> Result<Uint128, ContractError> {
+        if b == 0 {
+            return Err(ContractError::DivisionByZero {});
+        }
+        a.checked_div(Uint128::from(b)).map_err(|_| ContractError::Overflow {
+            operation: "division".to_string(),
+        })
+    }
+
+    /// Calculate percentage with precision (basis points)
     pub fn calculate_percentage(
         amount: Uint128,
         percentage_bps: u16,
@@ -257,6 +276,68 @@ impl MathGuard {
         let basis_points = Uint128::from(10000u128);
 
         Self::safe_mul(amount, percentage).and_then(|result| Self::safe_div(result, basis_points))
+    }
+
+    /// Calculate precise share allocation with decimal precision
+    pub fn calculate_shares_precise(
+        investment_amount: Uint128,
+        token_price: Uint128,
+        precision_factor: u128,
+    ) -> Result<u64, ContractError> {
+        if token_price.is_zero() {
+            return Err(ContractError::InvalidTokenPrice {});
+        }
+
+        // Use higher precision for calculation
+        let scaled_investment = Self::safe_mul_u128(investment_amount, precision_factor)?;
+        let shares_scaled = Self::safe_div(scaled_investment, token_price)?;
+        let shares_final = Self::safe_div_u128(shares_scaled, precision_factor)?;
+
+        if shares_final.is_zero() {
+            return Err(ContractError::InvalidSharesCalculation {});
+        }
+
+        // Additional overflow check when converting to u64
+        let shares_value = shares_final.u128();
+        if shares_value > u64::MAX as u128 {
+            return Err(ContractError::Overflow {
+                operation: "shares calculation - value exceeds u64 maximum".to_string(),
+            });
+        }
+
+        Ok(shares_value as u64)
+    }
+
+    /// Validate calculation inputs to prevent edge cases
+    pub fn validate_calculation_inputs(
+        amount: Uint128,
+        price: Uint128,
+        operation: &str,
+    ) -> Result<(), ContractError> {
+        if amount.is_zero() {
+            return Err(ContractError::InvalidInput {
+                field: "amount".to_string(),
+                message: format!("Amount cannot be zero for {}", operation),
+            });
+        }
+
+        if price.is_zero() {
+            return Err(ContractError::InvalidInput {
+                field: "price".to_string(),
+                message: format!("Price cannot be zero for {}", operation),
+            });
+        }
+
+        // Check for unreasonably large values that might cause overflow
+        const MAX_REASONABLE_VALUE: u128 = u128::MAX / 1_000_000; // Leave room for calculations
+        if amount.u128() > MAX_REASONABLE_VALUE || price.u128() > MAX_REASONABLE_VALUE {
+            return Err(ContractError::InvalidInput {
+                field: "value_range".to_string(),
+                message: format!("Values too large for safe calculation in {}", operation),
+            });
+        }
+
+        Ok(())
     }
 }
 
@@ -420,6 +501,28 @@ mod tests {
             MathGuard::calculate_percentage(Uint128::new(10000), 250).unwrap(),
             Uint128::new(250) // 2.5% of 10000
         );
+
+        // Test precise share calculation
+        let shares = MathGuard::calculate_shares_precise(
+            Uint128::new(1000_000_000), // $1000 investment
+            Uint128::new(1_000_000),     // $1 token price
+            1000,                        // precision factor
+        ).unwrap();
+        assert_eq!(shares, 1000);
+
+        // Test input validation
+        assert!(MathGuard::validate_calculation_inputs(
+            Uint128::new(1000),
+            Uint128::new(100),
+            "test"
+        ).is_ok());
+
+        // Test zero amount validation
+        assert!(MathGuard::validate_calculation_inputs(
+            Uint128::zero(),
+            Uint128::new(100),
+            "test"
+        ).is_err());
     }
 
     #[test]

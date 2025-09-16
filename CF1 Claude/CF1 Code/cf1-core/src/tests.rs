@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::{execute, instantiate, query, reply};
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
     use cosmwasm_std::{coins, from_json, Addr, Uint128};
     use cw_multi_test::{App, AppBuilder, Contract, ContractWrapper, Executor};
@@ -110,6 +111,7 @@ mod tests {
         let msg = InstantiateMsg {
             admin: None,
             platform_fee_bps: Some(250),
+            cw20_code_id: 1, // Mock code ID for testing
         };
 
         let res = instantiate(deps.as_mut(), env, info, msg).unwrap();
@@ -360,7 +362,7 @@ mod tests {
         // Create a proposal first
         let (asset_details, financial_terms, documents, compliance) = create_test_proposal();
         let create_msg = ExecuteMsg::CreateProposal {
-            asset_details,
+            asset_details: asset_details.clone(),
             financial_terms,
             documents,
             compliance,

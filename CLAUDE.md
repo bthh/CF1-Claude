@@ -14,19 +14,84 @@ CF1 is an enterprise-grade blockchain platform for Real-World Asset (RWA) tokeni
 
 ## CF1 Development Sub-Agent Team - ACTIVE
 
-**Team Status**: ✅ **9 SPECIALIZED AGENTS CREATED AND ACTIVE**
+**Team Status**: ✅ **10 SPECIALIZED AGENTS CREATED AND ACTIVE**
 **Team Architecture**: Independent Sonnet 4 agents with separate context windows for optimal parallel development workflow.
 
 **ACTIVE AGENTS:**
-- ✅ `cf1-frontend-specialist` - React/UI components and state management
-- ✅ `cf1-ux-designer` - User experience design and accessibility
-- ✅ `cf1-testing-engineer` - Test coverage improvement (75.9% → 95%)
-- ✅ `cf1-smart-contract-dev` - CosmWasm/Rust blockchain development
-- ✅ `cf1-data-integration-specialist` - Store architecture and API integration
-- ✅ `cf1-performance-optimizer` - Bundle optimization and Web Vitals
-- ✅ `cf1-security-auditor` - Security reviews and compliance
-- ✅ `cf1-devops-engineer` - CI/CD and deployment optimization
-- ✅ `cf1-documentation-architect` - Technical documentation and guides
+- ✅ `cosmwasm-security-auditor` - Elite security audit for CosmWasm smart contracts
+- ✅ `frontend-component-architect` - Enterprise React component architecture & TypeScript
+- ✅ `blockchain-integration-specialist` - Cosmos SDK/Neutron optimization & wallet integration
+- ✅ `testing-coverage-enforcer` - Comprehensive test coverage (95%+ target)
+- ✅ `ai-service-optimizer` - FastAPI AI services & Claude API integration optimization
+- ✅ `regulatory-compliance-checker` - Reg CF compliance & regulatory risk management
+- ✅ `cosmwasm-gas-optimizer` - Gas efficiency & transaction cost optimization
+- ✅ `production-deployment-engineer` - Infrastructure & deployment optimization
+- ✅ `ux-consistency-guardian` - "TradFi Feel, DeFi Engine" design philosophy & accessibility
+- ✅ `documentation-sync-specialist` - Technical documentation & API synchronization
+
+## 🌐 Enhanced Browserbase Integration - PRODUCTION WORKFLOW
+
+**Visual Web Analysis**: Claude Code now includes production-ready browserbase integration for comprehensive UI/UX analysis and continuous improvement:
+
+### **Live Site Analysis & UI Auditing**
+- **Production Site Inspection**: Real-time analysis of deployed CF1 platform (https://rwa2.netlify.app)
+- **Staging Environment Testing**: Visual validation on staging builds (Netlify preview URLs)
+- **Visual Component Auditing**: Screenshot and analyze UI components in real browser environments
+- **Cross-browser Compatibility**: Test across Chrome, Firefox, Safari with various viewport sizes
+- **Interactive Element Testing**: Validate user flows, click-through patterns, and conversion funnels
+- **Responsive Design Validation**: Test mobile/desktop layouts with real rendering across devices
+
+### **UI/UX Enhancement Workflow** ✨ **NEW CAPABILITY**
+**Comprehensive Design Analysis Process:**
+
+1. **Benchmark Analysis**: Capture screenshots of industry leaders (Stripe, Fundrise, YieldStreet) for design pattern reference
+2. **Current State Audit**: Visual inspection of CF1 platform across all major pages and user flows
+3. **Gap Analysis**: Side-by-side comparison identifying specific UI/UX improvement opportunities
+4. **Design Roadmap**: Strategic improvement plan with prioritized actionable items
+5. **Implementation Validation**: Post-update visual regression testing and user experience validation
+
+```typescript
+// UI/UX Enhancement Workflow Example
+User: "Improve CF1 platform to match industry standards"
+
+Phase 1: Browserbase captures of Stripe homepage (design excellence benchmark)
+Phase 2: Browserbase audit of CF1 platform (current state documentation)
+Phase 3: Create comprehensive design analysis documents:
+  → DESIGN_PRINCIPLES.md (Stripe's design excellence patterns)
+  → UI_AUDIT.md (CF1's current gaps and improvement opportunities)
+  → UI_IMPROVEMENT_ROADMAP.md (6-week transformation plan)
+Phase 4: Implementation with continuous visual validation
+```
+
+### **Integration with Subagents**
+- **`frontend-component-architect`**: Use browserbase for visual component inspection and responsive behavior validation
+- **`ux-consistency-guardian`**: Live accessibility testing, visual design compliance checking, and "TradFi Feel, DeFi Engine" philosophy validation
+- **`testing-coverage-enforcer`**: Browser-based testing, visual regression detection, and cross-browser compatibility validation
+- **Production deployment validation**: Pre and post-deployment visual comparison with automated regression detection
+
+### **Browserbase Production Capabilities**
+- **Multi-Page Screenshot Capture**: Automated visual documentation of entire platform user journeys
+- **Interactive User Flow Testing**: Validate complex investment processes, form submissions, and navigation patterns
+- **Performance Analysis**: Visual performance metrics, loading behavior, and Core Web Vitals validation in real environments
+- **Accessibility Testing**: Live accessibility testing with browser tools, screen reader compatibility, and WCAG compliance validation
+- **Responsive Design Testing**: Mobile/tablet/desktop layouts with real device rendering and touch interaction validation
+- **Competitive Benchmarking**: Visual comparison with industry leaders for design pattern analysis
+
+### **Current Browserbase Implementation Status**
+✅ **Production Ready**: Official browserbase SDK integration with 2-step connection process
+✅ **Multi-Environment Support**: Production, staging, and development URL testing capability
+✅ **Screenshot Automation**: Automated capture and analysis of key platform pages
+✅ **CORS Compatibility**: Backend configured to support Netlify preview URLs for staging analysis
+✅ **WSL Environment Tested**: Confirmed working in Windows Subsystem for Linux development environments
+
+### **Recent Browserbase Achievements**
+- ✅ **Stripe Benchmark Analysis**: Complete visual analysis of Stripe's homepage design patterns
+- ✅ **CF1 Platform Audit**: Comprehensive screenshot capture of Dashboard, Marketplace, Admin Panel, Portfolio, and Login pages
+- ✅ **Design Documentation**: Created DESIGN_PRINCIPLES.md, UI_AUDIT.md, and UI_IMPROVEMENT_ROADMAP.md based on visual analysis
+- ✅ **Critical Issue Identification**: Documented "Choose Your Path" modal blocking content access across all platform pages
+- ✅ **Strategic Improvement Plan**: 6-week UI/UX transformation roadmap with measurable success metrics
+
+**Implementation Note**: Browserbase provides the visual analysis foundation for CF1's UI/UX transformation from technical platform to enterprise-grade user experience matching industry leaders like Stripe.
 
 ### **Main Orchestrator (Claude Code)**
 **Role**: Strategic architecture, user requirement analysis, cross-system integration, quality gates
@@ -40,49 +105,57 @@ CF1 is an enterprise-grade blockchain platform for Real-World Asset (RWA) tokeni
 
 ### **Core Development Team**
 
-#### 1. **`cf1-frontend-specialist`**
-**Expertise**: React components, Zustand stores, UI implementation, responsive design
-**Context**: Frontend patterns, component architecture, state management, user flows
-**Delegates**: Component creation, store updates, styling fixes, responsive design implementation
+#### 1. **`cosmwasm-security-auditor`**
+**Expertise**: Elite CosmWasm smart contract security, Rust blockchain security, regulatory compliance
+**Context**: CosmWasm security patterns, access control review, reentrancy protection, gas optimization security
+**Delegates**: Security audits, vulnerability assessment, compliance verification, security best practices implementation
 
-#### 2. **`cf1-ux-designer`** 
-**Expertise**: User experience design, accessibility, interface optimization, user journey flows
-**Context**: Design systems, accessibility standards (WCAG 2.1 AA), user psychology, conversion optimization
-**Delegates**: UI/UX improvements, accessibility enhancements, user flow optimization, design system updates
+#### 2. **`frontend-component-architect`**
+**Expertise**: Enterprise React architecture, TypeScript integration, Zustand patterns, Tailwind design systems
+**Context**: Component reusability, enterprise UX patterns, type safety, accessibility standards
+**Delegates**: Component architecture review, TypeScript improvements, state management optimization, design system compliance
 
-#### 3. **`cf1-testing-engineer`**
-**Expertise**: Test automation, coverage improvement, mock strategies, integration testing
-**Context**: Testing patterns, Vitest/RTL best practices, mock data architecture, CI/CD integration
-**Delegates**: Test suite creation, coverage improvement (75.9% → 95% target), test debugging, performance testing
+#### 3. **`blockchain-integration-specialist`**
+**Expertise**: Cosmos SDK/Neutron optimization, wallet integration, query optimization, network handling
+**Context**: Blockchain interaction patterns, transaction optimization, cross-chain compatibility, RPC management
+**Delegates**: Blockchain integration optimization, wallet connectivity, query efficiency, network error handling
 
-#### 4. **`cf1-smart-contract-dev`**
-**Expertise**: CosmWasm/Rust development, blockchain integration, contract optimization
-**Context**: Rust patterns, CosmWasm architecture, gas optimization, blockchain state management
-**Delegates**: Smart contract development, blockchain integration, CosmJS connection fixes, contract deployment
+#### 4. **`testing-coverage-enforcer`**
+**Expertise**: Comprehensive test coverage, test quality assurance, CI/CD integration, performance testing
+**Context**: Testing strategies, coverage analysis, test automation, quality metrics
+**Delegates**: Test coverage improvement (95%+ target), test quality enhancement, testing infrastructure optimization
 
-#### 5. **`cf1-data-integration-specialist`**
-**Expertise**: Store architecture, API integration, data flow optimization, real-time synchronization
-**Context**: Zustand patterns, data transformation, API design, cross-store synchronization
-**Delegates**: Store management, API endpoint creation, data flow fixes, real-time update implementation
+#### 5. **`ai-service-optimizer`**
+**Expertise**: FastAPI performance, Claude API integration, document processing, async optimization
+**Context**: AI service architecture, performance profiling, caching strategies, resource optimization
+**Delegates**: AI service performance tuning, API optimization, document processing efficiency, scalability improvements
 
-#### 6. **`cf1-performance-optimizer`**
-**Expertise**: Bundle optimization, performance monitoring, build process optimization, Web Vitals
-**Context**: Vite configuration, performance budgets, code splitting strategies, monitoring systems
-**Delegates**: Bundle analysis, code splitting, performance regression fixes, build optimization
+#### 6. **`regulatory-compliance-checker`**
+**Expertise**: Reg CF compliance, securities law, financial technology compliance, audit trail management
+**Context**: Regulatory requirements, compliance frameworks, data handling standards, reporting obligations
+**Delegates**: Compliance verification, regulatory risk assessment, audit trail validation, reporting automation
 
-### **Specialized Support Team**
+### **Specialized Optimization Team**
 
-#### 7. **`cf1-security-auditor`**
-**Expertise**: Security reviews, vulnerability assessment, DeFi security patterns, regulatory compliance
-**Context**: OWASP standards, DeFi attack vectors, regulatory frameworks, security best practices
+#### 7. **`cosmwasm-gas-optimizer`**
+**Expertise**: Gas efficiency optimization, storage optimization, computational efficiency, batch operations
+**Context**: CosmWasm optimization patterns, storage strategies, gas cost analysis, performance benchmarking
+**Delegates**: Gas optimization implementation, storage pattern optimization, batch operation design, cost reduction strategies
 
-#### 8. **`cf1-devops-engineer`** 
-**Expertise**: CI/CD pipelines, deployment automation, infrastructure optimization, monitoring
-**Context**: Netlify deployment, build processes, environment management, system monitoring
+#### 8. **`production-deployment-engineer`**
+**Expertise**: Infrastructure optimization, deployment automation, monitoring setup, scalability strategies
+**Context**: Docker containerization, CI/CD pipelines, monitoring systems, production readiness
+**Delegates**: Infrastructure optimization, deployment pipeline enhancement, monitoring implementation, scalability improvements
 
-#### 9. **`cf1-documentation-architect`**
-**Expertise**: Technical documentation, API documentation, system architecture documentation
-**Context**: Documentation standards, technical writing, system architecture, developer experience
+#### 9. **`ux-consistency-guardian`**
+**Expertise**: "TradFi Feel, DeFi Engine" design philosophy, enterprise UI patterns, accessibility compliance
+**Context**: Design philosophy enforcement, accessibility standards, user flow optimization, enterprise UX patterns
+**Delegates**: Design consistency validation, accessibility compliance checking, user experience optimization, UI pattern standardization
+
+#### 10. **`documentation-sync-specialist`**
+**Expertise**: Technical documentation, API documentation synchronization, developer experience, maintenance automation
+**Context**: Documentation standards, synchronization processes, developer onboarding, technical writing
+**Delegates**: Documentation updates, API documentation maintenance, synchronization automation, developer guide creation
 
 ### **Workflow Orchestration Strategy**
 
@@ -119,26 +192,32 @@ Main Orchestrator: Coordinate integration + quality gates + deployment
 ```
 
 **MANDATORY DELEGATION TRIGGERS:**
-- ANY component building or UI implementation → `cf1-frontend-specialist`
-- ANY design or UX work → `cf1-ux-designer`  
-- ANY testing work → `cf1-testing-engineer`
-- ANY smart contract work → `cf1-smart-contract-dev`
-- ANY store/API work → `cf1-data-integration-specialist`
-- ANY performance work → `cf1-performance-optimizer`
-- ANY security work → `cf1-security-auditor`
-- ANY deployment/CI work → `cf1-devops-engineer`
-- ANY documentation work → `cf1-documentation-architect`
+- ANY smart contract security work → `cosmwasm-security-auditor`
+- ANY component architecture or TypeScript work → `frontend-component-architect`
+- ANY blockchain integration or wallet work → `blockchain-integration-specialist`
+- ANY testing coverage or quality work → `testing-coverage-enforcer`
+- ANY AI service or FastAPI optimization → `ai-service-optimizer`
+- ANY regulatory compliance or audit work → `regulatory-compliance-checker`
+- ANY gas optimization or contract efficiency → `cosmwasm-gas-optimizer`
+- ANY infrastructure or deployment work → `production-deployment-engineer`
+- ANY UX design or accessibility work → `ux-consistency-guardian`
+- ANY documentation or synchronization work → `documentation-sync-specialist`
+- ANY browserbase visual analysis → Use browserbase integration for live site inspection
 
 **CONTEXT OPTIMIZATION:**
 - **Main Orchestrator Focus**: User requirements, architecture decisions, integration, quality gates
 - **Agent Focus**: Specialized domain expertise and implementation
 - **Maximum Parallel Execution**: Multiple agents working simultaneously on independent tasks
 
-#### **Current Team Priorities**:
-1. **cf1-testing-engineer**: Improve test coverage from 75.9% to 95%
-2. **cf1-performance-optimizer**: Bundle optimization and Web Vitals improvement
-3. **cf1-smart-contract-dev**: Complete CF1 Portfolio Trust compilation fixes
-4. **cf1-ux-designer**: Optimize admin workflows and accessibility compliance
+#### **Current Team Priorities (Based on Recent Comprehensive Analysis)**:
+1. **🔴 CRITICAL**: `cosmwasm-security-auditor` - Address 6 high-severity vulnerabilities identified in security audit
+2. **🔴 CRITICAL**: `cosmwasm-gas-optimizer` - Implement 60-70% gas cost reduction optimizations
+3. **🟡 HIGH**: `frontend-component-architect` - Enable TypeScript strict mode and fix type safety issues
+4. **🟡 HIGH**: `ai-service-optimizer` - Implement 70-85% performance improvements with Redis caching and batching
+5. **🟠 MEDIUM**: `testing-coverage-enforcer` - Improve test coverage from 75.9% to 95%
+6. **🟠 MEDIUM**: `ux-consistency-guardian` - Component standardization and design system enhancements
+7. **🟢 LOW**: `production-deployment-engineer` - Multi-worker deployment and infrastructure hardening
+8. **🟢 LOW**: `regulatory-compliance-checker` - Enhanced compliance monitoring automation
 
 ### **Success Metrics**:
 - **Development velocity**: Faster feature delivery through parallel specialized work
