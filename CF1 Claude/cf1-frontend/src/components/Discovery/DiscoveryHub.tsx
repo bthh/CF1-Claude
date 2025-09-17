@@ -199,17 +199,19 @@ const DiscoveryHub: React.FC = memo(() => {
 
   const handleGuidedSearchAnswersChange = useCallback((answers: GuidedAnswer[]) => {
     updateGuidedSearchAnswers(answers);
-    
+
     // Apply real-time search result enhancements based on guided answers
     if (answers.length > 0) {
-      const enhancedResults = GuidedSearchEnhancer.generateMockEnhancedResults(
-        searchResults,
-        answers,
-        guidedSearch.category
-      );
-      setSearchResults(enhancedResults);
+      setSearchResults(prevResults => {
+        const enhancedResults = GuidedSearchEnhancer.generateMockEnhancedResults(
+          prevResults,
+          answers,
+          guidedSearch.category
+        );
+        return enhancedResults;
+      });
     }
-  }, [updateGuidedSearchAnswers, searchResults, guidedSearch.category]);
+  }, [updateGuidedSearchAnswers, guidedSearch.category]);
 
   const handleGuidedSearchComplete = useCallback(async () => {
     // Get guided answers for external search
