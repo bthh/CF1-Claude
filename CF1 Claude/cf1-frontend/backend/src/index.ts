@@ -40,7 +40,7 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      connectSrc: ["'self'", "https://rwa2.netlify.app", "wss://rwa2.netlify.app", "https://68c95aa850920f69596abcd1--rwa2.netlify.app"],
+      connectSrc: ["'self'", "https://rwa2.netlify.app", "wss://rwa2.netlify.app", "https://68c95aa850920f69596abcd1--rwa2.netlify.app", "https://staging--rwa2.netlify.app"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       scriptSrc: ["'self'"],
       imgSrc: ["'self'", "data:", "https:"],
@@ -58,7 +58,9 @@ const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
   // Staging environment - Netlify branch deploy
-  'https://68c95aa850920f69596abcd1--rwa2.netlify.app'
+  'https://68c95aa850920f69596abcd1--rwa2.netlify.app',
+  // New staging branch deployment
+  'https://staging--rwa2.netlify.app'
 ];
 
 app.use(cors({
