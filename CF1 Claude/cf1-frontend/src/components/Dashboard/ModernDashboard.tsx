@@ -21,6 +21,8 @@ import { UserPathEntryModal } from '../Onboarding/UserPathEntryModal';
 import { OnboardingTourComponent } from '../Onboarding/OnboardingTour';
 import { OnboardingWelcome } from '../Onboarding/OnboardingWelcome';
 import AIInvestmentInsights from './AIInvestmentInsights';
+import PlatformHighlights from './PlatformHighlights';
+import { useFeatureToggleStore } from '../../store/featureToggleStore';
 import { useState } from 'react';
 
 
@@ -29,6 +31,7 @@ const ModernDashboard: React.FC = memo(() => {
   const { showLogin } = useUnifiedAuthStore();
   const { summary, isEmpty } = usePortfolioData();
   const [showPathModal, setShowPathModal] = useState(false);
+  const { isFeatureEnabled } = useFeatureToggleStore();
 
   const {
     startTour,
@@ -228,6 +231,11 @@ const ModernDashboard: React.FC = memo(() => {
 
       {/* AI Investment Insights */}
       <AIInvestmentInsights />
+
+      {/* Platform Highlights - Feature Toggled */}
+      {isFeatureEnabled('dashboard_platform_highlights') && (
+        <PlatformHighlights />
+      )}
 
       {/* Getting Started CTA */}
       <section>
