@@ -69,9 +69,9 @@ export const useOnboarding = (options: UseOnboardingOptions = {}) => {
       completedTours: [],
       completedSteps: [],
       isActive: false,
-      showWelcome: true,
+      showWelcome: false, // Temporarily disabled for testing - will re-enable later
       userPreferences: {
-        skipIntros: false,
+        skipIntros: true, // Skip intros by default for now
         autoProgress: false,
         showHints: true
       }
@@ -92,9 +92,11 @@ export const useOnboarding = (options: UseOnboardingOptions = {}) => {
     }
   }, [state, persistProgress, storageKey]);
 
-  // Auto-start onboarding for new users
+  // Auto-start onboarding for new users (DISABLED FOR TESTING)
   useEffect(() => {
-    if (autoStart && state.showWelcome && state.completedTours.length === 0) {
+    // Temporarily disabled auto-start to allow proper platform testing
+    // Will re-enable once we've implemented proper onboarding flow
+    if (false && autoStart && state.showWelcome && state.completedTours.length === 0) {
       // Small delay to let the page load
       const timer = setTimeout(() => {
         setState(prev => ({ ...prev, showWelcome: true }));

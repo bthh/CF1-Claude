@@ -80,9 +80,9 @@ export const OnboardingProvider: React.FC<OnboardingProviderProps> = ({ children
     <OnboardingContext.Provider value={contextValue}>
       {children}
       
-      {/* User Path Modal */}
+      {/* User Path Modal - TEMPORARILY DISABLED FOR TESTING */}
       <UserPathController
-        isOpen={showWelcome && !userPreferences.skipIntros}
+        isOpen={false} // Temporarily disabled to allow proper platform testing
         onClose={handleCloseWelcome}
       />
       
