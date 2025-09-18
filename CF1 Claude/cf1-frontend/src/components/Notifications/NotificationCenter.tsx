@@ -151,15 +151,16 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
               )}
             </div>
             <div className="flex items-center space-x-2">
-              {onOpenSettings && (
-                <button
-                  onClick={onOpenSettings}
-                  className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
-                  title="Notification Settings"
-                >
-                  <Settings className="w-4 h-4" />
-                </button>
-              )}
+              <button
+                onClick={() => {
+                  navigate('/dashboard/activity/settings');
+                  onClose();
+                }}
+                className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                title="Notification Settings"
+              >
+                <Settings className="w-4 h-4" />
+              </button>
               <button
                 onClick={onClose}
                 className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"

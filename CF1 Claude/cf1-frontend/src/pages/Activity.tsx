@@ -20,7 +20,6 @@ import {
 import { useNotificationSystemStore, NotificationType, NotificationPriority, getPriorityColor, getPriorityIcon } from '../store/notificationSystemStore';
 import { useDataMode } from '../store/dataModeStore';
 import { formatTimeAgo } from '../utils/format';
-import NotificationSettings from '../components/Notifications/NotificationSettings';
 
 const Activity: React.FC = () => {
   const navigate = useNavigate();
@@ -44,7 +43,6 @@ const Activity: React.FC = () => {
   const [filter, setFilter] = useState<'all' | 'unread' | NotificationType>('all');
   const [selectedNotifications, setSelectedNotifications] = useState<string[]>([]);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
 
   // Auto-clear expired notifications on mount
   useEffect(() => {
@@ -160,7 +158,7 @@ const Activity: React.FC = () => {
             <p className="text-sm text-gray-600 dark:text-gray-400">Unread</p>
           </div>
           <button
-            onClick={() => setShowSettings(true)}
+            onClick={() => navigate('/dashboard/activity/settings')}
             className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg px-3 py-2 h-10 flex items-center space-x-2"
           >
             <Settings className="w-4 h-4" />
@@ -412,13 +410,6 @@ const Activity: React.FC = () => {
         </div>
       </div>
 
-      {/* Notification Settings Modal */}
-      {showSettings && (
-        <NotificationSettings
-          isOpen={showSettings}
-          onClose={() => setShowSettings(false)}
-        />
-      )}
     </div>
   );
 };

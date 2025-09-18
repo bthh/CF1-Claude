@@ -30,6 +30,7 @@ import GovernanceDrafts from './pages/GovernanceDrafts';
 import Profile from './pages/Profile';
 import EditProfile from './pages/EditProfile';
 import Settings from './pages/Settings';
+import NotificationSettings from './pages/NotificationSettings';
 import Verification from './pages/Verification';
 import Analytics from './pages/Analytics';
 import Search from './pages/Search';
@@ -75,6 +76,7 @@ function App() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/dashboard/performance" element={<Performance />} />
               <Route path="/dashboard/activity" element={<Activity />} />
+              <Route path="/dashboard/activity/settings" element={<NotificationSettings />} />
               <Route path="/marketplace" element={<UnifiedMarketplace />} />
               <Route path="/marketplace/assets/:id" element={<AssetDetail />} />
               <Route path="/portfolio" element={<Portfolio />} />
