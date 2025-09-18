@@ -57,22 +57,22 @@ export const RewardsTab: React.FC = () => {
     );
   }
 
-  const formatCurrency = (amount: number) => 
+  const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 
-  const formatDate = (dateString: string) => 
-    new Date(dateString).toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      year: 'numeric' 
+  const formatDate = (dateString: string) =>
+    new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
     });
 
   const getTierBadgeColor = (tierName: string) => {
     switch (tierName.toLowerCase()) {
-      case 'bronze': return 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400';
+      case 'bronze': return 'bg-slate-100 text-slate-800 dark:bg-slate-900/20 dark:text-slate-400';
       case 'silver': return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400';
-      case 'gold': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400';
-      case 'platinum': return 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400';
+      case 'gold': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400';
+      case 'platinum': return 'bg-slate-100 text-slate-800 dark:bg-slate-900/20 dark:text-slate-400';
       default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400';
     }
   };
@@ -84,8 +84,8 @@ export const RewardsTab: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
-                <DollarSign className="w-6 h-6 text-green-600 dark:text-green-400" />
+              <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                <DollarSign className="w-6 h-6 text-slate-700 dark:text-slate-300" />
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Rewards Earned</p>
@@ -108,8 +108,8 @@ export const RewardsTab: React.FC = () => {
 
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
-                <TrendingUp className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+              <div className="p-2 bg-slate-100 dark:bg-slate-900/20 rounded-lg">
+                <TrendingUp className="w-6 h-6 text-slate-600 dark:text-slate-400" />
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Yearly Projection</p>
@@ -120,7 +120,7 @@ export const RewardsTab: React.FC = () => {
         </div>
 
         {/* Membership Tiers - Prominent Section */}
-        <div className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl border-2 border-blue-200 dark:border-blue-800">
+        <div className="bg-gradient-to-br from-blue-50 to-slate-50 dark:from-blue-900/20 dark:to-slate-900/20 rounded-xl border-2 border-blue-200 dark:border-blue-800">
           <div className="px-6 py-5 border-b border-blue-200 dark:border-blue-700/50">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
@@ -142,81 +142,96 @@ export const RewardsTab: React.FC = () => {
                 return (
                   <div
                     key={reward.assetId}
-                    className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 transition-all hover:shadow-lg hover:border-blue-300 dark:hover:border-blue-600"
+                    className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 transition-all hover:shadow-lg hover:border-blue-300 dark:hover:border-blue-600 h-full flex flex-col"
                   >
-                    <div className="flex items-center space-x-3 mb-4">
-                      <div className="w-12 h-12 rounded-xl overflow-hidden shadow-sm">
-                        <img 
-                          src={getAssetImage(reward.assetId || reward.assetName, reward.assetType)} 
-                          alt={reward.assetName} 
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.style.display = 'none';
-                            const parent = target.parentElement;
-                            if (parent) {
-                              parent.className = "w-12 h-12 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 rounded-xl flex items-center justify-center shadow-sm";
-                              parent.innerHTML = `<span class="text-gray-700 dark:text-gray-300 font-bold">${reward.assetName.charAt(0)}</span>`;
-                            }
-                          }}
-                        />
-                      </div>
-                      
-                      <div className="flex-1">
-                        <h3 className="font-bold text-gray-900 dark:text-white mb-1 text-sm">
-                          {reward.assetName}
-                        </h3>
-                        <p className="text-xs text-gray-600 dark:text-gray-400">
-                          {reward.tokensHeld.toLocaleString()} tokens held
-                        </p>
-                      </div>
-                    </div>
+                    <div className="flex-1 flex flex-col">
+                      {/* Fixed height asset header section */}
+                      <div className="h-16 mb-4 flex items-center space-x-3">
+                        <div className="w-12 h-12 rounded-xl overflow-hidden shadow-sm flex-shrink-0">
+                          <img
+                            src={getAssetImage(reward.assetId || reward.assetName, reward.assetType)}
+                            alt={reward.assetName}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              const parent = target.parentElement;
+                              if (parent) {
+                                parent.className = "w-12 h-12 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 rounded-xl flex items-center justify-center shadow-sm flex-shrink-0";
+                                parent.innerHTML = `<span class="text-gray-700 dark:text-gray-300 font-bold">${reward.assetName.charAt(0)}</span>`;
+                              }
+                            }}
+                          />
+                        </div>
 
-                    {actualTier ? (
-                      <div className="p-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg text-white mb-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <Trophy className="w-4 h-4" />
-                            <span className="font-semibold">{actualTier.name} Tier</span>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-bold text-gray-900 dark:text-white mb-1 text-sm truncate">
+                            {reward.assetName}
+                          </h3>
+                          <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
+                            {reward.tokensHeld.toLocaleString()} tokens held
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex-1 flex flex-col">
+                        {/* Fixed height tier section */}
+                        <div className="h-20 mb-4">
+                          {actualTier ? (
+                            <div className="p-4 bg-gradient-to-r from-blue-500 to-slate-600 rounded-lg text-white h-full flex items-center">
+                              <div className="flex items-center justify-between w-full">
+                                <div className="flex items-center space-x-2">
+                                  <Trophy className="w-4 h-4" />
+                                  <span className="font-semibold">{actualTier.name} Tier</span>
+                                </div>
+                                <div className="text-right">
+                                  <p className="font-bold">{actualTier.votingMultiplier || 1}x</p>
+                                  <p className="text-xs text-blue-100">Multiplier</p>
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg h-full flex items-center">
+                              <div className="text-center w-full">
+                                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">No Tier Qualified</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">Hold more tokens to unlock tiers</p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Fixed height benefits section */}
+                        <div className="h-24 mb-4">
+                          <div className="space-y-2 h-full flex flex-col">
+                            {(actualTier?.benefits || []).slice(0, 2).map((benefit, index) => (
+                              <div key={index} className="flex items-center space-x-2 p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                                <Star className="w-3 h-3 text-slate-700 dark:text-slate-300 flex-shrink-0" />
+                                <span className="text-xs font-medium text-slate-900 dark:text-slate-100">{benefit}</span>
+                              </div>
+                            ))}
+                            {(actualTier?.benefits || []).length > 2 && (
+                              <div className="text-center mt-auto">
+                                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                                  +{actualTier.benefits.length - 2} more benefits
+                                </span>
+                              </div>
+                            )}
+                            {/* Fill remaining space if fewer than 2 benefits */}
+                            {(actualTier?.benefits || []).length < 2 && (
+                              <div className="flex-1"></div>
+                            )}
                           </div>
-                          <div className="text-right">
-                            <p className="font-bold">{actualTier.votingMultiplier || 1}x</p>
-                            <p className="text-xs text-blue-100">Multiplier</p>
-                          </div>
                         </div>
                       </div>
-                    ) : (
-                      <div className="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg mb-4">
-                        <div className="text-center">
-                          <p className="text-sm font-medium text-gray-600 dark:text-gray-400">No Tier Qualified</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">Hold more tokens to unlock tiers</p>
-                        </div>
-                      </div>
-                    )}
 
-                    <div className="space-y-2 mb-4">
-                      {(actualTier?.benefits || []).slice(0, 2).map((benefit, index) => (
-                        <div key={index} className="flex items-center space-x-2 p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                          <Star className="w-3 h-3 text-green-600 dark:text-green-400 flex-shrink-0" />
-                          <span className="text-xs font-medium text-green-800 dark:text-green-200">{benefit}</span>
-                        </div>
-                      ))}
-                      {(actualTier?.benefits || []).length > 2 && (
-                        <div className="text-center">
-                          <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                            +{actualTier.benefits.length - 2} more benefits
-                          </span>
-                        </div>
-                      )}
+                      <button
+                        onClick={() => setSelectedAssetId(reward.assetId)}
+                        className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg font-medium transition-colors text-sm mt-auto"
+                      >
+                        <span>View Rewards</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </button>
                     </div>
-
-                    <button
-                      onClick={() => setSelectedAssetId(reward.assetId)}
-                      className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-lg font-medium transition-colors text-sm"
-                    >
-                      <span>View Rewards</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </button>
                   </div>
                 );
               })}
@@ -246,9 +261,9 @@ export const RewardsTab: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
                     <div className="w-12 h-12 rounded-lg overflow-hidden">
-                      <img 
-                        src={getAssetImage(reward.assetId || reward.assetName, reward.assetType)} 
-                        alt={reward.assetName} 
+                      <img
+                        src={getAssetImage(reward.assetId || reward.assetName, reward.assetType)}
+                        alt={reward.assetName}
                         className="w-full h-full object-cover"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
@@ -261,7 +276,7 @@ export const RewardsTab: React.FC = () => {
                         }}
                       />
                     </div>
-                    
+
                     <div className="flex-1">
                       <div className="flex items-center space-x-3">
                         <h3 className="font-semibold text-gray-900 dark:text-white">
@@ -281,7 +296,7 @@ export const RewardsTab: React.FC = () => {
                           );
                         })()}
                       </div>
-                      
+
                       <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400 mt-1">
                         <span>Last distribution: {formatDate(reward.lastDistribution)}</span>
                       </div>
@@ -297,9 +312,9 @@ export const RewardsTab: React.FC = () => {
                         Total earned
                       </p>
                     </div>
-                    
+
                     <div className="text-right">
-                      <p className="font-semibold text-green-600 dark:text-green-400">
+                      <p className="font-semibold text-gray-900 dark:text-white">
                         {formatCurrency(reward.monthlyRewards)}
                       </p>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -320,7 +335,6 @@ export const RewardsTab: React.FC = () => {
           </div>
         </div>
       </div>
-
     </>
   );
 };

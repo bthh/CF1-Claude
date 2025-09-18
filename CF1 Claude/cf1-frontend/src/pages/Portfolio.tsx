@@ -158,11 +158,11 @@ const Portfolio: React.FC = memo(() => {
   }, [showPerformanceTab]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-responsive">
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center space-x-3">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Portfolio</h1>
+            <h1 className="heading-responsive-xl">Portfolio</h1>
             {isDemo && (
               <div className="flex items-center space-x-2 bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300 px-3 py-1 rounded-full text-sm">
                 <Eye className="w-4 h-4" />
@@ -214,7 +214,7 @@ const Portfolio: React.FC = memo(() => {
       </div>
 
       {/* Tab Content */}
-      <div className="min-h-screen">
+      <div className="min-h-screen pt-6">
         {isEmpty ? (
           <div className="text-center py-12">
             <PieChart className="w-16 h-16 text-gray-400 mx-auto mb-4" />
