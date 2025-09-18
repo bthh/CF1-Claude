@@ -415,7 +415,7 @@ const DiscoveryHub: React.FC = memo(() => {
               {/* Quick Filters */}
               <div className="flex flex-wrap gap-3 items-center">
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Categories:</span>
-                {['All', 'Real Estate', 'Technology', 'Commodities', 'Collectibles', 'Energy'].map((category) => {
+                {['All [CI TEST]', 'Real Estate', 'Technology', 'Commodities', 'Collectibles', 'Energy'].map((category) => {
                   const isActive = searchFilters.category.includes(category.toLowerCase()) || category === 'All';
                   return (
                     <button

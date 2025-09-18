@@ -162,7 +162,7 @@ const Portfolio: React.FC = memo(() => {
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center space-x-3">
-            <h1 className="heading-responsive-xl">Portfolio</h1>
+            <h1 className="heading-responsive-xl">Portfolio [CI TEST]</h1>
             {isDemo && (
               <div className="flex items-center space-x-2 bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300 px-3 py-1 rounded-full text-sm">
                 <Eye className="w-4 h-4" />
