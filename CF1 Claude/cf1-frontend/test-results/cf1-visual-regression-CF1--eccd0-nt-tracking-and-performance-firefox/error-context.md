@@ -1,0 +1,350 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - generic [ref=e6]:
+          - img [ref=e7]
+          - heading "Performance" [level=3] [ref=e9]
+        - button "×" [ref=e10] [cursor=pointer]
+      - generic [ref=e11]:
+        - generic [ref=e12]:
+          - generic [ref=e13]:
+            - img [ref=e14]
+            - generic [ref=e17]: Page Load Time
+          - generic [ref=e18]: N/A
+        - generic [ref=e19]:
+          - generic [ref=e20]:
+            - img [ref=e21]
+            - generic [ref=e24]: API Response Time
+          - generic [ref=e25]: N/A
+        - generic [ref=e26]:
+          - generic [ref=e27]:
+            - img [ref=e28]
+            - generic [ref=e31]: Error Rate
+          - generic [ref=e32]: N/A
+      - generic [ref=e34]:
+        - generic [ref=e35]: Events Tracked
+        - generic [ref=e36]: "5"
+    - generic [ref=e37]:
+      - banner [ref=e38]:
+        - generic [ref=e39]:
+          - generic [ref=e40]:
+            - generic [ref=e42]: CF1
+            - generic [ref=e43]: CF1 Platform
+          - generic [ref=e44]: DEMO MODE
+        - navigation [ref=e45]:
+          - link "Dashboard" [ref=e46] [cursor=pointer]:
+            - /url: /dashboard
+          - link "Launchpad" [ref=e47] [cursor=pointer]:
+            - /url: /launchpad
+          - link "Discovery" [ref=e48] [cursor=pointer]:
+            - /url: /discovery
+          - link "Voting" [ref=e49] [cursor=pointer]:
+            - /url: /governance
+        - generic [ref=e52]:
+          - img [ref=e53]
+          - textbox "Search assets, proposals..." [ref=e56]
+        - generic [ref=e57]:
+          - button "Information and Actions" [ref=e59] [cursor=pointer]:
+            - img [ref=e60] [cursor=pointer]
+          - button "8" [ref=e65] [cursor=pointer]:
+            - img [ref=e66] [cursor=pointer]
+            - generic [ref=e70] [cursor=pointer]: "8"
+          - button "Sign In" [ref=e71] [cursor=pointer]:
+            - img [ref=e72] [cursor=pointer]
+            - generic [ref=e75] [cursor=pointer]: Sign In
+      - navigation "Mobile navigation" [ref=e76]:
+        - generic [ref=e77]:
+          - generic [ref=e78]:
+            - generic [ref=e80]: CF1
+            - generic [ref=e81]: CF1 Platform
+          - button "Close navigation" [ref=e82] [cursor=pointer]:
+            - img [ref=e83] [cursor=pointer]
+        - generic [ref=e87]:
+          - link "Dashboard Platform overview and metrics" [ref=e88] [cursor=pointer]:
+            - /url: /dashboard
+            - img [ref=e90] [cursor=pointer]
+            - generic [ref=e95] [cursor=pointer]:
+              - paragraph [ref=e96] [cursor=pointer]: Dashboard
+              - paragraph [ref=e97] [cursor=pointer]: Platform overview and metrics
+          - link "Portfolio Your investments and performance" [ref=e98] [cursor=pointer]:
+            - /url: /portfolio
+            - img [ref=e100] [cursor=pointer]
+            - generic [ref=e103] [cursor=pointer]:
+              - paragraph [ref=e104] [cursor=pointer]: Portfolio
+              - paragraph [ref=e105] [cursor=pointer]: Your investments and performance
+          - link "Launchpad New asset launches" [ref=e106] [cursor=pointer]:
+            - /url: /launchpad
+            - img [ref=e108] [cursor=pointer]
+            - generic [ref=e113] [cursor=pointer]:
+              - paragraph [ref=e114] [cursor=pointer]: Launchpad
+              - paragraph [ref=e115] [cursor=pointer]: New asset launches
+          - link "Voting Voting and proposals" [ref=e116] [cursor=pointer]:
+            - /url: /governance
+            - img [ref=e118] [cursor=pointer]
+            - generic [ref=e122] [cursor=pointer]:
+              - paragraph [ref=e123] [cursor=pointer]: Voting
+              - paragraph [ref=e124] [cursor=pointer]: Voting and proposals
+        - generic [ref=e125]:
+          - heading "Account" [level=3] [ref=e127]
+          - generic [ref=e128]:
+            - link "Profile" [ref=e129] [cursor=pointer]:
+              - /url: /profile
+              - img [ref=e130] [cursor=pointer]
+              - generic [ref=e133] [cursor=pointer]: Profile
+            - link "Settings" [ref=e134] [cursor=pointer]:
+              - /url: /profile/settings
+              - img [ref=e135] [cursor=pointer]
+              - generic [ref=e138] [cursor=pointer]: Settings
+            - button "Light Mode" [ref=e139] [cursor=pointer]:
+              - img [ref=e140] [cursor=pointer]
+              - generic [ref=e150] [cursor=pointer]: Light Mode
+        - generic [ref=e152]:
+          - button "Connect Wallet" [ref=e153] [cursor=pointer]:
+            - img [ref=e154] [cursor=pointer]
+            - generic [ref=e157] [cursor=pointer]: Connect Wallet
+          - paragraph [ref=e158]: Connect your wallet to access all features
+      - generic [ref=e159]:
+        - complementary [ref=e161]:
+          - button "Expand Sidebar" [ref=e163] [cursor=pointer]:
+            - img [ref=e164] [cursor=pointer]
+          - generic [ref=e166]:
+            - button "Portfolio" [ref=e167] [cursor=pointer]:
+              - img [ref=e168] [cursor=pointer]
+              - generic [ref=e171] [cursor=pointer]: Portfolio
+            - button "Rewards" [ref=e172] [cursor=pointer]:
+              - img [ref=e173] [cursor=pointer]
+              - generic [ref=e178] [cursor=pointer]: Rewards
+            - button "8 Alerts" [ref=e179] [cursor=pointer]:
+              - img [ref=e180] [cursor=pointer]
+              - generic [ref=e183] [cursor=pointer]: "8"
+              - generic [ref=e184] [cursor=pointer]: Alerts
+        - main "Main content" [ref=e185]:
+          - generic [ref=e187]:
+            - generic [ref=e188]:
+              - generic [ref=e189]:
+                - generic [ref=e190]:
+                  - heading "Portfolio" [level=1] [ref=e191]
+                  - generic [ref=e192]:
+                    - img [ref=e193]
+                    - generic [ref=e196]: DEMO MODE
+                  - generic [ref=e197]: DEMO
+                - paragraph [ref=e198]: Track and manage your tokenized asset investments
+              - generic [ref=e199]:
+                - button "Export" [ref=e200] [cursor=pointer]:
+                  - img [ref=e201] [cursor=pointer]
+                  - generic [ref=e205] [cursor=pointer]: Export
+                - button "Settings" [ref=e206] [cursor=pointer]:
+                  - img [ref=e207] [cursor=pointer]
+                  - generic [ref=e210] [cursor=pointer]: Settings
+            - navigation [ref=e212]:
+              - button "Overview" [ref=e213] [cursor=pointer]:
+                - img [ref=e214] [cursor=pointer]
+                - generic [ref=e217] [cursor=pointer]: Overview
+              - button "Performance" [ref=e218] [cursor=pointer]:
+                - img [ref=e219] [cursor=pointer]
+                - generic [ref=e224] [cursor=pointer]: Performance
+              - button "Transactions" [ref=e225] [cursor=pointer]:
+                - img [ref=e226] [cursor=pointer]
+                - generic [ref=e230] [cursor=pointer]: Transactions
+              - button "Rewards" [ref=e231] [cursor=pointer]:
+                - img [ref=e232] [cursor=pointer]
+                - generic [ref=e237] [cursor=pointer]: Rewards
+            - generic [ref=e239]:
+              - generic [ref=e240]:
+                - generic [ref=e241]:
+                  - generic [ref=e242]:
+                    - img [ref=e243]
+                    - img [ref=e246]
+                  - generic [ref=e249]:
+                    - paragraph [ref=e250]: Total Portfolio Value
+                    - paragraph [ref=e251]: $321,800.00
+                    - paragraph [ref=e252]: +16.00% all time
+                - generic [ref=e253]:
+                  - generic [ref=e254]:
+                    - img [ref=e255]
+                    - generic [ref=e258]: Gains
+                  - generic [ref=e259]:
+                    - paragraph [ref=e260]: Total Gains
+                    - paragraph [ref=e261]: $44,891.50
+                    - paragraph [ref=e262]: +8.34% this month
+                - generic [ref=e263]:
+                  - generic [ref=e264]:
+                    - img [ref=e265]
+                    - generic [ref=e270]: Rewards
+                  - generic [ref=e271]:
+                    - paragraph [ref=e272]: Total Rewards
+                    - paragraph [ref=e273]: $0.00
+                    - paragraph [ref=e274]: 0.00% yield
+                - generic [ref=e275]:
+                  - generic [ref=e276]:
+                    - img [ref=e277]
+                    - generic [ref=e280]: Assets
+                  - generic [ref=e281]:
+                    - paragraph [ref=e282]: Portfolio Assets
+                    - paragraph [ref=e283]: "5"
+                    - paragraph [ref=e284]: Across 5 categories
+              - generic [ref=e285]:
+                - generic [ref=e286]:
+                  - generic [ref=e287]:
+                    - generic [ref=e288]:
+                      - heading "Portfolio Performance" [level=3] [ref=e289]
+                      - paragraph [ref=e290]: Value vs Target
+                    - generic [ref=e291]:
+                      - button "1M" [ref=e292] [cursor=pointer]
+                      - button "3M" [ref=e293] [cursor=pointer]
+                      - button "6M" [ref=e294] [cursor=pointer]
+                      - button "1Y" [ref=e295] [cursor=pointer]
+                      - button "ALL" [ref=e296] [cursor=pointer]
+                  - img [ref=e300]:
+                    - generic [ref=e302]:
+                      - generic [ref=e305]: Jan
+                      - generic [ref=e308]: Feb
+                      - generic [ref=e311]: Mar
+                      - generic [ref=e314]: Apr
+                      - generic [ref=e317]: May
+                      - generic [ref=e320]: Jun
+                      - generic [ref=e323]: Jul
+                    - generic [ref=e325]:
+                      - generic [ref=e328]: $0k
+                      - generic [ref=e331]: $35k
+                      - generic [ref=e334]: $70k
+                      - generic [ref=e337]: $105k
+                      - generic [ref=e340]: $140k
+                    - generic [ref=e342]:
+                      - generic [ref=e345]: $0
+                      - generic [ref=e348]: $2500
+                      - generic [ref=e351]: $5000
+                      - generic [ref=e354]: $7500
+                      - generic [ref=e357]: $10000
+                - generic [ref=e382]:
+                  - generic [ref=e383]:
+                    - heading "Asset Allocation" [level=3] [ref=e384]
+                    - paragraph [ref=e385]: Distribution across asset types
+                  - generic [ref=e386]:
+                    - img [ref=e390]:
+                      - generic [ref=e392]:
+                        - img [ref=e394]
+                        - img [ref=e396]
+                        - img [ref=e398]
+                        - img [ref=e400]
+                        - img [ref=e402]
+                    - generic [ref=e403]:
+                      - generic [ref=e406]:
+                        - paragraph [ref=e407]: Commercial Real Estate
+                        - paragraph [ref=e408]: 27.812305779987568% • $89,500.00
+                      - generic [ref=e411]:
+                        - paragraph [ref=e412]: Precious Metals
+                        - paragraph [ref=e413]: 21.193287756370417% • $68,200.00
+                      - generic [ref=e416]:
+                        - paragraph [ref=e417]: Fine Art
+                        - paragraph [ref=e418]: 18.116842759477937% • $58,300.00
+                      - generic [ref=e421]:
+                        - paragraph [ref=e422]: Renewable Energy
+                        - paragraph [ref=e423]: 13.331261653200746% • $42,900.00
+                      - generic [ref=e426]:
+                        - paragraph [ref=e427]: Luxury Vehicles
+                        - paragraph [ref=e428]: 19.546302050963334% • $62,900.00
+              - generic [ref=e429]:
+                - generic [ref=e430]:
+                  - generic [ref=e431]:
+                    - heading "Your Assets" [level=3] [ref=e432]
+                    - paragraph [ref=e433]: All your tokenized asset investments
+                  - button "View All (5)" [ref=e434] [cursor=pointer]:
+                    - img [ref=e435] [cursor=pointer]
+                    - generic [ref=e438] [cursor=pointer]: View All (5)
+                - generic [ref=e439]:
+                  - generic [ref=e440] [cursor=pointer]:
+                    - img "Austin Tech Hub Office Complex" [ref=e443] [cursor=pointer]
+                    - generic [ref=e444] [cursor=pointer]:
+                      - generic [ref=e445] [cursor=pointer]:
+                        - generic [ref=e446] [cursor=pointer]:
+                          - generic [ref=e447] [cursor=pointer]:
+                            - paragraph [ref=e448] [cursor=pointer]: Austin Tech Hub Office Complex
+                            - generic [ref=e449] [cursor=pointer]: Diamond
+                          - paragraph [ref=e450] [cursor=pointer]: Commercial Real Estate • 850 tokens
+                        - generic [ref=e451] [cursor=pointer]:
+                          - paragraph [ref=e452] [cursor=pointer]: $89,500
+                          - generic [ref=e453] [cursor=pointer]:
+                            - generic [ref=e454] [cursor=pointer]: +19.3%
+                            - img [ref=e455] [cursor=pointer]
+                      - generic [ref=e458] [cursor=pointer]:
+                        - generic [ref=e459] [cursor=pointer]: "Invested: $75,000"
+                        - generic [ref=e460] [cursor=pointer]: Premium Dividend Bonus
+                  - generic [ref=e464] [cursor=pointer]:
+                    - img "Diversified Precious Metals Fund" [ref=e467] [cursor=pointer]
+                    - generic [ref=e468] [cursor=pointer]:
+                      - generic [ref=e469] [cursor=pointer]:
+                        - generic [ref=e470] [cursor=pointer]:
+                          - generic [ref=e471] [cursor=pointer]:
+                            - paragraph [ref=e472] [cursor=pointer]: Diversified Precious Metals Fund
+                            - generic [ref=e473] [cursor=pointer]: Gold
+                          - paragraph [ref=e474] [cursor=pointer]: Precious Metals • 680 tokens
+                        - generic [ref=e475] [cursor=pointer]:
+                          - paragraph [ref=e476] [cursor=pointer]: $68,200
+                          - generic [ref=e477] [cursor=pointer]:
+                            - generic [ref=e478] [cursor=pointer]: +13.7%
+                            - img [ref=e479] [cursor=pointer]
+                      - generic [ref=e482] [cursor=pointer]:
+                        - generic [ref=e483] [cursor=pointer]: "Invested: $60,000"
+                        - generic [ref=e484] [cursor=pointer]: Gold Dividend Bonus
+                  - generic [ref=e488] [cursor=pointer]:
+                    - img "Contemporary Art Investment Portfolio" [ref=e491] [cursor=pointer]
+                    - generic [ref=e492] [cursor=pointer]:
+                      - generic [ref=e493] [cursor=pointer]:
+                        - generic [ref=e494] [cursor=pointer]:
+                          - generic [ref=e495] [cursor=pointer]:
+                            - paragraph [ref=e496] [cursor=pointer]: Contemporary Art Investment Portfolio
+                            - generic [ref=e497] [cursor=pointer]: Platinum
+                          - paragraph [ref=e498] [cursor=pointer]: Fine Art • 125 tokens
+                        - generic [ref=e499] [cursor=pointer]:
+                          - paragraph [ref=e500] [cursor=pointer]: $58,300
+                          - generic [ref=e501] [cursor=pointer]:
+                            - generic [ref=e502] [cursor=pointer]: +16.6%
+                            - img [ref=e503] [cursor=pointer]
+                      - generic [ref=e506] [cursor=pointer]:
+                        - generic [ref=e507] [cursor=pointer]: "Invested: $50,000"
+                        - generic [ref=e508] [cursor=pointer]: Gallery VIP Access
+                  - generic [ref=e512] [cursor=pointer]:
+                    - img "Clean Energy Infrastructure Fund" [ref=e515] [cursor=pointer]
+                    - generic [ref=e516] [cursor=pointer]:
+                      - generic [ref=e517] [cursor=pointer]:
+                        - generic [ref=e518] [cursor=pointer]:
+                          - generic [ref=e519] [cursor=pointer]:
+                            - paragraph [ref=e520] [cursor=pointer]: Clean Energy Infrastructure Fund
+                            - generic [ref=e521] [cursor=pointer]: Gold
+                          - paragraph [ref=e522] [cursor=pointer]: Renewable Energy • 350 tokens
+                        - generic [ref=e523] [cursor=pointer]:
+                          - paragraph [ref=e524] [cursor=pointer]: $42,900
+                          - generic [ref=e525] [cursor=pointer]:
+                            - generic [ref=e526] [cursor=pointer]: +12.9%
+                            - img [ref=e527] [cursor=pointer]
+                      - generic [ref=e530] [cursor=pointer]:
+                        - generic [ref=e531] [cursor=pointer]: "Invested: $38,000"
+                        - generic [ref=e532] [cursor=pointer]: Green Energy Bonus
+                  - generic [ref=e536] [cursor=pointer]:
+                    - img "Luxury Vehicle Collection Fund" [ref=e539] [cursor=pointer]
+                    - generic [ref=e540] [cursor=pointer]:
+                      - generic [ref=e541] [cursor=pointer]:
+                        - generic [ref=e542] [cursor=pointer]:
+                          - generic [ref=e543] [cursor=pointer]:
+                            - paragraph [ref=e544] [cursor=pointer]: Luxury Vehicle Collection Fund
+                            - generic [ref=e545] [cursor=pointer]: Platinum
+                          - paragraph [ref=e546] [cursor=pointer]: Luxury Vehicles • 200 tokens
+                        - generic [ref=e547] [cursor=pointer]:
+                          - paragraph [ref=e548] [cursor=pointer]: $62,900
+                          - generic [ref=e549] [cursor=pointer]:
+                            - generic [ref=e550] [cursor=pointer]: +16.7%
+                            - img [ref=e551] [cursor=pointer]
+                      - generic [ref=e554] [cursor=pointer]:
+                        - generic [ref=e555] [cursor=pointer]: "Invested: $53,909"
+                        - generic [ref=e556] [cursor=pointer]: Luxury Bonus
+    - generic [ref=e560]:
+      - img [ref=e562]
+      - button "Open Tanstack query devtools" [ref=e611] [cursor=pointer]:
+        - img [ref=e612] [cursor=pointer]
+  - generic [ref=e662]: $0
+```

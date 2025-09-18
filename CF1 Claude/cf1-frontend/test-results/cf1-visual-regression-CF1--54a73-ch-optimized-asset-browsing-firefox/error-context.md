@@ -1,0 +1,408 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e2]:
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - img [ref=e7]
+        - heading "Performance" [level=3] [ref=e9]
+      - button "×" [ref=e10] [cursor=pointer]
+    - generic [ref=e11]:
+      - generic [ref=e12]:
+        - generic [ref=e13]:
+          - img [ref=e14]
+          - generic [ref=e17]: Page Load Time
+        - generic [ref=e18]: N/A
+      - generic [ref=e19]:
+        - generic [ref=e20]:
+          - img [ref=e21]
+          - generic [ref=e24]: API Response Time
+        - generic [ref=e25]: N/A
+      - generic [ref=e26]:
+        - generic [ref=e27]:
+          - img [ref=e28]
+          - generic [ref=e31]: Error Rate
+        - generic [ref=e32]: N/A
+    - generic [ref=e34]:
+      - generic [ref=e35]: Events Tracked
+      - generic [ref=e36]: "5"
+  - generic [ref=e37]:
+    - banner [ref=e38]:
+      - generic [ref=e39]:
+        - button "Open navigation menu" [ref=e40] [cursor=pointer]:
+          - img [ref=e41] [cursor=pointer]
+        - generic [ref=e45]:
+          - generic [ref=e47]: CF1
+          - generic [ref=e48]: CF1 Platform
+        - generic [ref=e49]: DEMO MODE
+      - generic [ref=e50]:
+        - button "8" [ref=e51] [cursor=pointer]:
+          - img [ref=e52] [cursor=pointer]
+          - generic [ref=e56] [cursor=pointer]: "8"
+        - button "Connect wallet" [ref=e57] [cursor=pointer]:
+          - img [ref=e58] [cursor=pointer]
+    - navigation "Mobile navigation" [ref=e61]:
+      - generic [ref=e62]:
+        - generic [ref=e63]:
+          - generic [ref=e65]: CF1
+          - generic [ref=e66]: CF1 Platform
+        - button "Close navigation" [ref=e67] [cursor=pointer]:
+          - img [ref=e68] [cursor=pointer]
+      - generic [ref=e72]:
+        - link "Dashboard Platform overview and metrics" [ref=e73] [cursor=pointer]:
+          - /url: /dashboard
+          - img [ref=e75] [cursor=pointer]
+          - generic [ref=e80] [cursor=pointer]:
+            - paragraph [ref=e81] [cursor=pointer]: Dashboard
+            - paragraph [ref=e82] [cursor=pointer]: Platform overview and metrics
+        - link "Portfolio Your investments and performance" [ref=e83] [cursor=pointer]:
+          - /url: /portfolio
+          - img [ref=e85] [cursor=pointer]
+          - generic [ref=e88] [cursor=pointer]:
+            - paragraph [ref=e89] [cursor=pointer]: Portfolio
+            - paragraph [ref=e90] [cursor=pointer]: Your investments and performance
+        - link "Launchpad New asset launches" [ref=e91] [cursor=pointer]:
+          - /url: /launchpad
+          - img [ref=e93] [cursor=pointer]
+          - generic [ref=e98] [cursor=pointer]:
+            - paragraph [ref=e99] [cursor=pointer]: Launchpad
+            - paragraph [ref=e100] [cursor=pointer]: New asset launches
+        - link "Voting Voting and proposals" [ref=e101] [cursor=pointer]:
+          - /url: /governance
+          - img [ref=e103] [cursor=pointer]
+          - generic [ref=e107] [cursor=pointer]:
+            - paragraph [ref=e108] [cursor=pointer]: Voting
+            - paragraph [ref=e109] [cursor=pointer]: Voting and proposals
+      - generic [ref=e110]:
+        - heading "Account" [level=3] [ref=e112]
+        - generic [ref=e113]:
+          - link "Profile" [ref=e114] [cursor=pointer]:
+            - /url: /profile
+            - img [ref=e115] [cursor=pointer]
+            - generic [ref=e118] [cursor=pointer]: Profile
+          - link "Settings" [ref=e119] [cursor=pointer]:
+            - /url: /profile/settings
+            - img [ref=e120] [cursor=pointer]
+            - generic [ref=e123] [cursor=pointer]: Settings
+          - button "Light Mode" [ref=e124] [cursor=pointer]:
+            - img [ref=e125] [cursor=pointer]
+            - generic [ref=e135] [cursor=pointer]: Light Mode
+      - generic [ref=e137]:
+        - button "Connect Wallet" [ref=e138] [cursor=pointer]:
+          - img [ref=e139] [cursor=pointer]
+          - generic [ref=e142] [cursor=pointer]: Connect Wallet
+        - paragraph [ref=e143]: Connect your wallet to access all features
+    - main "Main content" [ref=e145]:
+      - generic [ref=e148]:
+        - generic [ref=e149]:
+          - generic [ref=e150]:
+            - img [ref=e152]
+            - generic [ref=e157]:
+              - generic [ref=e158]:
+                - heading "Secondary Marketplace" [level=1] [ref=e159]
+                - generic [ref=e160]:
+                  - img [ref=e161]
+                  - generic [ref=e164]: DEMO MODE
+                - generic [ref=e165]: DEMO
+              - paragraph [ref=e166]: Trade tokenized assets with other investors
+          - generic [ref=e167]:
+            - generic [ref=e168]:
+              - generic [ref=e169]:
+                - paragraph [ref=e170]: Total Listings
+                - paragraph [ref=e171]: "10"
+              - generic [ref=e172]:
+                - paragraph [ref=e173]: 24h Volume
+                - paragraph [ref=e174]: $1,682,125
+              - generic [ref=e175]:
+                - paragraph [ref=e176]: Active Trades
+                - paragraph [ref=e177]: "7"
+            - button "Refresh" [ref=e178] [cursor=pointer]:
+              - img [ref=e179] [cursor=pointer]
+              - generic [ref=e184] [cursor=pointer]: Refresh
+        - generic [ref=e185]:
+          - generic [ref=e187]:
+            - button "Listings" [ref=e188] [cursor=pointer]:
+              - img [ref=e189] [cursor=pointer]
+              - generic [ref=e193] [cursor=pointer]: Listings
+            - button "Order Book" [ref=e194] [cursor=pointer]:
+              - img [ref=e195] [cursor=pointer]
+              - generic [ref=e200] [cursor=pointer]: Order Book
+            - button "Trade History" [ref=e201] [cursor=pointer]:
+              - img [ref=e202] [cursor=pointer]
+              - generic [ref=e205] [cursor=pointer]: Trade History
+            - button "My Orders" [ref=e206] [cursor=pointer]:
+              - img [ref=e207] [cursor=pointer]
+              - generic [ref=e212] [cursor=pointer]: My Orders
+          - generic [ref=e213]:
+            - button "Filters" [ref=e214] [cursor=pointer]:
+              - img [ref=e215] [cursor=pointer]
+              - generic [ref=e217] [cursor=pointer]: Filters
+            - generic [ref=e218]:
+              - img [ref=e219]
+              - textbox "Search listings..." [ref=e222]
+        - table [ref=e225]:
+          - rowgroup [ref=e226]:
+            - row "Asset Price Quantity 24h Volume 24h Change Status Actions" [ref=e227]:
+              - cell "Asset" [ref=e228]
+              - cell "Price" [ref=e229] [cursor=pointer]:
+                - generic [ref=e230] [cursor=pointer]:
+                  - generic [ref=e231] [cursor=pointer]: Price
+                  - img [ref=e232] [cursor=pointer]
+              - cell "Quantity" [ref=e237]
+              - cell "24h Volume" [ref=e238] [cursor=pointer]:
+                - generic [ref=e239] [cursor=pointer]:
+                  - generic [ref=e240] [cursor=pointer]: 24h Volume
+                  - img [ref=e241] [cursor=pointer]
+              - cell "24h Change" [ref=e246] [cursor=pointer]:
+                - generic [ref=e247] [cursor=pointer]:
+                  - generic [ref=e248] [cursor=pointer]: 24h Change
+                  - img [ref=e249] [cursor=pointer]
+              - cell "Status" [ref=e254]
+              - cell "Actions" [ref=e255]
+          - rowgroup [ref=e256]:
+            - 'row "S Solar Energy Project Alpha Renewable Energy • GreenTech Investments $105.50 Last: $102.30 1,000 tokens Min: 100 $25,000.00 +3.13% active Trade Order Book" [ref=e257]':
+              - cell "S Solar Energy Project Alpha Renewable Energy • GreenTech Investments" [ref=e258]:
+                - generic [ref=e259]:
+                  - generic [ref=e262]: S
+                  - generic [ref=e263]:
+                    - generic [ref=e264]: Solar Energy Project Alpha
+                    - generic [ref=e265]: Renewable Energy • GreenTech Investments
+              - 'cell "$105.50 Last: $102.30" [ref=e266]':
+                - generic [ref=e267]: $105.50
+                - generic [ref=e268]: "Last: $102.30"
+              - 'cell "1,000 tokens Min: 100" [ref=e269]':
+                - generic [ref=e270]: 1,000 tokens
+                - generic [ref=e271]: "Min: 100"
+              - cell "$25,000.00" [ref=e272]:
+                - generic [ref=e273]: $25,000.00
+              - cell "+3.13%" [ref=e274]:
+                - generic [ref=e275]: +3.13%
+              - cell "active" [ref=e276]:
+                - generic [ref=e277]: active
+                - img [ref=e278]
+              - cell "Trade Order Book" [ref=e281]:
+                - generic [ref=e282]:
+                  - button "Trade" [ref=e283] [cursor=pointer]
+                  - button "Order Book" [ref=e284] [cursor=pointer]
+            - 'row "M Miami Beach Resort Portfolio Real Estate • Coastal Properties Inc $320.00 Last: $315.50 750 tokens Min: 50 $18,500.00 +1.43% active Trade Order Book" [ref=e285]':
+              - cell "M Miami Beach Resort Portfolio Real Estate • Coastal Properties Inc" [ref=e286]:
+                - generic [ref=e287]:
+                  - generic [ref=e290]: M
+                  - generic [ref=e291]:
+                    - generic [ref=e292]: Miami Beach Resort Portfolio
+                    - generic [ref=e293]: Real Estate • Coastal Properties Inc
+              - 'cell "$320.00 Last: $315.50" [ref=e294]':
+                - generic [ref=e295]: $320.00
+                - generic [ref=e296]: "Last: $315.50"
+              - 'cell "750 tokens Min: 50" [ref=e297]':
+                - generic [ref=e298]: 750 tokens
+                - generic [ref=e299]: "Min: 50"
+              - cell "$18,500.00" [ref=e300]:
+                - generic [ref=e301]: $18,500.00
+              - cell "+1.43%" [ref=e302]:
+                - generic [ref=e303]: +1.43%
+              - cell "active" [ref=e304]:
+                - generic [ref=e305]: active
+                - img [ref=e306]
+              - cell "Trade Order Book" [ref=e309]:
+                - generic [ref=e310]:
+                  - button "Trade" [ref=e311] [cursor=pointer]
+                  - button "Order Book" [ref=e312] [cursor=pointer]
+            - 'row "I Industrial Logistics Center Real Estate • Logistics Real Estate REIT $275.75 Last: $272.50 800 tokens Min: 75 $16,200.00 +1.19% active Trade Order Book" [ref=e313]':
+              - cell "I Industrial Logistics Center Real Estate • Logistics Real Estate REIT" [ref=e314]:
+                - generic [ref=e315]:
+                  - generic [ref=e318]: I
+                  - generic [ref=e319]:
+                    - generic [ref=e320]: Industrial Logistics Center
+                    - generic [ref=e321]: Real Estate • Logistics Real Estate REIT
+              - 'cell "$275.75 Last: $272.50" [ref=e322]':
+                - generic [ref=e323]: $275.75
+                - generic [ref=e324]: "Last: $272.50"
+              - 'cell "800 tokens Min: 75" [ref=e325]':
+                - generic [ref=e326]: 800 tokens
+                - generic [ref=e327]: "Min: 75"
+              - cell "$16,200.00" [ref=e328]:
+                - generic [ref=e329]: $16,200.00
+              - cell "+1.19%" [ref=e330]:
+                - generic [ref=e331]: +1.19%
+              - cell "active" [ref=e332]:
+                - generic [ref=e333]: active
+                - img [ref=e334]
+              - cell "Trade Order Book" [ref=e337]:
+                - generic [ref=e338]:
+                  - button "Trade" [ref=e339] [cursor=pointer]
+                  - button "Order Book" [ref=e340] [cursor=pointer]
+            - 'row "P Physical Gold Vault Gamma Precious Metals • Precious Assets Fund $85.25 Last: $84.10 2,000 tokens Min: 25 $15,750.00 +1.37% active Trade Order Book" [ref=e341]':
+              - cell "P Physical Gold Vault Gamma Precious Metals • Precious Assets Fund" [ref=e342]:
+                - generic [ref=e343]:
+                  - generic [ref=e346]: P
+                  - generic [ref=e347]:
+                    - generic [ref=e348]: Physical Gold Vault Gamma
+                    - generic [ref=e349]: Precious Metals • Precious Assets Fund
+              - 'cell "$85.25 Last: $84.10" [ref=e350]':
+                - generic [ref=e351]: $85.25
+                - generic [ref=e352]: "Last: $84.10"
+              - 'cell "2,000 tokens Min: 25" [ref=e353]':
+                - generic [ref=e354]: 2,000 tokens
+                - generic [ref=e355]: "Min: 25"
+              - cell "$15,750.00" [ref=e356]:
+                - generic [ref=e357]: $15,750.00
+              - cell "+1.37%" [ref=e358]:
+                - generic [ref=e359]: +1.37%
+              - cell "active" [ref=e360]:
+                - generic [ref=e361]: active
+                - img [ref=e362]
+              - cell "Trade Order Book" [ref=e365]:
+                - generic [ref=e366]:
+                  - button "Trade" [ref=e367] [cursor=pointer]
+                  - button "Order Book" [ref=e368] [cursor=pointer]
+            - 'row "V Verified Carbon Credits Portfolio Environmental • Green Carbon Solutions $65.00 Last: $63.50 1,500 tokens Min: 100 $14,200.00 +2.36% active Trade Order Book" [ref=e369]':
+              - cell "V Verified Carbon Credits Portfolio Environmental • Green Carbon Solutions" [ref=e370]:
+                - generic [ref=e371]:
+                  - generic [ref=e374]: V
+                  - generic [ref=e375]:
+                    - generic [ref=e376]: Verified Carbon Credits Portfolio
+                    - generic [ref=e377]: Environmental • Green Carbon Solutions
+              - 'cell "$65.00 Last: $63.50" [ref=e378]':
+                - generic [ref=e379]: $65.00
+                - generic [ref=e380]: "Last: $63.50"
+              - 'cell "1,500 tokens Min: 100" [ref=e381]':
+                - generic [ref=e382]: 1,500 tokens
+                - generic [ref=e383]: "Min: 100"
+              - cell "$14,200.00" [ref=e384]:
+                - generic [ref=e385]: $14,200.00
+              - cell "+2.36%" [ref=e386]:
+                - generic [ref=e387]: +2.36%
+              - cell "active" [ref=e388]:
+                - generic [ref=e389]: active
+                - img [ref=e390]
+              - cell "Trade Order Book" [ref=e393]:
+                - generic [ref=e394]:
+                  - button "Trade" [ref=e395] [cursor=pointer]
+                  - button "Order Book" [ref=e396] [cursor=pointer]
+            - 'row "T Technology Startup Fund Delta Private Equity • Innovation Capital $150.25 Last: $148.80 1,200 tokens Min: 100 $12,750.00 +0.97% active Trade Order Book" [ref=e397]':
+              - cell "T Technology Startup Fund Delta Private Equity • Innovation Capital" [ref=e398]:
+                - generic [ref=e399]:
+                  - generic [ref=e402]: T
+                  - generic [ref=e403]:
+                    - generic [ref=e404]: Technology Startup Fund Delta
+                    - generic [ref=e405]: Private Equity • Innovation Capital
+              - 'cell "$150.25 Last: $148.80" [ref=e406]':
+                - generic [ref=e407]: $150.25
+                - generic [ref=e408]: "Last: $148.80"
+              - 'cell "1,200 tokens Min: 100" [ref=e409]':
+                - generic [ref=e410]: 1,200 tokens
+                - generic [ref=e411]: "Min: 100"
+              - cell "$12,750.00" [ref=e412]:
+                - generic [ref=e413]: $12,750.00
+              - cell "+0.97%" [ref=e414]:
+                - generic [ref=e415]: +0.97%
+              - cell "active" [ref=e416]:
+                - generic [ref=e417]: active
+                - img [ref=e418]
+              - cell "Trade Order Book" [ref=e421]:
+                - generic [ref=e422]:
+                  - button "Trade" [ref=e423] [cursor=pointer]
+                  - button "Order Book" [ref=e424] [cursor=pointer]
+            - 'row "U University Student Housing Complex Real Estate • Education Properties Fund $195.25 Last: $193.80 600 tokens Min: 50 $9,500.00 +0.75% active Trade Order Book" [ref=e425]':
+              - cell "U University Student Housing Complex Real Estate • Education Properties Fund" [ref=e426]:
+                - generic [ref=e427]:
+                  - generic [ref=e430]: U
+                  - generic [ref=e431]:
+                    - generic [ref=e432]: University Student Housing Complex
+                    - generic [ref=e433]: Real Estate • Education Properties Fund
+              - 'cell "$195.25 Last: $193.80" [ref=e434]':
+                - generic [ref=e435]: $195.25
+                - generic [ref=e436]: "Last: $193.80"
+              - 'cell "600 tokens Min: 50" [ref=e437]':
+                - generic [ref=e438]: 600 tokens
+                - generic [ref=e439]: "Min: 50"
+              - cell "$9,500.00" [ref=e440]:
+                - generic [ref=e441]: $9,500.00
+              - cell "+0.75%" [ref=e442]:
+                - generic [ref=e443]: +0.75%
+              - cell "active" [ref=e444]:
+                - generic [ref=e445]: active
+                - img [ref=e446]
+              - cell "Trade Order Book" [ref=e449]:
+                - generic [ref=e450]:
+                  - button "Trade" [ref=e451] [cursor=pointer]
+                  - button "Order Book" [ref=e452] [cursor=pointer]
+            - 'row "P Premium Wine Collection Collectibles • Vintage Assets Ltd $425.50 Last: $420.00 400 tokens Min: 25 $8,900.00 +1.31% partial Trade Order Book" [ref=e453]':
+              - cell "P Premium Wine Collection Collectibles • Vintage Assets Ltd" [ref=e454]:
+                - generic [ref=e455]:
+                  - generic [ref=e458]: P
+                  - generic [ref=e459]:
+                    - generic [ref=e460]: Premium Wine Collection
+                    - generic [ref=e461]: Collectibles • Vintage Assets Ltd
+              - 'cell "$425.50 Last: $420.00" [ref=e462]':
+                - generic [ref=e463]: $425.50
+                - generic [ref=e464]: "Last: $420.00"
+              - 'cell "400 tokens Min: 25" [ref=e465]':
+                - generic [ref=e466]: 400 tokens
+                - generic [ref=e467]: "Min: 25"
+              - cell "$8,900.00" [ref=e468]:
+                - generic [ref=e469]: $8,900.00
+              - cell "+1.31%" [ref=e470]:
+                - generic [ref=e471]: +1.31%
+              - cell "partial" [ref=e472]:
+                - generic [ref=e473]: partial
+                - img [ref=e474]
+              - cell "Trade Order Book" [ref=e477]:
+                - generic [ref=e478]:
+                  - button "Trade" [ref=e479] [cursor=pointer]
+                  - button "Order Book" [ref=e480] [cursor=pointer]
+            - 'row "C Commercial Real Estate Fund Beta Real Estate • Property Ventures LLC $250.75 Last: $248.90 500 tokens Min: 50 $8,500.00 +0.74% partial Trade Order Book" [ref=e481]':
+              - cell "C Commercial Real Estate Fund Beta Real Estate • Property Ventures LLC" [ref=e482]:
+                - generic [ref=e483]:
+                  - generic [ref=e486]: C
+                  - generic [ref=e487]:
+                    - generic [ref=e488]: Commercial Real Estate Fund Beta
+                    - generic [ref=e489]: Real Estate • Property Ventures LLC
+              - 'cell "$250.75 Last: $248.90" [ref=e490]':
+                - generic [ref=e491]: $250.75
+                - generic [ref=e492]: "Last: $248.90"
+              - 'cell "500 tokens Min: 50" [ref=e493]':
+                - generic [ref=e494]: 500 tokens
+                - generic [ref=e495]: "Min: 50"
+              - cell "$8,500.00" [ref=e496]:
+                - generic [ref=e497]: $8,500.00
+              - cell "+0.74%" [ref=e498]:
+                - generic [ref=e499]: +0.74%
+              - cell "partial" [ref=e500]:
+                - generic [ref=e501]: partial
+                - img [ref=e502]
+              - cell "Trade Order Book" [ref=e505]:
+                - generic [ref=e506]:
+                  - button "Trade" [ref=e507] [cursor=pointer]
+                  - button "Order Book" [ref=e508] [cursor=pointer]
+            - 'row "C Classic Car Collection Fund Luxury Vehicles • Heritage Auto Investments $850.00 Last: $840.00 300 tokens Min: 10 $6,800.00 +1.19% partial Trade Order Book" [ref=e509]':
+              - cell "C Classic Car Collection Fund Luxury Vehicles • Heritage Auto Investments" [ref=e510]:
+                - generic [ref=e511]:
+                  - generic [ref=e514]: C
+                  - generic [ref=e515]:
+                    - generic [ref=e516]: Classic Car Collection Fund
+                    - generic [ref=e517]: Luxury Vehicles • Heritage Auto Investments
+              - 'cell "$850.00 Last: $840.00" [ref=e518]':
+                - generic [ref=e519]: $850.00
+                - generic [ref=e520]: "Last: $840.00"
+              - 'cell "300 tokens Min: 10" [ref=e521]':
+                - generic [ref=e522]: 300 tokens
+                - generic [ref=e523]: "Min: 10"
+              - cell "$6,800.00" [ref=e524]:
+                - generic [ref=e525]: $6,800.00
+              - cell "+1.19%" [ref=e526]:
+                - generic [ref=e527]: +1.19%
+              - cell "partial" [ref=e528]:
+                - generic [ref=e529]: partial
+                - img [ref=e530]
+              - cell "Trade Order Book" [ref=e533]:
+                - generic [ref=e534]:
+                  - button "Trade" [ref=e535] [cursor=pointer]
+                  - button "Order Book" [ref=e536] [cursor=pointer]
+  - generic [ref=e537]:
+    - img [ref=e539]
+    - button "Open Tanstack query devtools" [ref=e588] [cursor=pointer]:
+      - img [ref=e589] [cursor=pointer]
+```

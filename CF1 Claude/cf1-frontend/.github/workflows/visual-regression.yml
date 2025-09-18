@@ -1,0 +1,171 @@
+name: 'CF1 Visual Regression Tests'
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'index.html'
+      - 'package.json'
+      - 'vite.config.ts'
+      - 'tailwind.config.js'
+  workflow_dispatch: # Allows manual triggering
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  visual-tests:
+    name: 'Visual Regression Testing'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: 'Checkout Repository'
+        uses: actions/checkout@v4
+
+      - name: 'Setup Node.js'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 'Install Dependencies'
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: 'Build Application'
+        run: |
+          npm run build
+          npm run preview &
+          # Wait for preview server to be ready
+          npx wait-on http://localhost:4173 --timeout 60000
+
+      - name: 'Run Visual Tests'
+        run: npm run visual:test
+        env:
+          BROWSERBASE_API_KEY: ${{ secrets.BROWSERBASE_API_KEY }}
+          BROWSERBASE_PROJECT_ID: ${{ secrets.BROWSERBASE_PROJECT_ID }}
+          CI: true
+          # Use staging URL for comparison baseline
+          BASELINE_URL: 'https://rwa2.netlify.app'
+
+      - name: 'Upload Test Results'
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: visual-test-results
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 7
+
+      - name: 'Upload Visual Diff Report'
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: visual-diff-report
+          path: playwright-report/
+          retention-days: 30
+
+      - name: 'Comment PR with Results'
+        uses: actions/github-script@v7
+        if: failure() && github.event_name == 'pull_request'
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { owner, repo, number } = context.issue;
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number: number,
+              body: `
+              ## 🔍 Visual Regression Detected
+
+              Visual differences were detected in this PR. Please review the changes:
+
+              1. **Download the visual diff report** from the Actions artifacts
+              2. **Review each highlighted difference** to ensure it's intentional
+              3. **Update baselines** if the changes are correct by running \`npm run visual:update\`
+
+              ### 🎯 CF1 Visual Standards
+              - Maintain "TradFi Feel, DeFi Engine" design consistency
+              - Ensure mobile/desktop layouts remain professional
+              - Verify accessibility (WCAG 2.1 AA) isn't impacted
+              - Check dark mode compatibility
+
+              If these changes are intentional, update the baselines and re-run the tests.
+              `
+            });
+
+  lighthouse-performance:
+    name: 'Performance Baseline Check'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: visual-tests
+    if: always() # Run even if visual tests fail
+
+    steps:
+      - name: 'Checkout Repository'
+        uses: actions/checkout@v4
+
+      - name: 'Setup Node.js'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 'Install Dependencies'
+        run: npm ci
+
+      - name: 'Build and Start Preview'
+        run: |
+          npm run build
+          npm run preview &
+          npx wait-on http://localhost:4173 --timeout 60000
+
+      - name: 'Run Lighthouse Performance Tests'
+        uses: treosh/lighthouse-ci-action@v10
+        with:
+          configPath: './lighthouse.config.js'
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+
+      - name: 'Comment Performance Results'
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            try {
+              const lhciResults = JSON.parse(fs.readFileSync('./lhci_reports/manifest.json'));
+              const summary = lhciResults[0].summary;
+
+              const { owner, repo, number } = context.issue;
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: number,
+                body: `
+                ## ⚡ Performance Report
+
+                **Core Web Vitals:**
+                - **Performance**: ${Math.round(summary.performance * 100)}/100
+                - **Accessibility**: ${Math.round(summary.accessibility * 100)}/100
+                - **Best Practices**: ${Math.round(summary['best-practices'] * 100)}/100
+                - **SEO**: ${Math.round(summary.seo * 100)}/100
+
+                ### 🎯 CF1 Performance Standards
+                - Target: Performance > 85 (TradFi user expectations)
+                - Accessibility > 95 (WCAG 2.1 AA compliance)
+                - Mobile performance critical for enterprise adoption
+
+                [View detailed report](${process.env.LHCI_BUILD_URL || 'Check artifacts'})
+                `
+              });
+            } catch (error) {
+              console.log('Could not parse Lighthouse results:', error);
+            }
