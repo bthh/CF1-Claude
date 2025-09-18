@@ -23,12 +23,11 @@ const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) => {
   const location = useLocation();
 
   const [isCollapsed, setIsCollapsed] = useState(() => {
-    // Default to collapsed if we're on the dashboard page
-    const isDashboardPage = location.pathname === '/dashboard' || location.pathname === '/';
+    // Default to collapsed for all pages
     const savedState = localStorage.getItem('sidebar-collapsed');
 
-    if (isDashboardPage && savedState === null) {
-      return true; // Default collapsed for dashboard
+    if (savedState === null) {
+      return true; // Default collapsed for all pages
     }
     return savedState === 'true';
   });
@@ -40,13 +39,12 @@ const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) => {
   const sidebarRef = useRef<HTMLElement>(null);
   const resizeHandleRef = useRef<HTMLDivElement>(null);
 
-  // Update collapsed state when navigating to/from dashboard
+  // Update collapsed state when navigating (default to collapsed for all pages)
   useEffect(() => {
-    const isDashboardPage = location.pathname === '/dashboard' || location.pathname === '/';
     const savedState = localStorage.getItem('sidebar-collapsed');
 
-    // If user hasn't explicitly set a preference and we're on dashboard, collapse it
-    if (isDashboardPage && savedState === null) {
+    // If user hasn't explicitly set a preference, default to collapsed
+    if (savedState === null) {
       setIsCollapsed(true);
     }
   }, [location.pathname]);
@@ -342,18 +340,20 @@ const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) => {
         </div>
       </div>
       
-      {/* Resize Handle */}
-      <div
-        ref={resizeHandleRef}
-        className="absolute top-0 right-0 w-1 h-full cursor-col-resize group hover:w-2 transition-all duration-200"
-        onMouseDown={handleMouseDown}
-        title="Drag to resize sidebar"
-      >
-        <div className="absolute inset-0 bg-transparent group-hover:bg-blue-500/20 transition-colors" />
-        <div className="absolute top-1/2 right-0 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <GripVertical className="w-3 h-3 text-gray-400 group-hover:text-blue-500" />
+      {/* Resize Handle - Only show when not collapsed */}
+      {!isCollapsed && (
+        <div
+          ref={resizeHandleRef}
+          className="absolute top-0 right-0 w-1 h-full cursor-col-resize group hover:w-2 transition-all duration-200"
+          onMouseDown={handleMouseDown}
+          title="Drag to resize sidebar"
+        >
+          <div className="absolute inset-0 bg-transparent group-hover:bg-blue-500/20 transition-colors" />
+          <div className="absolute top-1/2 right-0 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <GripVertical className="w-3 h-3 text-gray-400 group-hover:text-blue-500" />
+          </div>
         </div>
-      </div>
+      )}
     </aside>
   );
 };

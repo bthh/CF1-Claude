@@ -413,18 +413,24 @@ const DiscoveryHub: React.FC = memo(() => {
               </div>
 
               {/* Quick Filters */}
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-3 items-center">
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Categories:</span>
-                {['All', 'Real Estate', 'Technology', 'Commodities', 'Collectibles', 'Energy'].map((category) => (
-                  <CF1Button
-                    key={category}
-                    size="small"
-                    variant={searchFilters.category.includes(category.toLowerCase()) || category === 'All' ? 'secondary' : 'outline'}
-                    onClick={() => handleFilterChange(category)}
-                  >
-                    {category}
-                  </CF1Button>
-                ))}
+                {['All', 'Real Estate', 'Technology', 'Commodities', 'Collectibles', 'Energy'].map((category) => {
+                  const isActive = searchFilters.category.includes(category.toLowerCase()) || category === 'All';
+                  return (
+                    <button
+                      key={category}
+                      onClick={() => handleFilterChange(category)}
+                      className={`px-4 py-2 text-sm font-medium rounded-full transition-all duration-200 hover:scale-105 ${
+                        isActive
+                          ? 'bg-blue-100 text-blue-700 border-2 border-blue-300 shadow-sm dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-600'
+                          : 'bg-gray-100 text-gray-700 border-2 border-gray-200 hover:bg-gray-200 hover:border-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600 dark:hover:border-gray-500'
+                      }`}
+                    >
+                      {category}
+                    </button>
+                  );
+                })}
               </div>
 
               {/* Search Stats */}
