@@ -35,56 +35,160 @@
 /* Custom component classes for dark mode support */
 @layer components {
   .card {
-    @apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm;
+    @apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-responsive-lg shadow-sm;
   }
-  
+
   .card-hover {
-    @apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm hover:shadow-md transition-shadow;
+    @apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-responsive-lg shadow-sm hover:shadow-md transition-shadow;
   }
-  
+
+  /* Responsive Card Variants */
+  .card-responsive {
+    @apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-responsive-lg shadow-sm p-responsive-4;
+  }
+
+  .card-responsive-sm {
+    @apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-responsive-md shadow-sm p-responsive-3;
+  }
+
+  .card-responsive-lg {
+    @apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-responsive-xl shadow-sm p-responsive-6;
+  }
+
   /* Text colors */
   .text-primary-600 {
     @apply text-blue-600 dark:text-blue-400;
   }
-  
+
   .text-secondary-900 {
     @apply text-gray-900 dark:text-white;
   }
-  
+
   .text-secondary-600 {
     @apply text-gray-600 dark:text-gray-400;
   }
-  
+
   .text-secondary-100 {
     @apply text-gray-100 dark:text-gray-800;
   }
-  
+
   .text-success-500 {
     @apply text-green-500 dark:text-green-400;
   }
-  
+
   .text-success-600 {
     @apply text-green-600 dark:text-green-400;
   }
-  
+
   .text-danger-500 {
     @apply text-red-500 dark:text-red-400;
   }
-  
+
   .text-danger-600 {
     @apply text-red-600 dark:text-red-400;
   }
-  
+
   /* Background colors */
   .bg-primary-50 {
     @apply bg-blue-50 dark:bg-blue-900/50;
   }
-  
+
   .bg-secondary-100 {
     @apply bg-gray-100 dark:bg-gray-700;
   }
-  
+
   .bg-secondary-200 {
     @apply bg-gray-200 dark:bg-gray-600;
+  }
+
+  /* Responsive Button Variants */
+  .btn-responsive-sm {
+    @apply px-responsive-3 py-responsive-2 text-responsive-sm rounded-responsive-md font-medium transition-colors;
+  }
+
+  .btn-responsive-md {
+    @apply px-responsive-4 py-responsive-3 text-responsive-base rounded-responsive-lg font-medium transition-colors;
+  }
+
+  .btn-responsive-lg {
+    @apply px-responsive-6 py-responsive-4 text-responsive-lg rounded-responsive-xl font-medium transition-colors;
+  }
+
+  /* Responsive Typography Helpers */
+  .heading-responsive-sm {
+    @apply text-responsive-lg font-semibold text-gray-900 dark:text-white;
+  }
+
+  .heading-responsive-md {
+    @apply text-responsive-xl font-semibold text-gray-900 dark:text-white;
+  }
+
+  .heading-responsive-lg {
+    @apply text-responsive-2xl font-bold text-gray-900 dark:text-white;
+  }
+
+  .heading-responsive-xl {
+    @apply text-responsive-3xl font-bold text-gray-900 dark:text-white;
+  }
+
+  .heading-responsive-hero {
+    @apply text-responsive-5xl md:text-responsive-6xl font-bold text-gray-900 dark:text-white;
+  }
+
+  .body-responsive {
+    @apply text-responsive-base text-gray-600 dark:text-gray-400;
+  }
+
+  .body-responsive-sm {
+    @apply text-responsive-sm text-gray-600 dark:text-gray-400;
+  }
+
+  /* Responsive Container */
+  .container-responsive {
+    @apply mx-auto px-responsive-4 max-w-content-xl;
+  }
+
+  .container-responsive-sm {
+    @apply mx-auto px-responsive-3 max-w-content-md;
+  }
+
+  .container-responsive-lg {
+    @apply mx-auto px-responsive-6 max-w-content-2xl;
+  }
+}
+
+/* Responsive Utilities */
+@layer utilities {
+  /* Touch target minimum size for accessibility */
+  .touch-target {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* Professional grid gaps */
+  .gap-responsive {
+    gap: clamp(0.75rem, 1vw + 0.5rem, 1rem);
+  }
+
+  .gap-responsive-sm {
+    gap: clamp(0.5rem, 0.5vw + 0.4rem, 0.6rem);
+  }
+
+  .gap-responsive-lg {
+    gap: clamp(1rem, 1.5vw + 0.75rem, 1.5rem);
+  }
+
+  /* Professional margin helpers */
+  .mb-responsive {
+    margin-bottom: clamp(0.75rem, 1vw + 0.5rem, 1rem);
+  }
+
+  .mt-responsive {
+    margin-top: clamp(0.75rem, 1vw + 0.5rem, 1rem);
+  }
+
+  .my-responsive {
+    margin-top: clamp(0.75rem, 1vw + 0.5rem, 1rem);
+    margin-bottom: clamp(0.75rem, 1vw + 0.5rem, 1rem);
   }
 }

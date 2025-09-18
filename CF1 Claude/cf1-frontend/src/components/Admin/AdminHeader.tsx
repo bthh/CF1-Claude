@@ -46,9 +46,9 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
   const getRoleGradient = (role: AdminRole): string => {
     switch (role) {
       case 'creator':
-        return 'bg-gradient-to-r from-orange-500 to-orange-600 dark:from-orange-600 dark:to-orange-700';
+        return 'bg-gradient-to-r from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700';
       case 'super_admin':
-        return 'bg-gradient-to-r from-green-500 to-green-600 dark:from-green-600 dark:to-green-700';
+        return 'bg-gradient-to-r from-slate-500 to-slate-600 dark:from-slate-600 dark:to-slate-700';
       case 'owner':
         return 'bg-gradient-to-r from-red-500 to-red-600 dark:from-red-600 dark:to-red-700';
       default:

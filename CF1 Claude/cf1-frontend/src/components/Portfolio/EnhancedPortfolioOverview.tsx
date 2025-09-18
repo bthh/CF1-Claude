@@ -249,15 +249,15 @@ export const EnhancedPortfolioOverview: React.FC<PortfolioOverviewProps> = ({ cl
           className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700"
         >
           <div className="flex items-center justify-between mb-2">
-            <Gift className="w-8 h-8 text-purple-500" />
-            <span className="text-purple-500 text-sm font-medium">Rewards</span>
+            <Gift className="w-8 h-8 text-green-500" />
+            <span className="text-green-500 text-sm font-medium">Rewards</span>
           </div>
           <div className="space-y-1">
             <p className="text-gray-600 dark:text-gray-400 text-sm">Total Rewards</p>
             <p className="text-2xl font-bold text-gray-900 dark:text-white">
               {formatCurrency(portfolioData.totalRewards)}
             </p>
-            <p className="text-purple-500 text-sm">
+            <p className="text-green-500 text-sm">
               {portfolioData.totalRewardsYield.toFixed(2)}% yield
             </p>
           </div>
@@ -270,15 +270,15 @@ export const EnhancedPortfolioOverview: React.FC<PortfolioOverviewProps> = ({ cl
           className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700"
         >
           <div className="flex items-center justify-between mb-2">
-            <PieChart className="w-8 h-8 text-orange-500" />
-            <span className="text-orange-500 text-sm font-medium">Assets</span>
+            <PieChart className="w-8 h-8 text-blue-500" />
+            <span className="text-blue-500 text-sm font-medium">Assets</span>
           </div>
           <div className="space-y-1">
             <p className="text-gray-600 dark:text-gray-400 text-sm">Portfolio Assets</p>
             <p className="text-2xl font-bold text-gray-900 dark:text-white">
               {portfolioData.assetsCount}
             </p>
-            <p className="text-orange-500 text-sm">
+            <p className="text-blue-500 text-sm">
               Across 5 categories
             </p>
           </div>
@@ -499,7 +499,7 @@ export const EnhancedPortfolioOverview: React.FC<PortfolioOverviewProps> = ({ cl
                       target.style.display = 'none';
                       const parent = target.parentElement;
                       if (parent) {
-                        parent.className = "w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold";
+                        parent.className = "w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center text-white font-bold";
                         parent.innerHTML = `#${index + 1}`;
                       }
                     }}
@@ -566,7 +566,7 @@ export const EnhancedPortfolioOverview: React.FC<PortfolioOverviewProps> = ({ cl
                           ? 'bg-green-500'
                           : asset.performance === 'good'
                           ? 'bg-blue-500'
-                          : 'bg-yellow-500'
+                          : 'bg-blue-500'
                       }`}
                       style={{
                         width: `${asset.performance === 'excellent' ? 85 : asset.performance === 'good' ? 65 : 45}%`

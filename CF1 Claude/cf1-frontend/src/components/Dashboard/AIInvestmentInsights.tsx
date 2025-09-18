@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Brain, TrendingUp, Eye, ChevronRight } from 'lucide-react';
 import Card from '../UI/Card';
-import Button from '../UI/Button';
+import CF1Button from '../UI/CF1Button';
 import { useLaunchpadData } from '../../services/launchpadDataService';
 
 interface AIInsight {
@@ -109,7 +109,7 @@ const AIInvestmentInsights: React.FC = () => {
 
           {/* Action Buttons - Moved to header */}
           <div className="flex flex-col sm:flex-row gap-3">
-            <Button
+            <CF1Button
               onClick={handleViewRecommendations}
               variant="outline"
               size="small"
@@ -117,7 +117,7 @@ const AIInvestmentInsights: React.FC = () => {
             >
               <Eye className="w-4 h-4" />
               <span>View All Assets</span>
-            </Button>
+            </CF1Button>
           </div>
         </div>
       </div>

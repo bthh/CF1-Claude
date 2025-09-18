@@ -585,22 +585,22 @@ const CreatorAdmin: React.FC = () => {
   // Helper functions
   const getTierColor = (tier: string) => {
     switch (tier) {
-      case 'PLATINUM': return 'text-purple-600 bg-purple-100 dark:bg-purple-900/20';
-      case 'GOLD': return 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/20';
+      case 'PLATINUM': return 'text-slate-600 bg-slate-100 dark:bg-slate-900/20';
+      case 'GOLD': return 'text-blue-600 bg-blue-100 dark:bg-blue-900/20';
       case 'SILVER': return 'text-gray-600 bg-gray-100 dark:bg-gray-900/20';
-      case 'BRONZE': return 'text-orange-600 bg-orange-100 dark:bg-orange-900/20';
+      case 'BRONZE': return 'text-slate-600 bg-slate-100 dark:bg-slate-900/20';
       default: return 'text-gray-600 bg-gray-100 dark:bg-gray-900/20';
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'SENT': return 'text-green-600 bg-green-100 dark:bg-green-900/20';
+      case 'SENT': return 'text-slate-600 bg-slate-100 dark:bg-slate-900/20';
       case 'SCHEDULED': return 'text-blue-600 bg-blue-100 dark:bg-blue-900/20';
-      case 'DRAFT': return 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/20';
+      case 'DRAFT': return 'text-slate-600 bg-slate-100 dark:bg-slate-900/20';
       case 'FAILED': return 'text-red-600 bg-red-100 dark:bg-red-900/20';
-      case 'VERIFIED': return 'text-green-600 bg-green-100 dark:bg-green-900/20';
-      case 'PENDING': return 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/20';
+      case 'VERIFIED': return 'text-slate-600 bg-slate-100 dark:bg-slate-900/20';
+      case 'PENDING': return 'text-slate-600 bg-slate-100 dark:bg-slate-900/20';
       case 'REJECTED': return 'text-red-600 bg-red-100 dark:bg-red-900/20';
       default: return 'text-gray-600 bg-gray-100 dark:bg-gray-900/20';
     }
@@ -609,8 +609,8 @@ const CreatorAdmin: React.FC = () => {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'HIGH': return 'text-red-600 bg-red-100 dark:bg-red-900/20';
-      case 'MEDIUM': return 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/20';
-      case 'LOW': return 'text-green-600 bg-green-100 dark:bg-green-900/20';
+      case 'MEDIUM': return 'text-slate-600 bg-slate-100 dark:bg-slate-900/20';
+      case 'LOW': return 'text-slate-600 bg-slate-100 dark:bg-slate-900/20';
       default: return 'text-gray-600 bg-gray-100 dark:bg-gray-900/20';
     }
   };

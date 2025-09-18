@@ -18,7 +18,7 @@ import {
 import { useDashboardV2Store } from '../../store/dashboardV2Store';
 import { useDataMode } from '../../store/dataModeStore';
 import Card from '../UI/Card';
-import Button from '../UI/Button';
+import CF1Button from '../UI/CF1Button';
 import ProgressBar from '../UI/ProgressBar';
 import EnhancedPortfolioWidget from './EnhancedPortfolioWidget';
 import EnhancedMarketplaceWidget from './EnhancedMarketplaceWidget';
@@ -180,9 +180,9 @@ const DashboardVariantB: React.FC = () => {
                     <Clock className="w-4 h-4 mr-1" />
                     {proposal.timeLeft} left
                   </div>
-                  <Button size="sm">
+                  <CF1Button size="sm">
                     Vote Now
-                  </Button>
+                  </CF1Button>
                 </div>
                 {proposal.votingPower && (
                   <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
@@ -241,9 +241,9 @@ const DashboardVariantB: React.FC = () => {
                   />
                 </div>
 
-                <Button size="sm" variant="outline" className="w-full">
+                <CF1Button size="sm" variant="outline" className="w-full">
                   {opportunity.name.includes('Wine') ? 'Invest Now' : 'View Details'}
-                </Button>
+                </CF1Button>
               </div>
             ))}
           </div>
@@ -281,10 +281,10 @@ const DashboardVariantB: React.FC = () => {
         </div>
 
         <div className="mt-4 text-center">
-          <Button className="bg-yellow-600 hover:bg-yellow-700 text-white">
+          <CF1Button className="bg-yellow-600 hover:bg-yellow-700 text-white">
             <Gift className="w-4 h-4 mr-2" />
             Claim All Rewards
-          </Button>
+          </CF1Button>
         </div>
       </Card>
 

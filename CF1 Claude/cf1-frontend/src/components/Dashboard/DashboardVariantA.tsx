@@ -22,7 +22,7 @@ import { useDataMode } from '../../store/dataModeStore';
 import { useUnifiedAuthStore } from '../../store/unifiedAuthStore';
 import { useOnboarding } from '../../hooks/useOnboarding';
 import Card from '../UI/Card';
-import Button from '../UI/Button';
+import CF1Button from '../UI/CF1Button';
 import SkylineHero from '../UI/SkylineHero';
 import { usePerformanceMonitoring } from '../../hooks/usePerformanceTracker';
 import EnhancedMarketplaceWidget from './EnhancedMarketplaceWidget';
@@ -198,7 +198,7 @@ const DashboardVariantA: React.FC = memo(() => {
               
               {/* Professional CTA Buttons */}
               <div className="flex flex-wrap justify-center gap-4 mb-8">
-                <Button 
+                <CF1Button 
                   variant="secondary"
                   size="large" 
                   className="bg-white text-blue-900 hover:bg-blue-50 font-semibold px-8 py-3 text-lg shadow-lg border-0" 
@@ -206,8 +206,8 @@ const DashboardVariantA: React.FC = memo(() => {
                 >
                   <Users className="w-5 h-5 mr-2" />
                   Get Started
-                </Button>
-                <Button 
+                </CF1Button>
+                <CF1Button 
                   variant="outline" 
                   size="large" 
                   className="border-white/30 text-white hover:bg-white/10 font-semibold px-8 py-3 text-lg backdrop-blur-sm" 
@@ -215,8 +215,8 @@ const DashboardVariantA: React.FC = memo(() => {
                 >
                   <Search className="w-5 h-5 mr-2" />
                   Explore Assets
-                </Button>
-                <Button 
+                </CF1Button>
+                <CF1Button 
                   variant="outline" 
                   size="large" 
                   className="border-white/30 text-white hover:bg-white/10 font-semibold px-8 py-3 text-lg backdrop-blur-sm" 
@@ -224,7 +224,7 @@ const DashboardVariantA: React.FC = memo(() => {
                 >
                   <BookOpen className="w-5 h-5 mr-2" />
                   Learn More
-                </Button>
+                </CF1Button>
               </div>
               
               {/* Trust Indicators */}

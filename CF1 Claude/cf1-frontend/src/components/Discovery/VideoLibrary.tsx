@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { useDiscoveryStore } from '../../store/discoveryStore';
 import Card from '../UI/Card';
-import Button from '../UI/Button';
+import CF1Button from '../UI/CF1Button';
 import LoadingSpinner from '../UI/LoadingSpinner';
 
 const VideoLibrary: React.FC = () => {
@@ -130,22 +130,22 @@ const VideoLibrary: React.FC = () => {
 
           {/* View Mode Toggle */}
           <div className="flex items-center space-x-1 border border-gray-300 dark:border-gray-600 rounded-lg">
-            <Button
+            <CF1Button
               size="sm"
               variant={viewMode === 'grid' ? 'default' : 'ghost'}
               onClick={() => setViewMode('grid')}
               className="rounded-r-none"
             >
               <Grid className="w-4 h-4" />
-            </Button>
-            <Button
+            </CF1Button>
+            <CF1Button
               size="sm"
               variant={viewMode === 'list' ? 'default' : 'ghost'}
               onClick={() => setViewMode('list')}
               className="rounded-l-none"
             >
               <List className="w-4 h-4" />
-            </Button>
+            </CF1Button>
           </div>
         </div>
 
@@ -238,13 +238,13 @@ const VideoLibrary: React.FC = () => {
                             {video.difficulty}
                           </span>
                         </div>
-                        <Button 
+                        <CF1Button 
                           size="sm" 
                           onClick={() => markVideoWatched(video.id)}
                           disabled={isWatched}
                         >
                           {isWatched ? 'Watched' : 'Watch'}
-                        </Button>
+                        </CF1Button>
                       </div>
                     </div>
                   </div>
@@ -298,7 +298,7 @@ const VideoLibrary: React.FC = () => {
                     </span>
                   </div>
 
-                  <Button 
+                  <CF1Button 
                     className="w-full" 
                     size="sm"
                     onClick={() => markVideoWatched(video.id)}
@@ -315,7 +315,7 @@ const VideoLibrary: React.FC = () => {
                         Watch Now
                       </>
                     )}
-                  </Button>
+                  </CF1Button>
                 </div>
               </Card>
             );

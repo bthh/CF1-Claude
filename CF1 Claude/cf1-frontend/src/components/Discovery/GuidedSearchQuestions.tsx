@@ -19,7 +19,7 @@ import {
   TrendingUp
 } from 'lucide-react';
 import Card from '../UI/Card';
-import Button from '../UI/Button';
+import CF1Button from '../UI/CF1Button';
 
 export interface GuidedAnswer {
   questionId: string;
@@ -416,9 +416,9 @@ const GuidedSearchQuestions: React.FC<GuidedSearchQuestionsProps> = ({
           <p className="text-gray-600 dark:text-gray-300 mb-4">
             No guided questions available for the "{category}" category yet.
           </p>
-          <Button variant="outline" onClick={onStartOver}>
+          <CF1Button variant="outline" onClick={onStartOver}>
             Try Different Category
-          </Button>
+          </CF1Button>
         </div>
       </Card>
     );
@@ -436,14 +436,14 @@ const GuidedSearchQuestions: React.FC<GuidedSearchQuestionsProps> = ({
             Help us find better matches for "{searchQuery}" in {category}
           </p>
         </div>
-        <Button 
+        <CF1Button 
           variant="ghost" 
           size="small" 
           icon={RefreshCw}
           onClick={onStartOver}
         >
           Start Over
-        </Button>
+        </CF1Button>
       </div>
 
       {/* Progress */}
@@ -485,14 +485,14 @@ const GuidedSearchQuestions: React.FC<GuidedSearchQuestionsProps> = ({
 
       {/* Navigation */}
       <div className="flex items-center justify-between">
-        <Button
+        <CF1Button
           variant="outline"
           onClick={handlePrevious}
           disabled={currentQuestionIndex === 0}
           icon={ChevronLeft}
         >
           Previous
-        </Button>
+        </CF1Button>
 
         <div className="flex items-center space-x-2">
           {questions.map((_, index) => (
@@ -509,7 +509,7 @@ const GuidedSearchQuestions: React.FC<GuidedSearchQuestionsProps> = ({
           ))}
         </div>
 
-        <Button
+        <CF1Button
           variant={canGoNext ? "primary" : "outline"}
           onClick={handleNext}
           disabled={!canGoNext}
@@ -517,7 +517,7 @@ const GuidedSearchQuestions: React.FC<GuidedSearchQuestionsProps> = ({
           iconPosition="right"
         >
           {isLastQuestion ? 'Complete' : 'Next'}
-        </Button>
+        </CF1Button>
       </div>
     </Card>
   );

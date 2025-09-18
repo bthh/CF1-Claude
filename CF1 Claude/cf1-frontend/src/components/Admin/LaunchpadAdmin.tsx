@@ -82,12 +82,12 @@ const LaunchpadAdmin: React.FC<LaunchpadAdminProps> = ({ selectedSubTab, setSele
 
   // Sub-navigation for Launchpad section
   const subTabs = [
-    { 
-      id: 'proposals', 
-      label: 'Asset Proposals', 
-      icon: <FileText className="w-4 h-4" />, 
+    {
+      id: 'proposals',
+      label: 'Asset Proposals',
+      icon: <FileText className="w-4 h-4" />,
       count: pendingCount,
-      color: 'orange' 
+      color: 'blue'
     }
     // Future: Add more subtabs like 'settings', 'metrics', etc.
   ];
@@ -112,10 +112,10 @@ const LaunchpadAdmin: React.FC<LaunchpadAdminProps> = ({ selectedSubTab, setSele
   return (
     <div className="space-y-6">
       {/* Launchpad Header */}
-      <div className="bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/10 dark:to-amber-900/10 rounded-2xl p-6 border border-orange-200 dark:border-orange-800">
+      <div className="bg-gradient-to-r from-blue-50 to-slate-50 dark:from-blue-900/10 dark:to-slate-900/10 rounded-2xl p-6 border border-blue-200 dark:border-blue-800">
         <div className="flex items-center space-x-3 mb-4">
-          <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center">
-            <Target className="w-5 h-5 text-orange-600" />
+          <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+            <Target className="w-5 h-5 text-blue-600" />
           </div>
           <div>
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Launchpad Management</h2>
@@ -126,11 +126,11 @@ const LaunchpadAdmin: React.FC<LaunchpadAdminProps> = ({ selectedSubTab, setSele
         {/* Quick Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           <div className="text-center p-3 bg-white dark:bg-gray-800 rounded-xl">
-            <div className="text-2xl font-bold text-orange-600">{pendingCount}</div>
+            <div className="text-2xl font-bold text-slate-600">{pendingCount}</div>
             <div className="text-sm text-gray-600 dark:text-gray-400">Pending Review</div>
           </div>
           <div className="text-center p-3 bg-white dark:bg-gray-800 rounded-xl">
-            <div className="text-2xl font-bold text-green-600">{approvedProposals.length}</div>
+            <div className="text-2xl font-bold text-slate-600">{approvedProposals.length}</div>
             <div className="text-sm text-gray-600 dark:text-gray-400">Approved</div>
           </div>
           <div className="text-center p-3 bg-white dark:bg-gray-800 rounded-xl">

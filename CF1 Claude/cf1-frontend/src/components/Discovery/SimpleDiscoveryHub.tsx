@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { useDiscoveryStore } from '../../store/discoveryStore';
 import Card from '../UI/Card';
-import Button from '../UI/Button';
+import CF1Button from '../UI/CF1Button';
 import SearchInput from '../UI/SearchInput';
 import LoadingSpinner from '../UI/LoadingSpinner';
 
@@ -159,27 +159,27 @@ const SimpleDiscoveryHub: React.FC = memo(() => {
                     className="w-full"
                   />
                 </div>
-                <Button variant="outline" className="flex items-center space-x-2 text-gray-700 dark:text-gray-300">
+                <CF1Button variant="outline" className="flex items-center space-x-2 text-gray-700 dark:text-gray-300">
                   <Filter className="w-4 h-4" />
                   <span>Filters</span>
-                </Button>
+                </CF1Button>
                 <div className="flex items-center space-x-1 border border-gray-300 dark:border-gray-600 rounded-lg">
-                  <Button
+                  <CF1Button
                     size="small"
                     variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
                     onClick={() => handleViewModeChange('grid')}
                     className="rounded-r-none"
                   >
                     <Grid className="w-4 h-4" />
-                  </Button>
-                  <Button
+                  </CF1Button>
+                  <CF1Button
                     size="small"
                     variant={viewMode === 'list' ? 'secondary' : 'ghost'}
                     onClick={() => handleViewModeChange('list')}
                     className="rounded-l-none"
                   >
                     <List className="w-4 h-4" />
-                  </Button>
+                  </CF1Button>
                 </div>
               </div>
 
@@ -187,14 +187,14 @@ const SimpleDiscoveryHub: React.FC = memo(() => {
               <div className="flex flex-wrap gap-2">
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Categories:</span>
                 {['All', 'Real Estate', 'Technology', 'Commodities', 'Collectibles', 'Energy'].map((category) => (
-                  <Button
+                  <CF1Button
                     key={category}
                     size="small"
                     variant={searchFilters.category.includes(category.toLowerCase()) || category === 'All' ? 'secondary' : 'outline'}
                     onClick={() => handleFilterChange(category)}
                   >
                     {category}
-                  </Button>
+                  </CF1Button>
                 ))}
               </div>
 
@@ -258,13 +258,13 @@ const SimpleDiscoveryHub: React.FC = memo(() => {
                 <p className="text-gray-600 dark:text-gray-300">
                   Try adjusting your search terms or filters
                 </p>
-                <Button 
+                <CF1Button 
                   variant="outline" 
                   className="mt-4" 
                   onClick={clearSearch}
                 >
                   Clear Search
-                </Button>
+                </CF1Button>
               </div>
             ) : (
               <div className="space-y-8">
@@ -329,7 +329,7 @@ const SimpleDiscoveryHub: React.FC = memo(() => {
                     Quick Actions
                   </h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <Button
+                    <CF1Button
                       variant="outline"
                       className="h-24 flex flex-col items-center justify-center space-y-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
                       onClick={() => handleTabChange('ideas')}
@@ -337,9 +337,9 @@ const SimpleDiscoveryHub: React.FC = memo(() => {
                       <Lightbulb className="w-6 h-6 text-blue-600" />
                       <span className="font-medium">Generate Ideas</span>
                       <span className="text-xs text-gray-500">AI-powered inspiration</span>
-                    </Button>
+                    </CF1Button>
                     
-                    <Button
+                    <CF1Button
                       variant="outline"
                       className="h-24 flex flex-col items-center justify-center space-y-2 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
                       onClick={() => handleTabChange('videos')}
@@ -347,9 +347,9 @@ const SimpleDiscoveryHub: React.FC = memo(() => {
                       <Play className="w-6 h-6 text-purple-600" />
                       <span className="font-medium">Watch Videos</span>
                       <span className="text-xs text-gray-500">Learn from experts</span>
-                    </Button>
+                    </CF1Button>
                     
-                    <Button
+                    <CF1Button
                       variant="outline"
                       className="h-24 flex flex-col items-center justify-center space-y-2 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
                       onClick={() => handleTabChange('docs')}
@@ -357,9 +357,9 @@ const SimpleDiscoveryHub: React.FC = memo(() => {
                       <BookOpen className="w-6 h-6 text-green-600" />
                       <span className="font-medium">Browse Docs</span>
                       <span className="text-xs text-gray-500">Templates & guides</span>
-                    </Button>
+                    </CF1Button>
                     
-                    <Button
+                    <CF1Button
                       variant="outline"
                       className="h-24 flex flex-col items-center justify-center space-y-2 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
                       onClick={() => setSearchQuery('real estate')}
@@ -367,7 +367,7 @@ const SimpleDiscoveryHub: React.FC = memo(() => {
                       <Search className="w-6 h-6 text-orange-600" />
                       <span className="font-medium">Search Assets</span>
                       <span className="text-xs text-gray-500">Find opportunities</span>
-                    </Button>
+                    </CF1Button>
                   </div>
                 </div>
 
@@ -387,7 +387,7 @@ const SimpleDiscoveryHub: React.FC = memo(() => {
                       'Risk Assessment',
                       'Due Diligence'
                     ].map((searchTerm) => (
-                      <Button
+                      <CF1Button
                         key={searchTerm}
                         size="small"
                         variant="outline"
@@ -395,7 +395,7 @@ const SimpleDiscoveryHub: React.FC = memo(() => {
                         onClick={() => setSearchQuery(searchTerm)}
                       >
                         {searchTerm}
-                      </Button>
+                      </CF1Button>
                     ))}
                   </div>
                 </div>

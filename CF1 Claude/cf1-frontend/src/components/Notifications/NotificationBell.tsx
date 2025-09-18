@@ -58,7 +58,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ className = '' }) =
       {/* Notification Bell Button */}
       <button
         onClick={handleBellClick}
-        className={`relative p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors duration-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 ${className} ${
+        className={`relative p-3 min-h-[44px] min-w-[44px] flex items-center justify-center text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors duration-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 touch-manipulation ${className} ${
           hasNewNotification ? 'animate-pulse' : ''
         }`}
         title={`${unreadCount} unread notifications`}

@@ -114,14 +114,14 @@ const formatCurrency = (amount: number) => {
 const getRatingColor = (rating: string) => {
   if (rating.startsWith('A')) return 'text-green-600 bg-green-100 dark:bg-green-900/20';
   if (rating.startsWith('B')) return 'text-blue-600 bg-blue-100 dark:bg-blue-900/20';
-  return 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/20';
+  return 'text-blue-600 bg-blue-100 dark:bg-blue-900/20';
 };
 
 const getStatusColor = (status: string) => {
   switch (status) {
     case 'excellent': return 'text-green-600';
     case 'good': return 'text-blue-600';
-    case 'warning': return 'text-yellow-600';
+    case 'warning': return 'text-red-600';
     case 'poor': return 'text-red-600';
     default: return 'text-gray-600';
   }
@@ -178,15 +178,15 @@ export const EnhancedPortfolioPerformance: React.FC<PerformanceTabProps> = ({ cl
           className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700"
         >
           <div className="flex items-center justify-between mb-2">
-            <AlertTriangle className="w-8 h-8 text-orange-500" />
-            <span className="text-orange-500 text-sm font-medium">Risk</span>
+            <AlertTriangle className="w-8 h-8 text-red-500" />
+            <span className="text-red-500 text-sm font-medium">Risk</span>
           </div>
           <div className="space-y-1">
             <p className="text-gray-600 dark:text-gray-400 text-sm">Max Drawdown</p>
             <p className="text-2xl font-bold text-gray-900 dark:text-white">
               {formatPercent(performanceMetrics.maxDrawdown)}
             </p>
-            <p className="text-orange-500 text-sm">Low risk exposure</p>
+            <p className="text-red-500 text-sm">Low risk exposure</p>
           </div>
         </motion.div>
 
@@ -197,15 +197,15 @@ export const EnhancedPortfolioPerformance: React.FC<PerformanceTabProps> = ({ cl
           className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700"
         >
           <div className="flex items-center justify-between mb-2">
-            <Zap className="w-8 h-8 text-purple-500" />
-            <span className="text-purple-500 text-sm font-medium">Alpha</span>
+            <Zap className="w-8 h-8 text-green-500" />
+            <span className="text-green-500 text-sm font-medium">Alpha</span>
           </div>
           <div className="space-y-1">
             <p className="text-gray-600 dark:text-gray-400 text-sm">Alpha Generation</p>
             <p className="text-2xl font-bold text-gray-900 dark:text-white">
               {formatPercent(performanceMetrics.alpha)}
             </p>
-            <p className="text-purple-500 text-sm">Outperforming market</p>
+            <p className="text-green-500 text-sm">Outperforming market</p>
           </div>
         </motion.div>
       </div>
@@ -458,7 +458,7 @@ export const EnhancedPortfolioPerformance: React.FC<PerformanceTabProps> = ({ cl
                     <div className={`w-2 h-2 rounded-full ${
                       metric.status === 'excellent' ? 'bg-green-500' :
                       metric.status === 'good' ? 'bg-blue-500' :
-                      metric.status === 'warning' ? 'bg-yellow-500' : 'bg-red-500'
+                      metric.status === 'warning' ? 'bg-red-500' : 'bg-red-500'
                     }`} />
                   </div>
                 </div>

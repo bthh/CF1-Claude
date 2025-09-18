@@ -6,7 +6,7 @@
 import React, { memo, useMemo, useCallback, useState } from 'react';
 import { Search, Filter, Download, ChevronDown, MoreVertical } from 'lucide-react';
 import { VirtualizedTable, VirtualizedTableColumn } from '../UI/VirtualizedList';
-import { Button } from '../UI/Button';
+import CF1Button from '../UI/CF1Button';
 import { SearchInput } from '../UI/SearchInput';
 import { useOptimizedSearch } from '../../hooks/useOptimizedSearch';
 import { usePerformanceMonitoring } from '../../hooks/usePerformanceTracker';
@@ -263,7 +263,7 @@ const OptimizedAdminTable: React.FC<OptimizedAdminTableProps> = memo(({
               const disabled = action.disabled?.(item) || false;
               
               return (
-                <Button
+                <CF1Button
                   key={action.id}
                   size="sm"
                   variant={action.variant || 'ghost'}
@@ -272,14 +272,14 @@ const OptimizedAdminTable: React.FC<OptimizedAdminTableProps> = memo(({
                   className="px-2"
                 >
                   {Icon && <Icon className="w-4 h-4" />}
-                </Button>
+                </CF1Button>
               );
             })}
             
             {actions.length > 2 && (
-              <Button size="sm" variant="ghost" className="px-2">
+              <CF1Button size="sm" variant="ghost" className="px-2">
                 <MoreVertical className="w-4 h-4" />
-              </Button>
+              </CF1Button>
             )}
           </div>
         )
@@ -315,20 +315,20 @@ const OptimizedAdminTable: React.FC<OptimizedAdminTableProps> = memo(({
           
           <div className="flex items-center space-x-3">
             {exportConfig?.enabled && (
-              <Button variant="outline" onClick={handleExport}>
+              <CF1Button variant="outline" onClick={handleExport}>
                 <Download className="w-4 h-4 mr-2" />
                 Export
-              </Button>
+              </CF1Button>
             )}
             
             {filters.length > 0 && (
-              <Button
+              <CF1Button
                 variant="outline"
                 onClick={() => setShowFilters(!showFilters)}
               >
                 <Filter className="w-4 h-4 mr-2" />
                 Filters
-              </Button>
+              </CF1Button>
             )}
           </div>
         </div>
@@ -352,7 +352,7 @@ const OptimizedAdminTable: React.FC<OptimizedAdminTableProps> = memo(({
               {bulkActions.map(action => {
                 const Icon = action.icon;
                 return (
-                  <Button
+                  <CF1Button
                     key={action.id}
                     size="sm"
                     variant={action.variant || 'outline'}
@@ -360,7 +360,7 @@ const OptimizedAdminTable: React.FC<OptimizedAdminTableProps> = memo(({
                   >
                     {Icon && <Icon className="w-4 h-4 mr-1" />}
                     {action.label}
-                  </Button>
+                  </CF1Button>
                 );
               })}
             </div>

@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { useDiscoveryStore, UserPreferences, Idea } from '../../store/discoveryStore';
 import Card from '../UI/Card';
-import Button from '../UI/Button';
+import CF1Button from '../UI/CF1Button';
 import LoadingSpinner from '../UI/LoadingSpinner';
 
 const IdeaGenerator: React.FC = () => {
@@ -117,13 +117,13 @@ const IdeaGenerator: React.FC = () => {
             </p>
           </div>
           <div className="flex items-center space-x-3">
-            <Button variant="outline" onClick={() => setCurrentStep('results')}>
+            <CF1Button variant="outline" onClick={() => setCurrentStep('results')}>
               Back to Results
-            </Button>
-            <Button variant="outline" onClick={handleStartOver}>
+            </CF1Button>
+            <CF1Button variant="outline" onClick={handleStartOver}>
               <RefreshCw className="w-4 h-4 mr-2" />
               Start Over
-            </Button>
+            </CF1Button>
           </div>
         </div>
 
@@ -221,22 +221,22 @@ const IdeaGenerator: React.FC = () => {
                 Quick Actions
               </h3>
               <div className="space-y-3">
-                <Button className="w-full justify-start" size="small">
+                <CF1Button className="w-full justify-start" size="small">
                   <FileText className="w-4 h-4 mr-2" />
                   Start Proposal Draft
-                </Button>
-                <Button variant="outline" className="w-full justify-start" size="small">
+                </CF1Button>
+                <CF1Button variant="outline" className="w-full justify-start" size="small">
                   <Users className="w-4 h-4 mr-2" />
                   Find Mentors
-                </Button>
-                <Button variant="outline" className="w-full justify-start" size="small">
+                </CF1Button>
+                <CF1Button variant="outline" className="w-full justify-start" size="small">
                   <BarChart3 className="w-4 h-4 mr-2" />
                   Market Research Tools
-                </Button>
-                <Button variant="outline" className="w-full justify-start" size="small">
+                </CF1Button>
+                <CF1Button variant="outline" className="w-full justify-start" size="small">
                   <Target className="w-4 h-4 mr-2" />
                   Similar Opportunities
-                </Button>
+                </CF1Button>
               </div>
             </Card>
 
@@ -247,9 +247,9 @@ const IdeaGenerator: React.FC = () => {
               <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
                 Connect with our Creator Success team for personalized guidance on turning this idea into reality.
               </p>
-              <Button size="small" className="w-full">
+              <CF1Button size="small" className="w-full">
                 Get Expert Help
-              </Button>
+              </CF1Button>
             </Card>
           </div>
         </div>
@@ -270,10 +270,10 @@ const IdeaGenerator: React.FC = () => {
               AI-generated opportunities based on your preferences
             </p>
           </div>
-          <Button variant="outline" onClick={handleStartOver}>
+          <CF1Button variant="outline" onClick={handleStartOver}>
             <RefreshCw className="w-4 h-4 mr-2" />
             Generate New Ideas
-          </Button>
+          </CF1Button>
         </div>
 
         {ideaGeneratorState.isGenerating ? (
@@ -325,14 +325,14 @@ const IdeaGenerator: React.FC = () => {
                   </div>
                 </div>
 
-                <Button 
+                <CF1Button 
                   onClick={() => handleSelectIdea(idea)}
                   className="w-full"
                   size="small"
                 >
                   View Details
                   <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
+                </CF1Button>
               </Card>
             ))}
           </div>
@@ -373,7 +373,7 @@ const IdeaGenerator: React.FC = () => {
                   'Energy', 'Healthcare', 'Finance', 'Agriculture',
                   'Entertainment', 'Education', 'Sustainability', 'Manufacturing'
                 ].map((interest) => (
-                  <Button
+                  <CF1Button
                     key={interest}
                     variant={preferences.interests?.includes(interest) ? 'secondary' : 'outline'}
                     size="small"
@@ -381,7 +381,7 @@ const IdeaGenerator: React.FC = () => {
                     className="justify-start"
                   >
                     {interest}
-                  </Button>
+                  </CF1Button>
                 ))}
               </div>
             </div>
@@ -398,7 +398,7 @@ const IdeaGenerator: React.FC = () => {
                   { value: 'large', label: '$1M+', description: 'Serious capital' },
                   { value: 'flexible', label: 'Flexible', description: 'Show me options' }
                 ].map((option) => (
-                  <Button
+                  <CF1Button
                     key={option.value}
                     variant={preferences.budgetRange === option.value ? 'secondary' : 'outline'}
                     onClick={() => {
@@ -409,7 +409,7 @@ const IdeaGenerator: React.FC = () => {
                   >
                     <div className="font-semibold">{option.label}</div>
                     <div className="text-xs opacity-75">{option.description}</div>
-                  </Button>
+                  </CF1Button>
                 ))}
               </div>
             </div>
@@ -425,7 +425,7 @@ const IdeaGenerator: React.FC = () => {
                   { value: 'medium', label: 'Balanced', description: 'Moderate risk for growth' },
                   { value: 'high', label: 'Aggressive', description: 'High risk, high reward' }
                 ].map((option) => (
-                  <Button
+                  <CF1Button
                     key={option.value}
                     variant={preferences.riskTolerance === option.value ? 'secondary' : 'outline'}
                     onClick={() => {
@@ -436,7 +436,7 @@ const IdeaGenerator: React.FC = () => {
                   >
                     <div className="font-semibold">{option.label}</div>
                     <div className="text-xs opacity-75">{option.description}</div>
-                  </Button>
+                  </CF1Button>
                 ))}
               </div>
             </div>
@@ -452,7 +452,7 @@ const IdeaGenerator: React.FC = () => {
                   { value: 'intermediate', label: 'Intermediate', description: 'Some experience' },
                   { value: 'advanced', label: 'Advanced', description: 'Experienced investor' }
                 ].map((option) => (
-                  <Button
+                  <CF1Button
                     key={option.value}
                     variant={preferences.experience === option.value ? 'secondary' : 'outline'}
                     onClick={() => {
@@ -463,7 +463,7 @@ const IdeaGenerator: React.FC = () => {
                   >
                     <div className="font-semibold">{option.label}</div>
                     <div className="text-xs opacity-75">{option.description}</div>
-                  </Button>
+                  </CF1Button>
                 ))}
               </div>
             </div>
@@ -478,7 +478,7 @@ const IdeaGenerator: React.FC = () => {
                   'Passive Income', 'Long-term Growth', 'Portfolio Diversification',
                   'Social Impact', 'Learning Experience', 'Quick Returns'
                 ].map((goal) => (
-                  <Button
+                  <CF1Button
                     key={goal}
                     variant={preferences.investmentGoals?.includes(goal) ? 'secondary' : 'outline'}
                     size="small"
@@ -486,7 +486,7 @@ const IdeaGenerator: React.FC = () => {
                     className="justify-start"
                   >
                     {goal}
-                  </Button>
+                  </CF1Button>
                 ))}
               </div>
             </div>
@@ -505,7 +505,7 @@ const IdeaGenerator: React.FC = () => {
 
             {/* Generate Button */}
             <div className="text-center pt-6">
-              <Button
+              <CF1Button
                 size="large"
                 onClick={handleGenerateIdeas}
                 disabled={!preferences.interests?.length || !preferences.budgetRange}
@@ -513,7 +513,7 @@ const IdeaGenerator: React.FC = () => {
               >
                 <Sparkles className="w-5 h-5 mr-2" />
                 Generate Personalized Ideas
-              </Button>
+              </CF1Button>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
                 This will take a few seconds while our AI analyzes market trends
               </p>

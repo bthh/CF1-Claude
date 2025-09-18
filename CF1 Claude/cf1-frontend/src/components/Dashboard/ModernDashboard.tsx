@@ -15,7 +15,7 @@ import { useUnifiedAuthStore } from '../../store/unifiedAuthStore';
 import { useOnboarding } from '../../hooks/useOnboarding';
 import { formatCurrency, formatPercentage } from '../../utils/format';
 import Card from '../UI/Card';
-import Button from '../UI/Button';
+import CF1Button from '../UI/CF1Button';
 import SkylineHero from '../UI/SkylineHero';
 import { UserPathEntryModal } from '../Onboarding/UserPathEntryModal';
 import { OnboardingTourComponent } from '../Onboarding/OnboardingTour';
@@ -89,30 +89,30 @@ const ModernDashboard: React.FC = memo(() => {
       <SkylineHero className="mb-8" gradientIntensity="medium">
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center px-4 py-16">
-            <div className="max-w-4xl mx-auto">
+            <div className="container-responsive">
               {/* CF1 Brand Header */}
-              <div className="mb-6">
-                <h1 className="text-5xl md:text-6xl font-bold text-white mb-3 tracking-tight">
+              <div className="mb-responsive">
+                <h1 className="heading-responsive-hero text-white mb-responsive tracking-tight">
                   CF1 Platform
                 </h1>
-                <div className="text-xl md:text-2xl text-blue-200 font-medium mb-2">
+                <div className="text-responsive-xl md:text-responsive-2xl text-blue-200 font-medium mb-responsive">
                   TradFi Feel, DeFi Engine
                 </div>
-                <div className="w-24 h-1 bg-gradient-to-r from-blue-400 to-purple-400 mx-auto rounded-full"></div>
+                <div className="w-responsive-6 h-1 bg-gradient-to-r from-blue-400 to-purple-400 mx-auto rounded-full"></div>
               </div>
 
               {/* Value Proposition */}
-              <p className="text-xl md:text-2xl text-white/90 mb-8 leading-relaxed">
+              <p className="text-responsive-xl md:text-responsive-2xl text-white/90 mb-responsive leading-relaxed">
                 Institutional-grade fractional asset ownership platform
               </p>
-              <p className="text-lg text-white/80 mb-10 max-w-2xl mx-auto">
+              <p className="text-responsive-lg text-white/80 mb-responsive max-w-content-md mx-auto">
                 Access premium investment opportunities typically reserved for institutions.
                 Build diversified portfolios through blockchain-powered fractional ownership.
               </p>
 
               {/* Professional CTA Buttons */}
-              <div className="flex flex-wrap justify-center gap-4 mb-8">
-                <Button
+              <div className="flex flex-wrap justify-center gap-responsive mb-responsive">
+                <CF1Button
                   variant="secondary"
                   size="large"
                   className="bg-white text-blue-900 hover:bg-blue-50 font-semibold px-8 py-3 text-lg shadow-lg border-0"
@@ -120,8 +120,8 @@ const ModernDashboard: React.FC = memo(() => {
                 >
                   <Users className="w-5 h-5 mr-2" />
                   Get Started
-                </Button>
-                <Button
+                </CF1Button>
+                <CF1Button
                   variant="outline"
                   size="large"
                   className="border-white/30 text-white hover:bg-white/10 font-semibold px-8 py-3 text-lg backdrop-blur-sm"
@@ -129,8 +129,8 @@ const ModernDashboard: React.FC = memo(() => {
                 >
                   <Search className="w-5 h-5 mr-2" />
                   Explore Assets
-                </Button>
-                <Button
+                </CF1Button>
+                <CF1Button
                   variant="outline"
                   size="large"
                   className="border-white/30 text-white hover:bg-white/10 font-semibold px-8 py-3 text-lg backdrop-blur-sm"
@@ -138,7 +138,7 @@ const ModernDashboard: React.FC = memo(() => {
                 >
                   <BookOpen className="w-5 h-5 mr-2" />
                   Learn More
-                </Button>
+                </CF1Button>
               </div>
 
               {/* Trust Indicators */}
@@ -171,60 +171,60 @@ const ModernDashboard: React.FC = memo(() => {
       </SkylineHero>
 
       {/* Quick Actions Section */}
-      <section>
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+      <section className="my-responsive">
+        <div className="mb-responsive">
+          <h2 className="heading-responsive-lg mb-responsive">
             Quick Actions
           </h2>
-          <p className="text-gray-600 dark:text-gray-300">
+          <p className="body-responsive">
             Get started with your investment journey
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="p-6 text-center hover:shadow-lg transition-shadow">
-            <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Search className="w-6 h-6 text-blue-600" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-responsive">
+          <Card size="lg" className="text-center hover:shadow-lg transition-shadow">
+            <div className="w-responsive-12 h-responsive-12 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-responsive">
+              <Search className="w-icon-md h-icon-md text-blue-600" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+            <h3 className="heading-responsive-md mb-responsive">
               Explore Assets
             </h3>
-            <p className="text-gray-600 dark:text-gray-300 mb-4">
+            <p className="body-responsive mb-responsive">
               Discover premium investment opportunities
             </p>
-            <Button onClick={handleBrowseAssets} className="w-full">
+            <CF1Button onClick={handleBrowseAssets} className="w-full">
               Browse Marketplace
-            </Button>
+            </CF1Button>
           </Card>
 
-          <Card className="p-6 text-center hover:shadow-lg transition-shadow">
-            <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Users className="w-6 h-6 text-green-600" />
+          <Card size="lg" className="text-center hover:shadow-lg transition-shadow">
+            <div className="w-responsive-12 h-responsive-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-responsive">
+              <Users className="w-icon-md h-icon-md text-green-600" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+            <h3 className="heading-responsive-md mb-responsive">
               Sign In
             </h3>
-            <p className="text-gray-600 dark:text-gray-300 mb-4">
+            <p className="body-responsive mb-responsive">
               Connect with wallet or email to get started
             </p>
-            <Button onClick={handleConnectWallet} variant="outline" className="w-full">
+            <CF1Button onClick={handleConnectWallet} variant="outline" className="w-full">
               Sign In Now
-            </Button>
+            </CF1Button>
           </Card>
 
-          <Card className="p-6 text-center hover:shadow-lg transition-shadow">
-            <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-              <BookOpen className="w-6 h-6 text-purple-600" />
+          <Card size="lg" className="text-center hover:shadow-lg transition-shadow">
+            <div className="w-responsive-12 h-responsive-12 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mx-auto mb-responsive">
+              <BookOpen className="w-icon-md h-icon-md text-purple-600" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+            <h3 className="heading-responsive-md mb-responsive">
               Learn & Tour
             </h3>
-            <p className="text-gray-600 dark:text-gray-300 mb-4">
+            <p className="body-responsive mb-responsive">
               Take a guided tour of the platform
             </p>
-            <Button onClick={handleLearnMore} variant="outline" className="w-full">
+            <CF1Button onClick={handleLearnMore} variant="outline" className="w-full">
               Start Tour
-            </Button>
+            </CF1Button>
           </Card>
         </div>
       </section>
@@ -238,32 +238,32 @@ const ModernDashboard: React.FC = memo(() => {
       )}
 
       {/* Getting Started CTA */}
-      <section>
-        <div className="relative overflow-hidden rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 p-8">
+      <section className="my-responsive">
+        <div className="relative overflow-hidden rounded-responsive-xl bg-gradient-to-r from-blue-600 to-purple-600 p-responsive-8">
           <div className="text-center relative z-10">
-            <Star className="w-12 h-12 mx-auto mb-4 text-yellow-300" />
-            <h2 className="text-3xl font-bold mb-4 text-white">Ready to Get Started?</h2>
-            <p className="text-blue-100 mb-6 max-w-2xl mx-auto">
+            <Star className="w-responsive-12 h-responsive-12 mx-auto mb-responsive text-yellow-300" />
+            <h2 className="heading-responsive-xl mb-responsive text-white">Ready to Get Started?</h2>
+            <p className="text-responsive-lg text-blue-100 mb-responsive max-w-content-md mx-auto">
               Join thousands of investors who are building wealth through our platform.
               Connect your wallet, browse opportunities, and start investing in minutes.
             </p>
-            <div className="flex flex-col sm:flex-row justify-center gap-4 max-w-2xl mx-auto">
-              <Button
+            <div className="flex flex-col sm:flex-row justify-center gap-responsive max-w-content-md mx-auto">
+              <CF1Button
                 variant="secondary"
-                className="!bg-white !text-blue-600 hover:!bg-gray-100 font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center"
+                className="!bg-white !text-blue-600 dark:!text-white dark:!bg-blue-600 hover:!bg-gray-100 dark:hover:!bg-blue-700 font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center"
                 onClick={handleGetStarted}
               >
                 <Users className="w-5 h-5 mr-2" />
                 Get Started Now
-              </Button>
-              <Button
+              </CF1Button>
+              <CF1Button
                 className="border-2 border-white text-white hover:bg-white hover:text-blue-600 font-semibold py-3 px-6 rounded-lg transition-colors flex items-center justify-center"
                 onClick={handleBrowseAssets}
                 variant="outline"
               >
                 <Search className="w-5 h-5 mr-2" />
                 Browse Assets
-              </Button>
+              </CF1Button>
             </div>
           </div>
         </div>

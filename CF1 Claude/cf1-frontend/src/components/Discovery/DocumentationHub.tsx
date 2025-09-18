@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { useDiscoveryStore } from '../../store/discoveryStore';
 import Card from '../UI/Card';
-import Button from '../UI/Button';
+import CF1Button from '../UI/CF1Button';
 import LoadingSpinner from '../UI/LoadingSpinner';
 
 const DocumentationHub: React.FC = () => {
@@ -233,19 +233,19 @@ const DocumentationHub: React.FC = () => {
 
                 <div className="flex items-center space-x-2">
                   {doc.downloadUrl ? (
-                    <Button size="sm" className="flex-1">
+                    <CF1Button size="sm" className="flex-1">
                       <Download className="w-4 h-4 mr-2" />
                       Download
-                    </Button>
+                    </CF1Button>
                   ) : (
-                    <Button size="sm" className="flex-1">
+                    <CF1Button size="sm" className="flex-1">
                       <BookOpen className="w-4 h-4 mr-2" />
                       Read
-                    </Button>
+                    </CF1Button>
                   )}
-                  <Button size="sm" variant="outline">
+                  <CF1Button size="sm" variant="outline">
                     <ArrowRight className="w-4 h-4" />
-                  </Button>
+                  </CF1Button>
                 </div>
 
                 {/* Tags */}

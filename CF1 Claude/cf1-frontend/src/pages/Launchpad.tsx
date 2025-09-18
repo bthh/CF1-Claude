@@ -50,13 +50,13 @@ const ProposalCard: React.FC<ProposalCardProps> = ({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm hover:shadow-md transition-shadow p-6">
-      <div className="flex items-start justify-between mb-4">
+    <div className="card-responsive hover:shadow-md transition-shadow h-full flex flex-col">
+      <div className="flex items-start justify-between mb-responsive">
         <div className="flex items-center space-x-2">
           <div className="w-8 h-8 rounded-lg overflow-hidden">
-            <img 
-              src={getAssetImage(title, category)} 
-              alt={title} 
+            <img
+              src={getAssetImage(title, category)}
+              alt={title}
               className="w-full h-full object-cover"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
@@ -78,13 +78,13 @@ const ProposalCard: React.FC<ProposalCardProps> = ({
         </div>
       </div>
 
-      <div className="space-y-4">
-        <div>
+      <div className="flex-1 flex flex-col space-y-4">
+        <div className="flex-1">
           <div className="flex items-start justify-between mb-2">
-            <h3 className="font-semibold text-gray-900 dark:text-white text-lg">{title}</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-white text-lg leading-tight">{title}</h3>
             {getStatusBadge()}
           </div>
-          <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{description}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 min-h-[2.5rem]">{description}</p>
           <div className="flex items-center space-x-4 mt-2 text-sm text-gray-600 dark:text-gray-400">
             <span className="bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">{category}</span>
             <div className="flex items-center space-x-1">
@@ -111,8 +111,8 @@ const ProposalCard: React.FC<ProposalCardProps> = ({
             <span className="font-medium text-gray-900 dark:text-white">{raisedPercentage}%</span>
           </div>
           <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
-            <div 
-              className="bg-blue-600 h-2 rounded-full" 
+            <div
+              className="bg-blue-600 h-2 rounded-full"
               style={{ width: `${raisedPercentage}%` }}
             ></div>
           </div>
@@ -131,20 +131,20 @@ const ProposalCard: React.FC<ProposalCardProps> = ({
           </div>
         </div>
 
-        <div className="border-t border-gray-200 dark:border-gray-600 pt-4">
+        <div className="border-t border-gray-200 dark:border-gray-600 pt-4 mt-auto">
           <div className="flex items-center justify-between text-sm mb-3">
             <span className="text-gray-600 dark:text-gray-400">Minimum Investment</span>
             <span className="font-semibold text-gray-900 dark:text-white">{minimumInvestment}</span>
           </div>
           <div className="flex space-x-2">
-            <button 
-              className="flex-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg py-2 text-sm font-medium transition-colors" 
+            <button
+              className="flex-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg py-2 text-sm font-medium transition-colors"
               onClick={handleViewDetailsClick}
             >
               View Details
             </button>
-            <button 
-              className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg py-2 text-sm font-medium transition-colors" 
+            <button
+              className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg py-2 text-sm font-medium transition-colors"
               disabled={status !== 'active'}
               onClick={handleInvestClick}
             >
@@ -171,14 +171,15 @@ const Launchpad: React.FC = () => {
   const { isDemo } = useDataMode();
   const { submissions, getDrafts } = useSubmissionStore();
 
-  // Categories based on actual proposals
+  // Categories based on proposals matching current status tab
+  const statusFilteredProposals = proposals.filter(p => p.status === selectedStatusTab);
   const categories = [
-    { id: 'all', name: 'All Categories', count: proposals.length },
-    { id: 'real-estate', name: 'Real Estate', count: proposals.filter(p => p.category.toLowerCase().includes('real estate')).length },
-    { id: 'precious-metals', name: 'Precious Metals', count: proposals.filter(p => p.category.toLowerCase().includes('metals')).length },
-    { id: 'art', name: 'Art & Collectibles', count: proposals.filter(p => p.category.toLowerCase().includes('art')).length },
-    { id: 'vehicles', name: 'Luxury Vehicles', count: proposals.filter(p => p.category.toLowerCase().includes('vehicles')).length },
-    { id: 'commodities', name: 'Commodities', count: proposals.filter(p => p.category.toLowerCase().includes('commodities')).length }
+    { id: 'all', name: 'All Categories', count: statusFilteredProposals.length },
+    { id: 'real-estate', name: 'Real Estate', count: statusFilteredProposals.filter(p => p.category.toLowerCase().includes('real estate')).length },
+    { id: 'precious-metals', name: 'Precious Metals', count: statusFilteredProposals.filter(p => p.category.toLowerCase().includes('metals')).length },
+    { id: 'art', name: 'Art & Collectibles', count: statusFilteredProposals.filter(p => p.category.toLowerCase().includes('art')).length },
+    { id: 'vehicles', name: 'Luxury Vehicles', count: statusFilteredProposals.filter(p => p.category.toLowerCase().includes('vehicles')).length },
+    { id: 'commodities', name: 'Commodities', count: statusFilteredProposals.filter(p => p.category.toLowerCase().includes('commodities')).length }
   ].filter(cat => cat.count > 0 || cat.id === 'all');
 
   const filteredProposals = proposals.filter(proposal => {
@@ -259,11 +260,11 @@ const Launchpad: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-responsive">
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center space-x-3">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Launchpad</h1>
+            <h1 className="heading-responsive-xl">Launchpad</h1>
             {isDemo && (
               <div className="flex items-center space-x-2 bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300 px-3 py-1 rounded-full text-sm">
                 <Eye className="w-4 h-4" />

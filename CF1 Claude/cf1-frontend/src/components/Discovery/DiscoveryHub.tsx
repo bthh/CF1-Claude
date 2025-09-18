@@ -18,7 +18,7 @@ import {
 import { useDiscoveryStore } from '../../store/discoveryStore';
 import { externalSearchService, ExternalSearchResult } from '../../services/externalSearch';
 import Card from '../UI/Card';
-import Button from '../UI/Button';
+import CF1Button from '../UI/CF1Button';
 import SearchInput from '../UI/SearchInput';
 import LoadingSpinner from '../UI/LoadingSpinner';
 import GuidedSearchQuestions, { GuidedAnswer } from './GuidedSearchQuestions';
@@ -348,7 +348,7 @@ const DiscoveryHub: React.FC = memo(() => {
                   />
                 </div>
                 <div className="flex items-center space-x-1 border border-gray-300 dark:border-gray-600 rounded-lg">
-                  <Button
+                  <CF1Button
                     size="small"
                     variant={searchMode === 'external' ? 'secondary' : 'ghost'}
                     onClick={() => setSearchMode('external')}
@@ -357,8 +357,8 @@ const DiscoveryHub: React.FC = memo(() => {
                   >
                     <TrendingUp className="w-4 h-4" />
                     <span className="ml-1 text-xs">Market</span>
-                  </Button>
-                  <Button
+                  </CF1Button>
+                  <CF1Button
                     size="small"
                     variant={searchMode === 'internal' ? 'secondary' : 'ghost'}
                     onClick={() => setSearchMode('internal')}
@@ -367,29 +367,29 @@ const DiscoveryHub: React.FC = memo(() => {
                   >
                     <BookOpen className="w-4 h-4" />
                     <span className="ml-1 text-xs">Education</span>
-                  </Button>
+                  </CF1Button>
                 </div>
-                <Button variant="outline" className="flex items-center space-x-2 text-gray-700 dark:text-gray-300">
+                <CF1Button variant="outline" className="flex items-center space-x-2 text-gray-700 dark:text-gray-300">
                   <Filter className="w-4 h-4" />
                   <span>Filters</span>
-                </Button>
+                </CF1Button>
                 <div className="flex items-center space-x-1 border border-gray-300 dark:border-gray-600 rounded-lg">
-                  <Button
+                  <CF1Button
                     size="small"
                     variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
                     onClick={() => handleViewModeChange('grid')}
                     className="rounded-r-none"
                   >
                     <Grid className="w-4 h-4" />
-                  </Button>
-                  <Button
+                  </CF1Button>
+                  <CF1Button
                     size="small"
                     variant={viewMode === 'list' ? 'secondary' : 'ghost'}
                     onClick={() => handleViewModeChange('list')}
                     className="rounded-l-none"
                   >
                     <List className="w-4 h-4" />
-                  </Button>
+                  </CF1Button>
                 </div>
               </div>
 
@@ -416,14 +416,14 @@ const DiscoveryHub: React.FC = memo(() => {
               <div className="flex flex-wrap gap-2">
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Categories:</span>
                 {['All', 'Real Estate', 'Technology', 'Commodities', 'Collectibles', 'Energy'].map((category) => (
-                  <Button
+                  <CF1Button
                     key={category}
                     size="small"
                     variant={searchFilters.category.includes(category.toLowerCase()) || category === 'All' ? 'secondary' : 'outline'}
                     onClick={() => handleFilterChange(category)}
                   >
                     {category}
-                  </Button>
+                  </CF1Button>
                 ))}
               </div>
 
@@ -471,20 +471,20 @@ const DiscoveryHub: React.FC = memo(() => {
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <Button
+                    <CF1Button
                       size="small"
                       variant="outline"
                       onClick={() => setShowGuidedSearchSuggestion(false)}
                     >
                       Dismiss
-                    </Button>
-                    <Button
+                    </CF1Button>
+                    <CF1Button
                       size="small"
                       variant="primary"
                       onClick={handleStartGuidedSearch}
                     >
                       Help Me Search
-                    </Button>
+                    </CF1Button>
                   </div>
                 </div>
               </Card>
@@ -581,13 +581,13 @@ const DiscoveryHub: React.FC = memo(() => {
 
                     {/* Action Buttons */}
                     <div className="flex space-x-2">
-                      <Button className="flex-1" size="small">
+                      <CF1Button className="flex-1" size="small">
                         View Details
-                      </Button>
+                      </CF1Button>
                       {result.proposalReady && (
-                        <Button variant="outline" size="small">
+                        <CF1Button variant="outline" size="small">
                           Start Proposal
-                        </Button>
+                        </CF1Button>
                       )}
                     </div>
 
@@ -678,30 +678,30 @@ const DiscoveryHub: React.FC = memo(() => {
                 </p>
                 {searchMode === 'external' && searchFilters.category.length > 0 && (
                   <div className="mb-4">
-                    <Button 
+                    <CF1Button 
                       size="small"
                       variant="primary"
                       onClick={handleStartGuidedSearch}
                       className="mr-2"
                     >
                       Get Guided Search Help
-                    </Button>
-                    <Button 
+                    </CF1Button>
+                    <CF1Button 
                       size="small"
                       variant="outline"
                       onClick={() => setSearchMode('internal')}
                     >
                       Search Educational Content
-                    </Button>
+                    </CF1Button>
                   </div>
                 )}
-                <Button 
+                <CF1Button 
                   variant="outline" 
                   className="mt-4" 
                   onClick={clearSearch}
                 >
                   Clear Search
-                </Button>
+                </CF1Button>
               </div>
             ) : (
               <div className="text-center py-12">
@@ -795,22 +795,6 @@ const DiscoveryHub: React.FC = memo(() => {
 
   return (
     <div className="space-y-8">
-      {/* Hero Section */}
-      <div className="text-center py-8">
-        <div className="flex items-center justify-center mb-4">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center">
-            <Search className="w-8 h-8 text-white" />
-          </div>
-        </div>
-        <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-          Discovery Hub
-        </h1>
-        <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-          Your gateway to inspiration, education, and market intelligence. 
-          Discover opportunities, learn from experts, and turn ideas into successful assets.
-        </p>
-      </div>
-
       {/* Navigation Tabs */}
       <div className="border-b border-gray-200 dark:border-gray-700">
         <nav className="flex space-x-8 overflow-x-auto">

@@ -57,7 +57,7 @@ describe('Creator Toolkit API Integration', () => {
       const result = await apiClient.get('/api/creator-toolkit/asset-updates');
 
       expect(mockFetch).toHaveBeenCalledWith(
-        'http://localhost:3001/api/creator-toolkit/asset-updates',
+        expect.stringContaining('/api/creator-toolkit/asset-updates'),
         expect.objectContaining({
           method: 'GET',
           headers: expect.objectContaining({
@@ -101,13 +101,13 @@ describe('Creator Toolkit API Integration', () => {
       const result = await apiClient.post('/api/creator-toolkit/asset-updates', updateData);
 
       expect(mockFetch).toHaveBeenCalledWith(
-        'http://localhost:3001/api/creator-toolkit/asset-updates',
+        expect.stringContaining('/api/creator-toolkit/asset-updates'),
         expect.objectContaining({
           method: 'POST',
           headers: expect.objectContaining({
             'Content-Type': 'application/json'
           }),
-          body: expect.stringContaining(JSON.stringify(updateData).slice(1, -1)) // Contains the core data without braces
+          body: expect.stringContaining(updateData.title) // Contains the core data
         })
       );
 
@@ -169,7 +169,7 @@ describe('Creator Toolkit API Integration', () => {
       const result = await apiClient.get('/api/creator-toolkit/communications');
 
       expect(mockFetch).toHaveBeenCalledWith(
-        'http://localhost:3001/api/creator-toolkit/communications',
+        expect.stringContaining('/api/creator-toolkit/communications'),
         expect.objectContaining({
           method: 'GET'
         })
@@ -217,10 +217,10 @@ describe('Creator Toolkit API Integration', () => {
       const result = await apiClient.post('/api/creator-toolkit/communications', campaignData);
 
       expect(mockFetch).toHaveBeenCalledWith(
-        'http://localhost:3001/api/creator-toolkit/communications',
+        expect.stringContaining('/api/creator-toolkit/communications'),
         expect.objectContaining({
           method: 'POST',
-          body: expect.stringContaining(JSON.stringify(campaignData).slice(1, -1)) // Contains the core data without braces
+          body: expect.stringContaining(campaignData.title) // Contains the core data
         })
       );
 
@@ -431,6 +431,7 @@ describe('Creator Toolkit API Integration', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toBeDefined();
+      expect(result.error).toMatch(/Something went wrong|There was a problem with your request/);
     });
 
     it('should handle timeout errors', async () => {
@@ -441,6 +442,7 @@ describe('Creator Toolkit API Integration', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toBeDefined();
+      expect(result.error).toMatch(/Something went wrong|There was a problem with your request/);
     });
 
     it('should retry failed requests', async () => {

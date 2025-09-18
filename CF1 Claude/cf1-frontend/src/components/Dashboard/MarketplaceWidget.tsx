@@ -160,21 +160,21 @@ const MarketplaceWidget: React.FC<MarketplaceWidgetProps> = ({ size, isEditMode 
         {size === 'full' && (
           <>
             <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
-              <TrendingUp className="w-6 h-6 text-purple-600 mb-2" />
+              <TrendingUp className="w-6 h-6 text-green-600 mb-2" />
               <p className="text-sm text-gray-500 dark:text-gray-400">Avg Return</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 {formatPercentage(marketStats.avgReturn)}
               </p>
-              <p className="text-xs text-purple-600 mt-1">Above market avg</p>
+              <p className="text-xs text-green-600 mt-1">Above market avg</p>
             </div>
             
             <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
-              <DollarSign className="w-6 h-6 text-orange-600 mb-2" />
+              <DollarSign className="w-6 h-6 text-blue-600 mb-2" />
               <p className="text-sm text-gray-500 dark:text-gray-400">Total Investors</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 8,234
               </p>
-              <p className="text-xs text-orange-600 mt-1">342 new this week</p>
+              <p className="text-xs text-blue-600 mt-1">342 new this week</p>
             </div>
           </>
         )}

@@ -1,21 +1,29 @@
 import { SecureErrorHandler } from '../../utils/secureErrorHandler';
 import { CSRFProtection } from '../../utils/csrfProtection';
 import { performanceMonitor } from '../../utils/performanceMonitoring';
-
-export interface ApiResponse<T = any> {
-  data?: T;
-  error?: string;
-  success: boolean;
-}
-
-export interface ApiRequestConfig {
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
-  headers?: Record<string, string>;
-  body?: any;
-  timeout?: number;
-  retries?: number;
-  retryDelay?: number;
-}
+import {
+  ApiResponse,
+  ApiRequestConfig,
+  TypedApiClient,
+  ProposalAPI,
+  PortfolioAPI,
+  GovernanceAPI,
+  UserAPI,
+  AnalyticsAPI,
+  AdminAPI,
+  AIAnalysisAPI,
+  ApiError,
+  ValidationError,
+  AuthenticationError,
+  AuthorizationError,
+  RateLimitError,
+  ApiTypeGuards
+} from '../../types/api';
+import {
+  InvestmentProposal,
+  FinancialTransaction,
+  InvestmentEligibilityResult
+} from '../../types/financial';
 
 class ApiClient {
   private baseUrl: string;
@@ -84,7 +92,7 @@ class ApiClient {
     }
   }
 
-  async request<T = any>(
+  async request<T = unknown>(
     endpoint: string,
     config: ApiRequestConfig = {}
   ): Promise<ApiResponse<T>> {
@@ -100,6 +108,10 @@ class ApiClient {
       performanceMonitor.trackAPIResponse(endpoint, duration, response?.status || 200, method);
 
       // Handle non-2xx responses
+      if (!response) {
+        throw new Error('Network request failed - no response received');
+      }
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({
           message: `HTTP ${response.status}: ${response.statusText}`,
@@ -116,13 +128,19 @@ class ApiClient {
     } catch (error) {
       // Track failed API performance
       const duration = performance.now() - startTime;
-      // Handle different error types
+      // Handle different error types with proper typing
       let status = 500;
       if (error && typeof error === 'object') {
-        const errorObj = error as any;
-        if (errorObj.response?.status) {
+        const errorObj = error as Record<string, unknown>;
+        if (
+          errorObj.response &&
+          typeof errorObj.response === 'object' &&
+          errorObj.response !== null &&
+          'status' in errorObj.response &&
+          typeof errorObj.response.status === 'number'
+        ) {
           status = errorObj.response.status;
-        } else if (errorObj.status) {
+        } else if ('status' in errorObj && typeof errorObj.status === 'number') {
           status = errorObj.status;
         }
       }
@@ -138,24 +156,24 @@ class ApiClient {
     }
   }
 
-  // Convenience methods
-  async get<T = any>(endpoint: string, config?: Omit<ApiRequestConfig, 'method'>): Promise<ApiResponse<T>> {
+  // Convenience methods with strict typing
+  async get<T = unknown>(endpoint: string, config?: Omit<ApiRequestConfig, 'method'>): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, { ...config, method: 'GET' });
   }
 
-  async post<T = any>(endpoint: string, data?: any, config?: Omit<ApiRequestConfig, 'method' | 'body'>): Promise<ApiResponse<T>> {
+  async post<T = unknown>(endpoint: string, data?: unknown, config?: Omit<ApiRequestConfig, 'method' | 'body'>): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, { ...config, method: 'POST', body: data });
   }
 
-  async put<T = any>(endpoint: string, data?: any, config?: Omit<ApiRequestConfig, 'method' | 'body'>): Promise<ApiResponse<T>> {
+  async put<T = unknown>(endpoint: string, data?: unknown, config?: Omit<ApiRequestConfig, 'method' | 'body'>): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, { ...config, method: 'PUT', body: data });
   }
 
-  async patch<T = any>(endpoint: string, data?: any, config?: Omit<ApiRequestConfig, 'method' | 'body'>): Promise<ApiResponse<T>> {
+  async patch<T = unknown>(endpoint: string, data?: unknown, config?: Omit<ApiRequestConfig, 'method' | 'body'>): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, { ...config, method: 'PATCH', body: data });
   }
 
-  async delete<T = any>(endpoint: string, config?: Omit<ApiRequestConfig, 'method'>): Promise<ApiResponse<T>> {
+  async delete<T = unknown>(endpoint: string, config?: Omit<ApiRequestConfig, 'method'>): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, { ...config, method: 'DELETE' });
   }
 
@@ -177,35 +195,74 @@ class ApiClient {
 // Export singleton instance
 export const apiClient = new ApiClient();
 
-// Export type-safe API endpoints
-export const api = {
+// Export type-safe API endpoints implementing TypedApiClient interface
+export const api: TypedApiClient = {
   proposals: {
-    list: (params?: any) => apiClient.get('/api/proposals', { body: params }),
-    get: (id: string) => apiClient.get(`/api/proposals/${id}`),
-    create: (data: any) => apiClient.post('/api/proposals', data),
-    update: (id: string, data: any) => apiClient.put(`/api/proposals/${id}`, data),
-    delete: (id: string) => apiClient.delete(`/api/proposals/${id}`),
-    invest: (id: string, amount: number) => apiClient.post(`/api/proposals/${id}/invest`, { amount }),
+    list: (params?: ProposalAPI.ListParams) =>
+      apiClient.get<ProposalAPI.ListResponse>('/api/proposals', { body: params }),
+    get: (id: string) =>
+      apiClient.get<InvestmentProposal>(`/api/proposals/${id}`),
+    create: (data: ProposalAPI.CreateRequest) =>
+      apiClient.post<InvestmentProposal>('/api/proposals', data),
+    update: (id: string, data: ProposalAPI.UpdateRequest) =>
+      apiClient.put<InvestmentProposal>(`/api/proposals/${id}`, data),
+    delete: (id: string) =>
+      apiClient.delete<void>(`/api/proposals/${id}`),
+    invest: (id: string, data: ProposalAPI.InvestRequest) =>
+      apiClient.post<ProposalAPI.InvestResponse>(`/api/proposals/${id}/invest`, data),
+    checkEligibility: (id: string, amount: number) =>
+      apiClient.get<InvestmentEligibilityResult>(`/api/proposals/${id}/eligibility`, { body: { amount } }),
   },
   portfolio: {
-    overview: () => apiClient.get('/api/portfolio/overview'),
-    investments: () => apiClient.get('/api/portfolio/investments'),
-    transactions: () => apiClient.get('/api/portfolio/transactions'),
+    overview: () =>
+      apiClient.get<PortfolioAPI.OverviewResponse>('/api/portfolio/overview'),
+    investments: () =>
+      apiClient.get<PortfolioAPI.InvestmentsResponse>('/api/portfolio/investments'),
+    transactions: (params?: PortfolioAPI.TransactionsParams) =>
+      apiClient.get<PortfolioAPI.TransactionsResponse>('/api/portfolio/transactions', { body: params }),
   },
   governance: {
-    proposals: () => apiClient.get('/api/governance/proposals'),
-    vote: (proposalId: string, vote: string) => apiClient.post(`/api/governance/proposals/${proposalId}/vote`, { vote }),
+    proposals: () =>
+      apiClient.get<GovernanceAPI.ProposalsResponse>('/api/governance/proposals'),
+    vote: (proposalId: string, data: GovernanceAPI.VoteRequest) =>
+      apiClient.post<GovernanceAPI.VoteResponse>(`/api/governance/proposals/${proposalId}/vote`, data),
   },
   user: {
-    profile: () => apiClient.get('/api/user/profile'),
-    updateProfile: (data: any) => apiClient.patch('/api/user/profile', data),
+    profile: () =>
+      apiClient.get<UserAPI.UserProfile>('/api/user/profile'),
+    updateProfile: (data: UserAPI.UpdateProfileRequest) =>
+      apiClient.patch<UserAPI.UserProfile>('/api/user/profile', data),
     verification: {
-      status: () => apiClient.get('/api/user/verification/status'),
-      submit: (level: string, data: any) => apiClient.post('/api/user/verification/submit', { level, data }),
+      status: () =>
+        apiClient.get<UserAPI.VerificationStatusResponse>('/api/user/verification/status'),
+      submit: (data: UserAPI.VerificationSubmitRequest) =>
+        apiClient.post<UserAPI.VerificationSubmitResponse>('/api/user/verification/submit', data),
     },
   },
   analytics: {
-    portfolio: (timeRange?: string) => apiClient.get('/api/analytics/portfolio', { body: { timeRange } }),
-    market: () => apiClient.get('/api/analytics/market'),
+    portfolio: (params?: AnalyticsAPI.PortfolioAnalyticsParams) =>
+      apiClient.get<AnalyticsAPI.PortfolioAnalyticsResponse>('/api/analytics/portfolio', { body: params }),
+    market: () =>
+      apiClient.get<AnalyticsAPI.MarketAnalyticsResponse>('/api/analytics/market'),
+  },
+  admin: {
+    login: (data: AdminAPI.LoginRequest) =>
+      apiClient.post<AdminAPI.LoginResponse>('/api/admin/login', data),
+    users: {
+      list: (page = 1, limit = 50) =>
+        apiClient.get<AdminAPI.UsersListResponse>(`/api/admin/users?page=${page}&limit=${limit}`),
+      create: (data: AdminAPI.CreateUserRequest) =>
+        apiClient.post<AdminAPI.AdminUser>('/api/admin/users', data),
+      update: (id: string, data: AdminAPI.UpdateUserRequest) =>
+        apiClient.put<AdminAPI.AdminUser>(`/api/admin/users/${id}`, data),
+      delete: (id: string) =>
+        apiClient.delete<void>(`/api/admin/users/${id}`),
+    },
+  },
+  ai: {
+    analyze: (data: AIAnalysisAPI.AnalysisRequest) =>
+      apiClient.post<AIAnalysisAPI.AnalysisResponse>('/api/ai/analyze', data),
+    getAnalysis: (analysisId: string) =>
+      apiClient.get<AIAnalysisAPI.AnalysisResponse>(`/api/ai/analysis/${analysisId}`),
   },
 };

@@ -158,7 +158,7 @@ const MySubmissions: React.FC = () => {
           className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2"
         >
           <Plus className="w-4 h-4" />
-          <span>New Proposal</span>
+          <span>Create Proposal</span>
         </button>
       </div>
 

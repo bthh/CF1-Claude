@@ -253,7 +253,7 @@ const GovernanceDrafts: React.FC = () => {
               onClick={() => navigate('/governance/create')}
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
             >
-              Create New Proposal
+              Create Proposal
             </button>
           </div>
         )}

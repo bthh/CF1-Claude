@@ -8,24 +8,36 @@ import { TouchInput } from './TouchOptimized/TouchInput';
 import { formatAmount, parseAmount } from '../utils/format';
 import { usePortfolioStore } from '../store/portfolioStore';
 import { useVerificationStore } from '../store/verificationStore';
-
-interface InvestmentModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  proposal: any;
-  onSuccess?: () => void;
-}
+import { InvestmentModalProps, InvestmentFormData } from '../types/components';
+import { InvestmentProposal, InvestmentAmount, FinancialUtils } from '../types/financial';
+import { VerificationLevel } from '../types/verification';
 
 export const InvestmentModal: React.FC<InvestmentModalProps> = ({
   isOpen,
   onClose,
   proposal,
-  onSuccess
+  onSuccess,
+  onError,
+  maxInvestmentAmount,
+  userVerificationLevel,
+  eligibilityCheck
 }) => {
-  const [investmentAmount, setInvestmentAmount] = useState<string>('');
+  const [investmentAmount, setInvestmentAmount] = useState<InvestmentAmount>(
+    FinancialUtils.createAmount('0', 'USD', 2)
+  );
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [calculatedShares, setCalculatedShares] = useState<number>(0);
-  const [estimatedReturns, setEstimatedReturns] = useState<string>('0');
+  const [estimatedReturns, setEstimatedReturns] = useState<InvestmentAmount>(
+    FinancialUtils.createAmount('0', 'USD', 2)
+  );
+  const [formData, setFormData] = useState<Partial<InvestmentFormData>>({
+    acceptedTerms: false,
+    acceptedRisks: false,
+    accreditedInvestor: false,
+    verificationLevel: userVerificationLevel,
+    investmentMethod: 'wallet',
+    agreedToLockup: false
+  });
   
   const { 
     invest, 

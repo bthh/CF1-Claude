@@ -8,7 +8,7 @@ import { X, Mail, Wallet, User, Lock, Eye, EyeOff, CheckCircle } from 'lucide-re
 import { useUnifiedAuthStore } from '../../store/unifiedAuthStore';
 import { useCosmJS } from '../../hooks/useCosmJS';
 import Card from '../UI/Card';
-import Button from '../UI/Button';
+import CF1Button from '../UI/CF1Button';
 import LoadingSpinner from '../UI/LoadingSpinner';
 
 interface UnifiedAuthModalProps {
@@ -395,7 +395,7 @@ const UnifiedAuthModal: React.FC<UnifiedAuthModalProps> = ({ isOpen, onClose }) 
         )}
 
         {/* Submit Button */}
-        <Button
+        <CF1Button
           type="submit"
           className="w-full"
           disabled={loading}
@@ -410,7 +410,7 @@ const UnifiedAuthModal: React.FC<UnifiedAuthModalProps> = ({ isOpen, onClose }) 
             authMode === 'register' ? 'Create Account' :
             authMode === 'forgot-password' ? 'Send Reset Link' : 'Set New Password'
           )}
-        </Button>
+        </CF1Button>
 
         {/* Action Links */}
         <div className="text-center space-y-2">
@@ -507,7 +507,7 @@ const UnifiedAuthModal: React.FC<UnifiedAuthModalProps> = ({ isOpen, onClose }) 
           )}
         </div>
       ) : (
-        <Button
+        <CF1Button
           onClick={handleWalletAuth}
           className="w-full"
           disabled={isConnecting || loading}
@@ -523,7 +523,7 @@ const UnifiedAuthModal: React.FC<UnifiedAuthModalProps> = ({ isOpen, onClose }) 
               Connect Wallet
             </>
           )}
-        </Button>
+        </CF1Button>
       )}
 
       {error && (

@@ -191,9 +191,9 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   const getRoleColor = (role: AdminRole): string => {
     switch (role) {
       case 'creator':
-        return 'text-orange-600 dark:text-orange-400';
+        return 'text-blue-600 dark:text-blue-400';
       case 'super_admin':
-        return 'text-green-600 dark:text-green-400';
+        return 'text-slate-600 dark:text-slate-400';
       case 'owner':
         return 'text-red-600 dark:text-red-400';
       default:
@@ -204,9 +204,9 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   const getActiveColor = (role: AdminRole): string => {
     switch (role) {
       case 'creator':
-        return 'bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300';
+        return 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300';
       case 'super_admin':
-        return 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300';
+        return 'bg-slate-100 text-slate-700 dark:bg-slate-900/50 dark:text-slate-300';
       case 'owner':
         return 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300';
       default:

@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { useDashboardV2Store } from '../../store/dashboardV2Store';
 import Card from '../UI/Card';
-import Button from '../UI/Button';
+import CF1Button from '../UI/CF1Button';
 import ProgressBar from '../UI/ProgressBar';
 import StatusBadge from '../UI/StatusBadge';
 
@@ -155,22 +155,22 @@ const DashboardVariantC: React.FC = () => {
               Quick Actions
             </h3>
             <div className="space-y-2">
-              <Button size="sm" className="w-full justify-start bg-orange-600 hover:bg-orange-700">
+              <CF1Button size="sm" className="w-full justify-start bg-orange-600 hover:bg-orange-700">
                 <FileText className="w-4 h-4 mr-2" />
                 New Proposal
-              </Button>
-              <Button size="sm" variant="outline" className="w-full justify-start">
+              </CF1Button>
+              <CF1Button size="sm" variant="outline" className="w-full justify-start">
                 <Building className="w-4 h-4 mr-2" />
                 Manage Assets
-              </Button>
-              <Button size="sm" variant="outline" className="w-full justify-start">
+              </CF1Button>
+              <CF1Button size="sm" variant="outline" className="w-full justify-start">
                 <Send className="w-4 h-4 mr-2" />
                 Send Update
-              </Button>
-              <Button size="sm" variant="outline" className="w-full justify-start">
+              </CF1Button>
+              <CF1Button size="sm" variant="outline" className="w-full justify-start">
                 <BarChart3 className="w-4 h-4 mr-2" />
                 View Analytics
-              </Button>
+              </CF1Button>
             </div>
           </Card>
         </div>
@@ -201,14 +201,14 @@ const DashboardVariantC: React.FC = () => {
                   </StatusBadge>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Button size="sm" variant="outline">
+                  <CF1Button size="sm" variant="outline">
                     <BarChart3 className="w-4 h-4 mr-1" />
                     Manage
-                  </Button>
-                  <Button size="sm" variant="outline">
+                  </CF1Button>
+                  <CF1Button size="sm" variant="outline">
                     <Eye className="w-4 h-4 mr-1" />
                     View
-                  </Button>
+                  </CF1Button>
                 </div>
               </div>
 
@@ -282,9 +282,9 @@ const DashboardVariantC: React.FC = () => {
                   <ProgressBar value={proposal.completion} className="h-2" />
                 </div>
 
-                <Button size="sm" variant="outline" className="w-full">
+                <CF1Button size="sm" variant="outline" className="w-full">
                   {proposal.status === 'draft' ? 'Continue' : 'View Details'}
-                </Button>
+                </CF1Button>
               </div>
             ))}
           </div>
@@ -307,10 +307,10 @@ const DashboardVariantC: React.FC = () => {
               <span className="text-sm text-yellow-800 dark:text-yellow-200">
                 Pending Updates: <strong>2</strong>
               </span>
-              <Button size="sm" className="bg-yellow-600 hover:bg-yellow-700">
+              <CF1Button size="sm" className="bg-yellow-600 hover:bg-yellow-700">
                 <Send className="w-4 h-4 mr-1" />
                 Send
-              </Button>
+              </CF1Button>
             </div>
 
             {shareholderUpdates.map((update, index) => (
@@ -324,9 +324,9 @@ const DashboardVariantC: React.FC = () => {
                     {update.type} update • {update.priority} priority
                   </div>
                 </div>
-                <Button size="sm" variant="outline">
+                <CF1Button size="sm" variant="outline">
                   <Send className="w-4 h-4" />
-                </Button>
+                </CF1Button>
               </div>
             ))}
           </div>
@@ -359,9 +359,9 @@ const DashboardVariantC: React.FC = () => {
                   <Clock className="w-4 h-4 mr-1" />
                   {proposal.timeLeft} left
                 </div>
-                <Button size="sm" variant="outline">
+                <CF1Button size="sm" variant="outline">
                   Vote Now
-                </Button>
+                </CF1Button>
               </div>
             </div>
           ))}

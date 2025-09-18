@@ -164,12 +164,12 @@ const PlatformConfigSection: React.FC = () => {
           </div>
         </div>
         
-        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
           <div className="flex items-start space-x-3">
-            <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
+            <AlertTriangle className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
             <div>
-              <h4 className="font-medium text-yellow-800 dark:text-yellow-200">Super Admin Access Required</h4>
-              <p className="text-yellow-700 dark:text-yellow-300 text-sm mt-1">
+              <h4 className="font-medium text-blue-800 dark:text-blue-200">Super Admin Access Required</h4>
+              <p className="text-blue-700 dark:text-blue-300 text-sm mt-1">
                 These settings affect all users and assets on the platform. Changes should be made carefully and with proper consideration.
               </p>
             </div>
@@ -788,13 +788,13 @@ const PlatformAdmin: React.FC = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active': return 'text-green-600 bg-green-100 dark:bg-green-900/20';
-      case 'suspended': return 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/20';
+      case 'suspended': return 'text-red-600 bg-red-100 dark:bg-red-900/20';
       case 'locked': case 'banned': return 'text-red-600 bg-red-100 dark:bg-red-900/20';
       case 'pending': case 'pending_verification': return 'text-blue-600 bg-blue-100 dark:bg-blue-900/20';
       case 'approved': return 'text-green-600 bg-green-100 dark:bg-green-900/20';
       case 'rejected': return 'text-red-600 bg-red-100 dark:bg-red-900/20';
       case 'open': return 'text-blue-600 bg-blue-100 dark:bg-blue-900/20';
-      case 'in_progress': case 'in_review': return 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/20';
+      case 'in_progress': case 'in_review': return 'text-blue-600 bg-blue-100 dark:bg-blue-900/20';
       case 'resolved': case 'closed': return 'text-green-600 bg-green-100 dark:bg-green-900/20';
       case 'escalated': return 'text-red-600 bg-red-100 dark:bg-red-900/20';
       default: return 'text-gray-600 bg-gray-100 dark:bg-gray-900/20';
@@ -804,7 +804,7 @@ const PlatformAdmin: React.FC = () => {
   const getRiskColor = (risk: string) => {
     switch (risk) {
       case 'low': return 'text-green-600';
-      case 'medium': return 'text-yellow-600';
+      case 'medium': return 'text-blue-600';
       case 'high': return 'text-red-600';
       default: return 'text-gray-600';
     }
@@ -813,8 +813,8 @@ const PlatformAdmin: React.FC = () => {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'urgent': return 'text-red-600 bg-red-100 dark:bg-red-900/20';
-      case 'high': return 'text-orange-600 bg-orange-100 dark:bg-orange-900/20';
-      case 'medium': return 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/20';
+      case 'high': return 'text-red-600 bg-red-100 dark:bg-red-900/20';
+      case 'medium': return 'text-blue-600 bg-blue-100 dark:bg-blue-900/20';
       case 'low': return 'text-blue-600 bg-blue-100 dark:bg-blue-900/20';
       default: return 'text-gray-600 bg-gray-100 dark:bg-gray-900/20';
     }
@@ -1122,9 +1122,9 @@ const PlatformAdmin: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-xl p-6 border border-purple-200 dark:border-purple-800">
+                      <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-xl p-6 border border-blue-200 dark:border-blue-800">
                         <div className="flex items-center space-x-3 mb-4">
-                          <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
+                          <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
                             <Target className="w-5 h-5 text-white" />
                           </div>
                           <div>
@@ -1169,7 +1169,7 @@ const PlatformAdmin: React.FC = () => {
                           </div>
                           <div className="flex justify-between">
                             <span className="text-gray-600 dark:text-gray-400">SMS</span>
-                            <span className="text-yellow-600 font-medium">Optional</span>
+                            <span className="text-slate-600 font-medium">Optional</span>
                           </div>
                         </div>
                       </div>
@@ -1334,7 +1334,7 @@ const PlatformAdmin: React.FC = () => {
                                 {[...Array(5)].map((_, i) => (
                                   <Star 
                                     key={i} 
-                                    className={`w-3 h-3 ${i < Math.floor(user.complianceScore / 20) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
+                                    className={`w-3 h-3 ${i < Math.floor(user.complianceScore / 20) ? 'text-blue-400 fill-current' : 'text-gray-300'}`} 
                                   />
                                 ))}
                               </div>
@@ -1376,7 +1376,7 @@ const PlatformAdmin: React.FC = () => {
                               role: user.role
                             });
                           }}
-                          className="p-2 text-purple-600 hover:bg-purple-100 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
+                          className="p-2 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                           title="Edit User"
                         >
                           <Edit className="w-4 h-4" />
@@ -1385,7 +1385,7 @@ const PlatformAdmin: React.FC = () => {
                         {user.status === 'active' && (
                           <button
                             onClick={() => handleUserAction(user.id, 'suspend')}
-                            className="p-2 text-yellow-600 hover:bg-yellow-100 dark:hover:bg-yellow-900/20 rounded-lg transition-colors"
+                            className="p-2 text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-900/20 rounded-lg transition-colors"
                             title="Suspend User"
                           >
                             <UserX className="w-4 h-4" />
@@ -1678,8 +1678,8 @@ const PlatformAdmin: React.FC = () => {
                                 User Level: 
                                 <span className={`ml-2 px-2 py-1 text-xs font-semibold rounded-full ${
                                   user.role === 'super_admin' ? 'text-red-600 bg-red-100 dark:bg-red-900/30' :
-                                  user.role === 'platform_admin' ? 'text-purple-600 bg-purple-100 dark:bg-purple-900/30' :
-                                  user.role === 'creator_admin' ? 'text-orange-600 bg-orange-100 dark:bg-orange-900/30' :
+                                  user.role === 'platform_admin' ? 'text-blue-600 bg-blue-100 dark:bg-blue-900/30' :
+                                  user.role === 'creator_admin' ? 'text-green-600 bg-green-100 dark:bg-green-900/30' :
                                   user.role === 'investor' ? 'text-blue-600 bg-blue-100 dark:bg-blue-900/30' :
                                   'text-gray-600 bg-gray-100 dark:bg-gray-900/30'
                                 }`}>
@@ -1756,7 +1756,7 @@ const PlatformAdmin: React.FC = () => {
           {/* Compliance Tab */}
           {selectedTab === 'compliance' && (
             <div className="space-y-6" role="tabpanel" id="compliance-panel">
-              <div className="bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-900/10 dark:to-orange-900/10 rounded-2xl p-6 border border-red-200 dark:border-red-800">
+              <div className="bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/10 dark:to-red-900/20 rounded-2xl p-6 border border-red-200 dark:border-red-800">
                 <div className="flex items-center space-x-3 mb-4">
                   <div className="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
                     <AlertCircle className="w-5 h-5 text-red-600" />
@@ -1792,8 +1792,8 @@ const PlatformAdmin: React.FC = () => {
                         <div className="flex items-center space-x-2">
                           <div className={`w-3 h-3 rounded-full ${
                             case_.severity === 'critical' ? 'bg-red-500' :
-                            case_.severity === 'high' ? 'bg-orange-500' :
-                            case_.severity === 'medium' ? 'bg-yellow-500' :
+                            case_.severity === 'high' ? 'bg-red-500' :
+                            case_.severity === 'medium' ? 'bg-blue-500' :
                             'bg-blue-500'
                           }`} />
                           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -1805,8 +1805,8 @@ const PlatformAdmin: React.FC = () => {
                         </span>
                         <span className={`px-3 py-1 rounded-full text-xs font-bold ${
                           case_.severity === 'critical' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' :
-                          case_.severity === 'high' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400' :
-                          case_.severity === 'medium' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' :
+                          case_.severity === 'high' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' :
+                          case_.severity === 'medium' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' :
                           'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
                         }`}>
                           {case_.severity.toUpperCase()} PRIORITY
@@ -1862,7 +1862,7 @@ const PlatformAdmin: React.FC = () => {
                           </button>
                           <button
                             onClick={() => handleComplianceAction(case_.id, 'escalate')}
-                            className="px-3 py-1 bg-yellow-600 text-white text-sm rounded-lg hover:bg-yellow-700 transition-colors"
+                            className="px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
                           >
                             Escalate
                           </button>
@@ -1918,8 +1918,8 @@ const PlatformAdmin: React.FC = () => {
                         <div className="flex items-center space-x-2">
                           <div className={`w-3 h-3 rounded-full ${
                             ticket.priority === 'urgent' ? 'bg-red-500 animate-pulse' :
-                            ticket.priority === 'high' ? 'bg-orange-500' :
-                            ticket.priority === 'medium' ? 'bg-yellow-500' :
+                            ticket.priority === 'high' ? 'bg-red-500' :
+                            ticket.priority === 'medium' ? 'bg-blue-500' :
                             'bg-blue-500'
                           }`} />
                           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -1994,10 +1994,10 @@ const PlatformAdmin: React.FC = () => {
           {/* Analytics Tab */}
           {selectedTab === 'analytics' && (
             <div className="space-y-6" role="tabpanel" id="analytics-panel">
-              <div className="bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/10 dark:to-amber-900/10 rounded-2xl p-6 border border-yellow-200 dark:border-yellow-800">
+              <div className="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/10 dark:to-blue-900/20 rounded-2xl p-6 border border-blue-200 dark:border-blue-800">
                 <div className="flex items-center space-x-3 mb-6">
-                  <div className="w-10 h-10 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center">
-                    <FileText className="w-5 h-5 text-yellow-600" />
+                  <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+                    <FileText className="w-5 h-5 text-blue-600" />
                   </div>
                   <div>
                     <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Platform Analytics</h2>
@@ -2023,7 +2023,7 @@ const PlatformAdmin: React.FC = () => {
                 <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg">
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-sm text-gray-500 dark:text-gray-400">KYC Pending</p>
-                    <Clock className="w-5 h-5 text-yellow-600" />
+                    <Clock className="w-5 h-5 text-blue-600" />
                   </div>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">
                     {users.filter(u => u.kycStatus === 'pending').length}
@@ -2043,7 +2043,7 @@ const PlatformAdmin: React.FC = () => {
                 <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg">
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-sm text-gray-500 dark:text-gray-400">Open Tickets</p>
-                    <MessageSquare className="w-5 h-5 text-purple-600" />
+                    <MessageSquare className="w-5 h-5 text-blue-600" />
                   </div>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">
                     {supportTickets.filter(t => t.status === 'open' || t.status === 'in_progress').length}

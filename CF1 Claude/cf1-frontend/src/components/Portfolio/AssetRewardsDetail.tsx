@@ -52,7 +52,7 @@ export const AssetRewardsDetail: React.FC<AssetRewardsDetailProps> = ({ assetId,
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'completed':
-        return <CheckCircle className="w-4 h-4 text-green-500" />;
+        return <CheckCircle className="w-4 h-4 text-slate-500" />;
       case 'pending':
         return <Clock className="w-4 h-4 text-yellow-500" />;
       case 'processing':
@@ -65,7 +65,7 @@ export const AssetRewardsDetail: React.FC<AssetRewardsDetailProps> = ({ assetId,
   const getRewardTypeIcon = (type: string) => {
     switch (type) {
       case 'dividend':
-        return <DollarSign className="w-4 h-4 text-green-500" />;
+        return <DollarSign className="w-4 h-4 text-slate-500" />;
       case 'appreciation':
         return <TrendingUp className="w-4 h-4 text-blue-500" />;
       case 'bonus':
@@ -136,7 +136,7 @@ export const AssetRewardsDetail: React.FC<AssetRewardsDetailProps> = ({ assetId,
             <p className="text-sm text-gray-600 dark:text-gray-400">Reward Multiplier</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">
               {formatCurrency(assetReward.monthlyRewards)}
             </p>
             <p className="text-sm text-gray-600 dark:text-gray-400">Monthly Rewards</p>
@@ -150,7 +150,7 @@ export const AssetRewardsDetail: React.FC<AssetRewardsDetailProps> = ({ assetId,
             {actualUserTier?.benefits ? (
               actualUserTier.benefits.map((benefit, index) => (
                 <div key={index} className="flex items-center space-x-2">
-                  <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+                  <CheckCircle className="w-4 h-4 text-slate-500 flex-shrink-0" />
                   <span className="text-sm text-gray-600 dark:text-gray-400">{benefit}</span>
                 </div>
               ))
@@ -169,8 +169,8 @@ export const AssetRewardsDetail: React.FC<AssetRewardsDetailProps> = ({ assetId,
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
           <div className="flex items-center space-x-3">
-            <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
-              <DollarSign className="w-6 h-6 text-green-600 dark:text-green-400" />
+            <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
+              <DollarSign className="w-6 h-6 text-slate-700 dark:text-slate-300" />
             </div>
             <div>
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Earned</p>

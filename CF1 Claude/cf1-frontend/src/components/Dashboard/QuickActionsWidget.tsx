@@ -71,9 +71,9 @@ const QuickActionsWidget: React.FC<QuickActionsWidgetProps> = ({ size, isEditMod
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-base font-semibold text-gray-900 dark:text-white">Quick Actions</h3>
           {!isEditMode && (
-            <button 
+            <button
               onClick={handleNavigate}
-              className="flex items-center space-x-1 px-2 py-1 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              className="flex items-center space-x-1 px-3 py-2 min-h-[36px] text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors touch-manipulation"
             >
               <span>More</span>
               <ArrowRight className="w-3 h-3" />
@@ -86,7 +86,7 @@ const QuickActionsWidget: React.FC<QuickActionsWidgetProps> = ({ size, isEditMod
             <button
               key={action.id}
               onClick={action.action}
-              className="flex flex-col items-center justify-center p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group"
+              className="flex flex-col items-center justify-center p-3 min-h-[60px] rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group touch-manipulation"
             >
               <div className={`p-2 rounded-full ${action.color} group-hover:scale-105 transition-transform`}>
                 <action.icon className="w-4 h-4" />
@@ -107,9 +107,9 @@ const QuickActionsWidget: React.FC<QuickActionsWidgetProps> = ({ size, isEditMod
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-base font-semibold text-gray-900 dark:text-white">Quick Actions</h3>
           {!isEditMode && (
-            <button 
+            <button
               onClick={handleNavigate}
-              className="flex items-center space-x-1 px-2 py-1 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              className="flex items-center space-x-1 px-3 py-2 min-h-[36px] text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors touch-manipulation"
             >
               <span>View All</span>
               <ArrowRight className="w-3 h-3" />
@@ -129,7 +129,7 @@ const QuickActionsWidget: React.FC<QuickActionsWidgetProps> = ({ size, isEditMod
             <button
               key={action.id}
               onClick={action.action}
-              className="w-full flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group text-left"
+              className="w-full flex items-center space-x-3 p-3 min-h-[48px] rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group text-left touch-manipulation"
             >
               <div className={`p-2 rounded-full ${action.color} group-hover:scale-105 transition-transform flex-shrink-0`}>
                 <action.icon className="w-3 h-3" />

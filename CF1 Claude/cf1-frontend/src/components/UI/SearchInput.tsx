@@ -1,20 +1,56 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, forwardRef } from 'react';
 import { Search, X, Loader2 } from 'lucide-react';
 
+/**
+ * Enterprise CF1SearchInput Component
+ *
+ * Standardized search input component following CF1 design system principles:
+ * - "TradFi Feel, DeFi Engine" - Professional, institutional appearance
+ * - WCAG 2.1 AA compliance with proper ARIA labels and keyboard navigation
+ * - Consistent with enterprise design patterns
+ * - TypeScript strict mode compatible
+ *
+ * @example
+ * ```tsx
+ * <SearchInput
+ *   value={query}
+ *   onChange={setQuery}
+ *   placeholder="Search assets..."
+ *   suggestions={assetSuggestions}
+ *   size="md"
+ * />
+ * ```
+ */
 interface SearchInputProps {
+  /** Current search value */
   value: string;
+  /** Change handler for search value */
   onChange: (value: string) => void;
+  /** Submit handler for search */
   onSubmit?: (value: string) => void;
+  /** Placeholder text */
   placeholder?: string;
+  /** Loading state indicator */
   loading?: boolean;
+  /** Search suggestions array */
   suggestions?: string[];
+  /** Suggestion click handler */
   onSuggestionClick?: (suggestion: string) => void;
+  /** Additional CSS classes */
   className?: string;
-  size?: 'small' | 'medium' | 'large';
+  /** Input size following design system */
+  size?: 'sm' | 'md' | 'lg';
+  /** Debounce delay in milliseconds */
   debounceMs?: number;
+  /** Enable responsive design system (default: true) */
+  responsive?: boolean;
+  /** ARIA label for accessibility */
+  'aria-label'?: string;
+  /** Input disabled state */
+  disabled?: boolean;
 }
 
-const SearchInput: React.FC<SearchInputProps> = ({
+const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(({
   value,
   onChange,
   onSubmit,
@@ -23,9 +59,13 @@ const SearchInput: React.FC<SearchInputProps> = ({
   suggestions = [],
   onSuggestionClick,
   className = '',
-  size = 'medium',
-  debounceMs = 300
-}) => {
+  size = 'md',
+  responsive = true,
+  disabled = false,
+  debounceMs = 300,
+  ...props
+}, ref) => {
+  const ariaLabel = props['aria-label'];
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [debouncedValue, setDebouncedValue] = useState(value);
 
@@ -38,17 +78,37 @@ const SearchInput: React.FC<SearchInputProps> = ({
     return () => clearTimeout(timer);
   }, [value, debounceMs]);
 
-  const sizes = {
-    small: 'h-8 text-sm',
-    medium: 'h-10 text-sm',
-    large: 'h-12 text-base'
+  // Responsive sizing using design system tokens
+  const responsiveSizes = {
+    sm: 'h-responsive-8 text-responsive-sm min-h-[44px]',
+    md: 'h-responsive-10 text-responsive-base min-h-[44px]',
+    lg: 'h-responsive-12 text-responsive-lg min-h-[48px]'
   };
 
-  const iconSizes = {
-    small: 'w-4 h-4',
-    medium: 'w-5 h-5',
-    large: 'w-6 h-6'
+  // Legacy sizing for non-responsive mode
+  const legacySizes = {
+    sm: 'h-8 text-sm min-h-[44px]',
+    md: 'h-10 text-sm min-h-[44px]',
+    lg: 'h-12 text-base min-h-[48px]'
   };
+
+  const sizes = responsive ? responsiveSizes : legacySizes;
+
+  // Responsive icon sizing using design system tokens
+  const responsiveIconSizes = {
+    sm: 'w-icon-xs h-icon-xs',
+    md: 'w-icon-sm h-icon-sm',
+    lg: 'w-icon-md h-icon-md'
+  };
+
+  // Legacy icon sizing for non-responsive mode
+  const legacyIconSizes = {
+    sm: 'w-4 h-4',
+    md: 'w-5 h-5',
+    lg: 'w-6 h-6'
+  };
+
+  const iconSizes = responsive ? responsiveIconSizes : legacyIconSizes;
 
   const handleClear = () => {
     onChange('');
@@ -79,6 +139,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
         </div>
         
         <input
+          ref={ref}
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
@@ -86,13 +147,15 @@ const SearchInput: React.FC<SearchInputProps> = ({
           onFocus={() => setShowSuggestions(suggestions.length > 0)}
           onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
           placeholder={placeholder}
+          aria-label={ariaLabel || placeholder || 'Search'}
+          disabled={disabled}
           className={`
-            block w-full pl-10 pr-10 border border-gray-300 dark:border-gray-600 
-            rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white 
-            placeholder-gray-500 dark:placeholder-gray-400 
-            focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+            cf1-input
+            ${responsive ? 'pl-responsive-10 pr-responsive-10' : 'pl-10 pr-10'}
             ${sizes[size]}
+            ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
           `}
+          {...props}
         />
         
         {value && (
@@ -124,6 +187,8 @@ const SearchInput: React.FC<SearchInputProps> = ({
       )}
     </div>
   );
-};
+});
+
+SearchInput.displayName = 'SearchInput';
 
 export default SearchInput;

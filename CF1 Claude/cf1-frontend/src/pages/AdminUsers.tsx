@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { useUnifiedAuthStore, getAuthHeaders } from '../store/unifiedAuthStore';
 import Card from '../components/UI/Card';
-import Button from '../components/UI/Button';
+import CF1Button from '../components/UI/CF1Button';
 import LoadingSpinner from '../components/UI/LoadingSpinner';
 
 interface User {
@@ -236,14 +236,14 @@ const AdminUsers: React.FC = () => {
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          <Button variant="outline" onClick={fetchUsers} disabled={loading}>
+          <CF1Button variant="outline" onClick={fetchUsers} disabled={loading}>
             <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Refresh
-          </Button>
-          <Button variant="outline">
+          </CF1Button>
+          <CF1Button variant="outline">
             <Download className="w-4 h-4 mr-2" />
             Export
-          </Button>
+          </CF1Button>
         </div>
       </div>
 
@@ -348,9 +348,9 @@ const AdminUsers: React.FC = () => {
         ) : error ? (
           <div className="p-8 text-center">
             <div className="text-red-600 mb-2">{error}</div>
-            <Button onClick={fetchUsers} variant="outline">
+            <CF1Button onClick={fetchUsers} variant="outline">
               Try Again
-            </Button>
+            </CF1Button>
           </div>
         ) : filteredUsers.length === 0 ? (
           <div className="p-8 text-center text-gray-500 dark:text-gray-400">
@@ -453,8 +453,8 @@ const AdminUsers: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end space-x-2">
-                        <Button
-                          size="small"
+                        <CF1Button
+                          size="sm"
                           variant="outline"
                           onClick={() => {
                             setSelectedUser(user);
@@ -462,11 +462,11 @@ const AdminUsers: React.FC = () => {
                           }}
                         >
                           <Eye className="w-4 h-4" />
-                        </Button>
+                        </CF1Button>
                         <div className="relative">
-                          <Button size="small" variant="outline">
+                          <CF1Button size="sm" variant="outline">
                             <MoreVertical className="w-4 h-4" />
-                          </Button>
+                          </CF1Button>
                         </div>
                       </div>
                     </td>
@@ -552,11 +552,11 @@ const AdminUsers: React.FC = () => {
               </div>
             </div>
             <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end space-x-3">
-              <Button variant="outline" onClick={() => setShowUserModal(false)} disabled={loading}>
+              <CF1Button variant="outline" onClick={() => setShowUserModal(false)} disabled={loading}>
                 Close
-              </Button>
+              </CF1Button>
               {currentUser?.role === 'super_admin' && selectedUser.id !== currentUser.id && (
-                <Button 
+                <CF1Button
                   variant="outline"
                   onClick={() => {
                     // TODO: Add more user management actions
@@ -565,7 +565,7 @@ const AdminUsers: React.FC = () => {
                   disabled={loading}
                 >
                   More Actions
-                </Button>
+                </CF1Button>
               )}
             </div>
           </div>

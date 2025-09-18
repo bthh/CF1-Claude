@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { TrendingUp, TrendingDown, Minus, ArrowRight, BarChart3, Clock } from 'lucide-react';
 import { useDiscoveryStore } from '../../store/discoveryStore';
 import Card from '../UI/Card';
-import Button from '../UI/Button';
+import CF1Button from '../UI/CF1Button';
 import LoadingSpinner from '../UI/LoadingSpinner';
 
 const MarketInsights: React.FC = () => {
@@ -102,10 +102,10 @@ const MarketInsights: React.FC = () => {
               </div>
             </div>
 
-            <Button variant="outline" size="small" className="w-full text-gray-700 dark:text-gray-300">
+            <CF1Button variant="outline" size="small" className="w-full text-gray-700 dark:text-gray-300">
               Read Full Analysis
               <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
+            </CF1Button>
           </Card>
         ))}
       </div>

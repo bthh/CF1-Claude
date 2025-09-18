@@ -11,7 +11,7 @@ import {
   Target
 } from 'lucide-react';
 import Card from '../UI/Card';
-import Button from '../UI/Button';
+import CF1Button from '../UI/CF1Button';
 import { useNavigate } from 'react-router-dom';
 
 interface PlatformHighlight {
@@ -143,7 +143,7 @@ const PlatformHighlights: React.FC = () => {
               </div>
 
               {highlight.action && (
-                <Button
+                <CF1Button
                   onClick={() => handleAction(highlight.action!.path)}
                   variant="outline"
                   size="small"
@@ -151,7 +151,7 @@ const PlatformHighlights: React.FC = () => {
                 >
                   {highlight.action.label}
                   <ArrowRight className="w-3 h-3 ml-1" />
-                </Button>
+                </CF1Button>
               )}
             </div>
 

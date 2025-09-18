@@ -34,7 +34,7 @@ const Search: React.FC = () => {
       <div className="mb-8">
         <div className="flex items-center space-x-3 mb-2">
           <SearchIcon className="w-8 h-8 text-blue-600" />
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          <h1 className="heading-responsive-xl">
             Search CF1 Platform
           </h1>
         </div>

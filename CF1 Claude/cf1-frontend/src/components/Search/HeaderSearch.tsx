@@ -119,7 +119,7 @@ const HeaderSearch: React.FC<HeaderSearchProps> = ({ className = '' }) => {
         {localQuery && (
           <button
             onClick={handleClear}
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            className="absolute right-1 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1.5 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-md touch-manipulation"
           >
             <X className="w-4 h-4" />
           </button>
@@ -142,7 +142,7 @@ const HeaderSearch: React.FC<HeaderSearchProps> = ({ className = '' }) => {
                 <button
                   key={suggestion.id}
                   onClick={() => handleSuggestionClick(suggestion.text)}
-                  className="w-full text-left px-3 py-2 text-sm text-gray-900 dark:text-white hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded flex items-center justify-between group"
+                  className="w-full text-left px-3 py-3 min-h-[44px] text-sm text-gray-900 dark:text-white hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded flex items-center justify-between group touch-manipulation"
                 >
                   <span>{suggestion.text}</span>
                   <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -168,7 +168,7 @@ const HeaderSearch: React.FC<HeaderSearchProps> = ({ className = '' }) => {
                 <button
                   key={index}
                   onClick={() => handleSuggestionClick(popular)}
-                  className="w-full text-left px-3 py-2 text-sm text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 rounded flex items-center justify-between group"
+                  className="w-full text-left px-3 py-3 min-h-[44px] text-sm text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 rounded flex items-center justify-between group touch-manipulation"
                 >
                   <span>{popular}</span>
                   <ArrowRight className="w-3 h-3 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -182,7 +182,7 @@ const HeaderSearch: React.FC<HeaderSearchProps> = ({ className = '' }) => {
             <div className="p-2 border-t border-gray-100 dark:border-gray-700">
               <button
                 onClick={() => handleSearch()}
-                className="w-full text-left px-3 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded flex items-center justify-between group"
+                className="w-full text-left px-3 py-3 min-h-[44px] text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded flex items-center justify-between group touch-manipulation"
               >
                 <span>Search for "{localQuery}"</span>
                 <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
