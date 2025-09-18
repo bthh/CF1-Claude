@@ -11,7 +11,23 @@ const SimpleSidebar: React.FC<SidebarProps> = ({ type }) => {
   const navigate = useNavigate();
   const { isFeatureEnabled } = useFeatureToggleStore();
   
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => {
+    // Special case for launchpad - include related pages
+    if (path === '/launchpad') {
+      return location.pathname === '/launchpad' ||
+             location.pathname.startsWith('/launchpad/') ||
+             location.pathname === '/my-submissions';
+    }
+
+    // Special case for governance - include related pages
+    if (path === '/governance') {
+      return location.pathname === '/governance' ||
+             location.pathname.startsWith('/governance/');
+    }
+
+    // Default exact match
+    return location.pathname === path;
+  };
 
   const renderDashboardSidebar = () => (
     <div className="space-y-6">

@@ -29,14 +29,31 @@ interface NavItemProps {
 
 const NavItem: React.FC<NavItemProps> = ({ icon, label, to, badge }) => {
   const location = useLocation();
-  const isActive = location.pathname === to;
+
+  const isActive = () => {
+    // Special case for launchpad - include related pages
+    if (to === '/launchpad') {
+      return location.pathname === '/launchpad' ||
+             location.pathname.startsWith('/launchpad/') ||
+             location.pathname === '/my-submissions';
+    }
+
+    // Special case for governance - include related pages
+    if (to === '/governance') {
+      return location.pathname === '/governance' ||
+             location.pathname.startsWith('/governance/');
+    }
+
+    // Default exact match
+    return location.pathname === to;
+  };
 
   return (
     <Link
       to={to}
       className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left cf1-nav-item transition-all duration-200 hover:transform hover:translate-x-1 ${
-        isActive 
-          ? 'bg-white/20 text-blue-900 dark:bg-white/10 dark:text-blue-100 active' 
+        isActive()
+          ? 'bg-white/20 text-blue-900 dark:bg-white/10 dark:text-blue-100 active'
           : 'text-slate-700 dark:text-slate-300 hover:bg-white/10 hover:text-slate-900 dark:hover:text-slate-100'
       }`}
     >

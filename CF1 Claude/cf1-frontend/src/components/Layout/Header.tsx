@@ -215,7 +215,26 @@ const Header: React.FC = () => {
   };
   
   const isActive = (path: string) => {
-    return location.pathname === path || (path === '/dashboard' && location.pathname === '/');
+    // Special case for dashboard root
+    if (path === '/dashboard' && location.pathname === '/') {
+      return true;
+    }
+
+    // Special case for launchpad - include related pages
+    if (path === '/launchpad') {
+      return location.pathname === '/launchpad' ||
+             location.pathname.startsWith('/launchpad/') ||
+             location.pathname === '/my-submissions';
+    }
+
+    // Special case for governance - include related pages
+    if (path === '/governance') {
+      return location.pathname === '/governance' ||
+             location.pathname.startsWith('/governance/');
+    }
+
+    // Default exact match
+    return location.pathname === path;
   };
 
   // Helper to check if user is platform or super admin
@@ -336,7 +355,7 @@ const Header: React.FC = () => {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMobileNavOpen(true)}
-            className="lg:hidden p-2 hover:bg-blue-600 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            className="lg:hidden p-3 min-h-[44px] min-w-[44px] flex items-center justify-center hover:bg-blue-600 dark:hover:bg-gray-700 rounded-lg transition-colors touch-manipulation"
             aria-label="Open navigation menu"
           >
             <Menu className="w-5 h-5 text-white dark:text-gray-300" />
@@ -364,18 +383,18 @@ const Header: React.FC = () => {
         
         {/* Desktop Navigation */}
         <nav className="hidden lg:flex items-center space-x-1" data-tour="main-nav">
-          <Link 
+          <Link
             to="/dashboard"
-            className={`px-4 py-2 rounded-lg text-sm font-medium ${
+            className={`px-4 py-3 min-h-[44px] flex items-center rounded-lg text-sm font-medium touch-manipulation ${
               isActive('/dashboard') ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white'
             }`}
           >
             Dashboard
           </Link>
           {isFeatureEnabled('marketplace') && (
-            <Link 
+            <Link
               to="/marketplace"
-              className={`px-4 py-2 rounded-lg text-sm font-medium ${
+              className={`px-4 py-3 min-h-[44px] flex items-center rounded-lg text-sm font-medium touch-manipulation ${
                 isActive('/marketplace') ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white'
               }`}
             >
@@ -383,18 +402,18 @@ const Header: React.FC = () => {
             </Link>
           )}
           {isFeatureEnabled('launchpad') && (
-            <Link 
+            <Link
               to="/launchpad"
-              className={`px-4 py-2 rounded-lg text-sm font-medium ${
+              className={`px-4 py-3 min-h-[44px] flex items-center rounded-lg text-sm font-medium touch-manipulation ${
                 isActive('/launchpad') ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white'
               }`}
             >
               Launchpad
             </Link>
           )}
-          <Link 
+          <Link
             to="/discovery"
-            className={`px-4 py-2 rounded-lg text-sm font-medium ${
+            className={`px-4 py-3 min-h-[44px] flex items-center rounded-lg text-sm font-medium touch-manipulation ${
               isActive('/discovery') ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white'
             }`}
           >
