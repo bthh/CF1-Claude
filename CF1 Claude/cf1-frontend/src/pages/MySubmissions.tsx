@@ -1,16 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Clock, 
-  CheckCircle, 
-  XCircle, 
-  AlertCircle, 
-  Eye, 
+import {
+  Clock,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  Eye,
   Download,
   Filter,
   Plus,
-  Building2,
-  DollarSign,
   Calendar
 } from 'lucide-react';
 import { useSubmissionStore, type SubmittedProposal } from '../store/submissionStore';
@@ -189,56 +187,6 @@ const MySubmissions: React.FC = () => {
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Total Submissions</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {submissions.filter(s => s.status !== 'draft').length}
-              </p>
-            </div>
-            <Building2 className="w-8 h-8 text-blue-600" />
-          </div>
-        </div>
-        
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Under Review</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {submissions.filter(s => s.status === 'under_review' || s.status === 'submitted').length}
-              </p>
-            </div>
-            <Clock className="w-8 h-8 text-yellow-600" />
-          </div>
-        </div>
-        
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Approved</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {submissions.filter(s => s.status === 'approved').length}
-              </p>
-            </div>
-            <CheckCircle className="w-8 h-8 text-green-600" />
-          </div>
-        </div>
-        
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Total Value</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                ${submissions.reduce((sum, s) => sum + parseFloat(s.targetAmount.replace(/,/g, '') || '0'), 0).toLocaleString()}
-              </p>
-            </div>
-            <DollarSign className="w-8 h-8 text-blue-600" />
-          </div>
-        </div>
-      </div>
 
       {/* Status Filter Tabs */}
       <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm mb-6">
