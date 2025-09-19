@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, DollarSign, PieChart, BarChart3, Gift, Target, Calendar, Eye, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, BarChart, Bar } from 'recharts';
@@ -106,6 +107,7 @@ const formatPercent = (percent: number) => {
 };
 
 export const EnhancedPortfolioOverview: React.FC<PortfolioOverviewProps> = ({ className = '' }) => {
+  const navigate = useNavigate();
   const [timeframe, setTimeframe] = useState<'1M' | '3M' | '6M' | '1Y' | 'ALL'>('6M');
   const [selectedAssetForTiers, setSelectedAssetForTiers] = useState<{id: string, name: string, tokens: number} | null>(null);
   
@@ -485,7 +487,7 @@ export const EnhancedPortfolioOverview: React.FC<PortfolioOverviewProps> = ({ cl
             <div
               key={asset.id}
               className="flex items-center space-x-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors cursor-pointer"
-              onClick={() => setSelectedAssetForTiers({id: asset.id, name: asset.name, tokens: asset.tokens})}
+              onClick={() => navigate(`/portfolio/assets/${asset.id}`)}
             >
               <div className="flex-shrink-0">
                 <div className="w-12 h-12 rounded-lg overflow-hidden">

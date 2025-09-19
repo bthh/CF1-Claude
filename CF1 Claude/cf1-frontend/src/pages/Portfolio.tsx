@@ -49,7 +49,7 @@ const PortfolioAssetRow: React.FC<PortfolioAssetProps> = ({
   return (
     <tr 
       className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
-      onClick={() => navigate(`/marketplace/assets/${id}`)}
+      onClick={() => navigate(`/portfolio/assets/${id}`)}
     >
       <td className="px-6 py-4">
         <div className="flex items-center space-x-3">

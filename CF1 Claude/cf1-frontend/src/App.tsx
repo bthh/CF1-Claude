@@ -31,6 +31,7 @@ import Profile from './pages/Profile';
 import EditProfile from './pages/EditProfile';
 import Settings from './pages/Settings';
 import NotificationSettings from './pages/NotificationSettings';
+import PortfolioAssetDetail from './pages/PortfolioAssetDetail';
 import Verification from './pages/Verification';
 import Analytics from './pages/Analytics';
 import Search from './pages/Search';
@@ -80,6 +81,7 @@ function App() {
               <Route path="/marketplace" element={<UnifiedMarketplace />} />
               <Route path="/marketplace/assets/:id" element={<AssetDetail />} />
               <Route path="/portfolio" element={<Portfolio />} />
+              <Route path="/portfolio/assets/:id" element={<PortfolioAssetDetail />} />
               <Route path="/portfolio/performance" element={<PortfolioPerformance />} />
               <Route path="/portfolio/transactions" element={<PortfolioTransactions />} />
               <Route path="/launchpad" element={<Launchpad />} />
