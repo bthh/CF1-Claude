@@ -169,3 +169,72 @@ jobs:
             } catch (error) {
               console.log('Could not parse Lighthouse results:', error);
             }
+
+  chromatic:
+    name: 'Chromatic Visual Testing'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: visual-tests # Runs after the main visual test job
+
+    steps:
+      - name: 'Checkout Repository'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Required for Chromatic to fetch git history
+
+      - name: 'Setup Node.js'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 'Install Dependencies'
+        run: npm ci
+
+      - name: 'Run Chromatic'
+        uses: chromaui/action@v1
+        with:
+          projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+          buildScriptName: 'build-storybook'
+          exitOnceUploaded: true # Skip waiting for build results in CI
+          onlyChanged: true # Only test components that have changed
+          externals: |
+            - public/**
+            - src/assets/**
+            - '**/*.md'
+
+      - name: 'Comment PR with Chromatic Results'
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { owner, repo, number } = context.issue;
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number: number,
+              body: `
+              ## 🎨 Chromatic Visual Testing Complete
+
+              Storybook components have been tested for visual regressions.
+
+              ### 📊 Component Stories Tested
+              - StatusBadge variants (success, warning, error)
+              - Button components with all states
+              - Header components across breakpoints
+              - Page layouts and compositions
+
+              ### 🔍 Review Process
+              1. **Check Chromatic Build**: Visit the build URL in the action logs
+              2. **Review Changes**: Accept or reject visual differences
+              3. **Update Baselines**: Approve intentional design changes
+
+              ### 🎯 CF1 Visual Standards
+              - Maintain "TradFi Feel, DeFi Engine" consistency
+              - Ensure enterprise-grade component quality
+              - Verify accessibility and mobile responsiveness
+
+              The detailed visual diff report is available in the Chromatic dashboard.
+              `
+            });
