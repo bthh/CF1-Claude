@@ -4,7 +4,7 @@ import { clsx } from 'clsx';
 export interface StatusBadgeProps {
   variant: 'success' | 'warning' | 'error';
   label: string;
-  status?: string; // Support for proposal status mapping
+  status?: string; // Support for proposal status mapping (Pipeline test)
 }
 
 export const StatusBadge: React.FC<StatusBadgeProps> = ({ variant, label, status }) => {
