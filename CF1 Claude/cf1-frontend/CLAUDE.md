@@ -4,10 +4,15 @@ CF1 is an enterprise-grade blockchain platform for Real-World Asset (RWA) tokeni
 
 ## 🚀 **Live Platform Status** (September 2025)
 
-**Production URLs:**
+**🔴 PRODUCTION URLs (LIVE USERS):**
 - **Frontend**: https://rwa2.netlify.app ✅ (Live)
 - **Backend**: https://cf1-claude-production.up.railway.app ✅ (Live)
 - **Admin Dashboard**: https://rwa2.netlify.app/admin ✅ (Fully Functional)
+
+**🟡 STAGING URLs (TESTING):**
+- **Frontend**: https://staging--rwa2.netlify.app ✅ (For Testing)
+- **Backend**: https://cf1-claude-production.up.railway.app ✅ (Shared with production)
+- **Admin Dashboard**: https://staging--rwa2.netlify.app/admin ✅ (Testing Environment)
 
 **Current Authentication Status:**
 - ✅ **bthardwick@gmail.com** / **BrockCF1Admin2025!** (Super Admin - Working)
@@ -29,7 +34,10 @@ CF1 is an enterprise-grade blockchain platform for Real-World Asset (RWA) tokeni
 - ✅ **Railway**: `railway` - Connected to backend deployment (production environment)
 - ✅ **Netlify**: `netlify` - Connected to frontend deployment (rwa2.netlify.app)
 
-### **Development Workflow:**
+### **🚨 CRITICAL: Staging vs Production Deployment**
+
+**⚠️ ALWAYS TEST ON STAGING FIRST ⚠️**
+
 ```bash
 # 1. Make changes to code
 git add .
@@ -40,14 +48,23 @@ git push origin main
 cd backend
 railway up --detach
 
-# 3. Deploy frontend (from root directory)
+# 3. 🟡 DEPLOY TO STAGING FIRST (TESTING)
 cd ..
-netlify deploy --prod
+netlify deploy  # WITHOUT --prod flag = STAGING
+# ✅ Test at: https://staging--rwa2.netlify.app
 
-# 4. Verify deployments
+# 4. 🔴 ONLY AFTER STAGING TESTS PASS - DEPLOY TO PRODUCTION
+netlify deploy --prod  # WITH --prod flag = PRODUCTION
+# ⚠️ Goes live at: https://rwa2.netlify.app
+
+# 5. Verify deployments
 railway status
 netlify status
 ```
+
+**🚨 DEPLOYMENT COMMANDS:**
+- **Staging**: `netlify deploy` (no --prod flag)
+- **Production**: `netlify deploy --prod` (with --prod flag)
 
 ### **Deployment Configuration:**
 - **Backend**: Railway auto-deploys from `backend/` directory to production
