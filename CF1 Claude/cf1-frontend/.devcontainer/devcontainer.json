@@ -5,6 +5,8 @@
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
 
+  "workspaceFolder": "/workspaces/CF1-Claude/CF1 Claude/cf1-frontend",
+
   "forwardPorts": [5173, 6006],
   "portsAttributes": {
     "5173": {
@@ -17,7 +19,7 @@
     }
   },
 
-  "postCreateCommand": "npm install",
+  "postCreateCommand": "cd 'CF1 Claude/cf1-frontend' && npm install",
 
   "customizations": {
     "vscode": {
