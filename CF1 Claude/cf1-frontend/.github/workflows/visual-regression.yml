@@ -36,6 +36,14 @@ jobs:
           npm ci
           npx playwright install --with-deps chromium
 
+      - name: 'Create Neon Branch'
+        id: neon_branch # We give the step an ID to reference its outputs
+        uses: neondatabase/create-branch-action@v5
+        with:
+          project_id: ${{ secrets.NEON_PROJECT_ID }}
+          branch_name: pr-${{ github.event.number }} # Creates a unique branch for the PR
+          api_key: ${{ secrets.NEON_API_KEY }}
+
       - name: 'Build Application'
         run: |
           npm run build
@@ -51,6 +59,8 @@ jobs:
           CI: true
           # Use staging URL for comparison baseline
           BASELINE_URL: 'https://rwa2.netlify.app'
+          # This line is the key: It uses the output from the 'neon_branch' step above
+          DATABASE_URL: ${{ steps.neon_branch.outputs.db_url }}
 
       - name: 'Upload Test Results'
         uses: actions/upload-artifact@v4
