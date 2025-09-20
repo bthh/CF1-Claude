@@ -1,0 +1,32 @@
+{
+  "name": "CF1 Development Environment",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:18",
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+
+  "forwardPorts": [5173, 6006],
+  "portsAttributes": {
+    "5173": {
+      "label": "Vite App",
+      "onAutoForward": "openPreview"
+    },
+    "6006": {
+      "label": "Storybook",
+      "onAutoForward": "openBrowser"
+    }
+  },
+
+  "postCreateCommand": "npm install",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "bradlc.vscode-tailwindcss",
+        "ms-vscode.vscode-typescript-next"
+      ]
+    }
+  }
+}
