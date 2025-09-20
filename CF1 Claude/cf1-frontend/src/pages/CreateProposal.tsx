@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import CF1Button from '../components/UI/CF1Button';
 import { 
   ArrowLeft, 
   ArrowRight, 
@@ -1405,13 +1406,15 @@ const CreateProposal: React.FC = () => {
           <p className="text-gray-600 dark:text-gray-400 mb-4">
             Add at least one service to continue with your proposal.
           </p>
-          <button
+          <CF1Button
             onClick={addService}
-            className="inline-flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 py-2 font-medium transition-colors"
+            variant="primary"
+            size="md"
+            icon={Plus}
+            iconPosition="left"
           >
-            <Plus className="w-4 h-4" />
-            <span>Add First Service</span>
-          </button>
+            Add First Service
+          </CF1Button>
         </div>
       )}
     </div>
@@ -1658,27 +1661,23 @@ const CreateProposal: React.FC = () => {
             </div>
 
             {currentStep < totalSteps ? (
-              <button
+              <CF1Button
                 onClick={nextStep}
                 disabled={!validateStep(currentStep)}
-                className={`flex items-center space-x-2 px-6 py-2 rounded-lg transition-colors font-medium ${
-                  validateStep(currentStep)
-                    ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm'
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                }`}
+                variant={validateStep(currentStep) ? "primary" : "secondary"}
+                size="md"
+                icon={ArrowRight}
+                iconPosition="right"
               >
-                <span>Next</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
+                Next
+              </CF1Button>
             ) : (
-              <button
+              <CF1Button
                 onClick={handleSubmitConfirm}
                 disabled={!validateStep(currentStep) || isSubmitting}
-                className={`flex items-center space-x-2 px-6 py-2 rounded-lg transition-colors font-medium ${
-                  validateStep(currentStep) && !isSubmitting
-                    ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm'
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                }`}
+                variant={validateStep(currentStep) && !isSubmitting ? "primary" : "secondary"}
+                size="md"
+                loading={isSubmitting}
               >
                 {isSubmitting ? (
                   <>
@@ -1691,7 +1690,7 @@ const CreateProposal: React.FC = () => {
                     <span>Submit Proposal for Review</span>
                   </>
                 )}
-              </button>
+              </CF1Button>
             )}
           </div>
         </div>
@@ -1744,16 +1743,19 @@ const CreateProposal: React.FC = () => {
               >
                 Cancel
               </button>
-              <button
+              <CF1Button
                 onClick={() => {
                   setShowSubmitConfirm(false);
                   handleSubmit();
                 }}
                 disabled={isSubmitting}
-                className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium disabled:opacity-50"
+                variant="primary"
+                size="md"
+                loading={isSubmitting}
+                fullWidth
               >
-                {isSubmitting ? 'Submitting...' : 'Submit Proposal'}
-              </button>
+                Submit Proposal
+              </CF1Button>
             </div>
           </div>
         </div>
