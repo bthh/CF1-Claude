@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { ChevronDown, Zap, Plus, Vote, Eye, User, Settings, LogOut, Moon, Sun, Bell, Wallet, HelpCircle, PlayCircle, Menu, Shield, Crown, Users, Info, Mail, MessageSquare } from 'lucide-react';
 import CF1Button from '../UI/CF1Button';
 import { MobileNavigation } from './MobileNavigation';
+import { useMobileNavigation } from '../../hooks/useMobileNavigation';
 import { useCosmJS } from '../../hooks/useCosmJS';
 import { useOnboardingContext } from '../Onboarding/OnboardingProvider';
 import { useVerificationStore } from '../../store/verificationStore';
@@ -87,12 +88,14 @@ const Header: React.FC = () => {
   }, [isConnected, address, initializeUser]);
   
   
-  // Local state for dropdowns and mobile nav
+  // Local state for dropdowns
   const [isQuickActionsOpen, setIsQuickActionsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
+
+  // Mobile navigation hook
+  const { isOpen: isMobileNavOpen, openNavigation: openMobileNav, closeNavigation: closeMobileNav } = useMobileNavigation();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -354,7 +357,7 @@ const Header: React.FC = () => {
           
           {/* Mobile Menu Button */}
           <button
-            onClick={() => setIsMobileNavOpen(true)}
+            onClick={openMobileNav}
             className="lg:hidden p-3 min-h-[44px] min-w-[44px] flex items-center justify-center hover:bg-blue-600 dark:hover:bg-gray-700 rounded-lg transition-colors touch-manipulation"
             aria-label="Open navigation menu"
           >
@@ -661,7 +664,7 @@ const Header: React.FC = () => {
       {/* Mobile Navigation */}
       <MobileNavigation
         isOpen={isMobileNavOpen}
-        onClose={() => setIsMobileNavOpen(false)}
+        onClose={closeMobileNav}
       />
 
       {/* Role Selector Modal */}

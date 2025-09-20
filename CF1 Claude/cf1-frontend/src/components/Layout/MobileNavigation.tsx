@@ -17,7 +17,6 @@ import {
   LogOut,
   Shield
 } from 'lucide-react';
-import { useMobileNavigation } from '../../hooks/useMobileNavigation';
 import { useCosmJS } from '../../hooks/useCosmJS';
 import { useVerificationStore } from '../../store/verificationStore';
 import { useFeatureToggleStore } from '../../store/featureToggleStore';
@@ -43,7 +42,6 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
 }) => {
   const location = useLocation();
   const navRef = useRef<HTMLElement>(null);
-  const { focusManagement, overlayClasses, navigationClasses } = useMobileNavigation();
   const { isConnected, address, disconnect } = useCosmJS();
   const { level } = useVerificationStore();
   const { isFeatureEnabled } = useFeatureToggleStore();
@@ -58,9 +56,15 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
   // Focus management
   useEffect(() => {
     if (isOpen && navRef.current) {
-      focusManagement(navRef.current);
+      // Focus first focusable element in navigation
+      const focusableElements = navRef.current.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      if (focusableElements.length > 0) {
+        (focusableElements[0] as HTMLElement).focus();
+      }
     }
-  }, [isOpen, focusManagement]);
+  }, [isOpen]);
 
   const isActive = (path: string) => {
     return location.pathname === path || (path === '/dashboard' && location.pathname === '/');
@@ -120,10 +124,20 @@ export const MobileNavigation: React.FC<MobileNavigationProps> = ({
     onClose();
   };
 
+
+  // Define CSS classes directly since we're not using the hook
+  const overlayClasses = `fixed inset-0 bg-black transition-opacity duration-300 z-40 ${
+    isOpen ? 'opacity-50' : 'opacity-0 pointer-events-none'
+  }`;
+
+  const navigationClasses = `fixed top-0 left-0 h-full bg-white dark:bg-gray-800 transform transition-transform duration-300 ease-in-out z-50 ${
+    isOpen ? 'translate-x-0' : '-translate-x-full'
+  }`;
+
   return (
     <>
       {/* Overlay */}
-      <div 
+      <div
         className={overlayClasses}
         onClick={onClose}
         aria-hidden="true"

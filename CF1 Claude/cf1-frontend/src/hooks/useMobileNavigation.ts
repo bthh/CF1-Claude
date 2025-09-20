@@ -52,10 +52,10 @@ export const useMobileNavigation = (options: UseMobileNavigationOptions = {}) =>
     if (!isAnimating) {
       setIsAnimating(true);
       setIsOpen(true);
-      
+
       // Prevent body scroll when mobile nav is open
       document.body.style.overflow = 'hidden';
-      
+
       setTimeout(() => setIsAnimating(false), 300);
     }
   }, [isAnimating]);
