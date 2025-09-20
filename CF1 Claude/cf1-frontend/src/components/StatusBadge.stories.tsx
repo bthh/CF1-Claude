@@ -59,3 +59,14 @@ export const AllVariants: Story = {
     </div>
   ),
 };
+
+export const ProposalStatuses: Story = {
+  render: () => (
+    <div className="flex gap-4 flex-wrap">
+      <StatusBadge variant="success" label="" status="Active" />
+      <StatusBadge variant="warning" label="" status="Pending" />
+      <StatusBadge variant="success" label="" status="Completed" />
+      <StatusBadge variant="error" label="" status="Rejected" />
+    </div>
+  ),
+};
